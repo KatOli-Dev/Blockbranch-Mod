@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_leggings",
+    "blockbranch:steel_leggings",
+    "blockbranch:stainless_steel_leggings",
+    "blockbranch:silver_leggings",
+    "blockbranch:platinum_alloy_leggings",
+    "blockbranch:titanium_alloy_leggings"
+  ]
+}

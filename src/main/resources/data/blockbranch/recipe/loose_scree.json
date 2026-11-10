@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "blockbranch:angular_rock_fragment",
+    "blockbranch:angular_rock_fragment",
+    "blockbranch:angular_rock_fragment",
+    "blockbranch:angular_rock_fragment"
+  ],
+  "result": {
+    "id": "blockbranch:loose_scree",
+    "count": 1
+  }
+}

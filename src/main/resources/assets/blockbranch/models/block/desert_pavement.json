@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "blockbranch:block/desert_pavement_top",
+    "side": "blockbranch:block/desert_pavement_side",
+    "bottom": "minecraft:block/sand",
+    "particle": "blockbranch:block/desert_pavement_top"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "package": "blockbranch.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "cubic.WorldRenderTeardownMixin",
+    "cubic.OcclusionSourceMixin",
+    "cubic.ClientChunkStorageMixin",
+    "cubic.ClientPacketListenerMixin",
+    "cubic.RotatingSectionStorageMixin",
+    "cubic.SectionCopyMixin",
+    "cubic.ViewAreaMixin",
+    "metallurgy.RadiationHeartMixin",
+    "horizon.CameraHorizonMixin",
+    "horizon.FogHorizonMixin",
+    "horizon.LevelRendererHorizonMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

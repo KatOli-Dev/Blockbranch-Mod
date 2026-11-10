@@ -1,0 +1,178 @@
+def oldCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v1')
+def oldCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v1/blockbranch/cubic/ColumnWorldFormat.java')
+def oldCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v1/ORIGIN.json')
+def oldCatalogCompile=tasks.register('compileLegacyMetallurgyCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(oldCatalogSource);inputs.file(oldCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(oldCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(oldCatalogOrigin);assert java.security.MessageDigest.getInstance('SHA-256').digest(oldCatalogSource.bytes).encodeHex().toString()==origin.sha256:'Frozen catalog1 input changed'}
+}
+def oldToolCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v2')
+def oldToolCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v2/blockbranch/cubic/ColumnWorldFormat.java')
+def oldToolCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v2/ORIGIN.json')
+def oldToolCatalogCompile=tasks.register('compileLegacyToolCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(oldToolCatalogSource);inputs.file(oldToolCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(oldToolCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(oldToolCatalogOrigin);assert java.security.MessageDigest.getInstance('SHA-256').digest(oldToolCatalogSource.bytes).encodeHex().toString()==origin.sha256:'Frozen catalog2 input changed'}
+}
+def oldArmorCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v3')
+def oldArmorCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-v3/blockbranch/cubic/ColumnWorldFormat.java')
+def oldArmorCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-v3/ORIGIN.json')
+def oldArmorCatalogCompile=tasks.register('compileLegacyArmorCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(oldArmorCatalogSource,new File(oldArmorCatalogSource.parentFile.parentFile,"realistic/OreLayer.java"),new File(oldArmorCatalogSource.parentFile.parentFile,"metallurgy/TinVeins.java"));inputs.file(oldArmorCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(oldArmorCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(oldArmorCatalogOrigin);for(def row:origin.sources){def input=new File(oldArmorCatalogSource.parentFile.parentFile,row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-v3 input changed'}}
+}
+def oldZincCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v4')
+def oldZincCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-v4/blockbranch/cubic/ColumnWorldFormat.java')
+def oldZincCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-v4/ORIGIN.json')
+def oldZincCatalogCompile=tasks.register('compileLegacyZincCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(oldZincCatalogSource,new File(oldZincCatalogSource.parentFile.parentFile,"realistic/OreLayer.java"),new File(oldZincCatalogSource.parentFile.parentFile,"metallurgy/TinVeins.java"),new File(oldZincCatalogSource.parentFile.parentFile,"metallurgy/ZincVeins.java"));inputs.file(oldZincCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(oldZincCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(oldZincCatalogOrigin);for(def row:origin.sources){def input=new File(oldZincCatalogSource.parentFile.parentFile,row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-v4 input changed'}}
+}
+def oldOreClasses=layout.buildDirectory.dir('historical-ore-v2')
+def oldOreSource=file('src/integrationTest/resources/blockbranch-fixtures/ore-layer-v2/blockbranch/realistic/OreLayer.java')
+def oldFormatSource=file('src/integrationTest/resources/blockbranch-fixtures/ore-layer-v2/blockbranch/cubic/ColumnWorldFormat.java')
+def oldOreOrigin=file('src/integrationTest/resources/blockbranch-fixtures/ore-layer-v2/ORIGIN.json')
+def oldOreCompile=tasks.register('compileLegacyOreV2',JavaCompile){
+ dependsOn tasks.named('compileJava')
+ source(oldOreSource,oldFormatSource);inputs.file(oldOreOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output
+ destinationDirectory.set(oldOreClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{
+  def origin=new groovy.json.JsonSlurper().parse(oldOreOrigin)
+  assert java.security.MessageDigest.getInstance('SHA-256').digest(oldOreSource.bytes).encodeHex().toString()==origin.sha256:'Frozen pre-metallurgy ore input changed'
+  assert java.security.MessageDigest.getInstance('SHA-256').digest(oldFormatSource.bytes).encodeHex().toString()==origin.format_guard.sha256:'Frozen pre-metallurgy world guard changed'
+ }
+}
+def metallurgyWorldType=providers.gradleProperty('metallurgyRealistic').isPresent()?'blockbranch:realistic':'minecraft:flat'
+def metallurgyDir=layout.projectDirectory.dir(providers.gradleProperty('metallurgyDirectory').getOrElse('build/metallurgy-native'))
+loom.runs.register('metallurgySmoke'){
+ server();if(providers.gradleProperty('metallurgyExpectedOre').isPresent())vmArg('-Dblockbranch.metallurgyExpectedOre='+providers.gradleProperty('metallurgyExpectedOre').get());runDir(metallurgyDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.metallurgyLegacy='+providers.gradleProperty('metallurgyLegacy').isPresent());vmArg('-Dblockbranch.metallurgySmoke=true');vmArg('-Dblockbranch.metallurgyDirectory='+metallurgyDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.oldZincCatalogClasses='+oldZincCatalogClasses.get().asFile.absolutePath)
+ vmArg('-Dblockbranch.oldArmorCatalogClasses='+oldArmorCatalogClasses.get().asFile.absolutePath)
+ vmArg('-Dblockbranch.oldToolCatalogClasses='+oldToolCatalogClasses.get().asFile.absolutePath)
+ vmArg('-Dblockbranch.oldCatalogClasses='+oldCatalogClasses.get().asFile.absolutePath)
+ vmArg('-Dblockbranch.oldOreClasses='+oldOreClasses.get().asFile.absolutePath)
+}
+tasks.named('runMetallurgySmoke'){
+ dependsOn oldOreCompile,oldCatalogCompile,oldToolCatalogCompile,oldArmorCatalogCompile,oldZincCatalogCompile
+ doFirst{
+  metallurgyDir.asFile.mkdirs();metallurgyDir.file('result.txt').asFile.delete();metallurgyDir.file('eula.txt').asFile.text='eula=true\n'
+  def properties=metallurgyDir.file('server.properties').asFile
+  if(!properties.exists())properties.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port=25621\nlevel-name=metallurgy\nlevel-type='+metallurgyWorldType+'\nlevel-seed=424242\nview-distance=2\nsimulation-distance=2\nmax-tick-time=240000\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
+ }
+ doLast{assert metallurgyDir.file('result.txt').asFile.exists()&&metallurgyDir.file('result.txt').asFile.text.startsWith('PASS'):'Native metallurgy qualification failed; inspect fixture logs'}
+}
+
+def viewRoot=layout.projectDirectory.dir(providers.gradleProperty('metallurgyViewDirectory').getOrElse('build/metallurgy-visual'))
+def viewPack=providers.gradleProperty('metallurgyViewPack').isPresent()
+def viewClient=viewRoot.dir(viewPack?'retexture':'base')
+loom.runs.register('metallurgyViewServer'){
+ server();runDir(viewRoot.dir('server').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.metallurgyView=true')
+}
+loom.runs.register('metallurgyViewClient'){
+ client();runDir(viewClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.metallurgyView=true')
+ vmArg('-Dblockbranch.metallurgyViewDirectory='+viewClient.asFile.absolutePath);vmArg('-Dblockbranch.metallurgyViewPack='+viewPack)
+ programArgs('--username','MetalReview','--quickPlayMultiplayer','127.0.0.1:25622','--width','1024','--height','576')
+}
+tasks.named('runMetallurgyViewServer'){
+ doFirst{
+  def dir=viewRoot.dir('server');dir.asFile.mkdirs();dir.file('eula.txt').asFile.text='eula=true\n'
+  dir.file('server.properties').asFile.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port=25622\nspawn-protection=0\nlevel-name=metallurgy\nlevel-type=minecraft:flat\nview-distance=2\nsimulation-distance=2\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
+ }
+}
+tasks.named('runMetallurgyViewClient'){
+ doFirst{
+  viewClient.asFile.mkdirs();viewClient.file('result.txt').asFile.delete()
+  for(def suffix:['-blocks.png','-items.png','-tools.png','-armor.png','-building.png'])viewClient.file('screenshots/'+(viewPack?'retexture':'base')+suffix).asFile.delete()
+  viewClient.file('options.txt').asFile.text='onboardAccessibility:false\nrenderDistance:2\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\ntutorialStep:none\nfov:0.0\nguiScale:2\ngamma:1.0\nresourcePacks:["vanilla"'+(viewPack?',"file/tin-host-test"':'')+']\n'
+  if(viewPack){
+   def pack=viewClient.dir('resourcepacks/tin-host-test');pack.asFile.mkdirs()
+   pack.file('pack.mcmeta').asFile.text='{"pack":{"min_format":[97,1],"max_format":[97,1],"description":"Native metallurgy host compositing test"}}\n'
+   for(def row:[['stone',0x264e8a,0x346bb0],['deepslate',0x643a8d,0x8b4a9f]]){
+    def target=pack.file('assets/minecraft/textures/block/'+row[0]+'.png').asFile;target.parentFile.mkdirs()
+    def image=new java.awt.image.BufferedImage(16,16,java.awt.image.BufferedImage.TYPE_INT_ARGB)
+    for(int y=0;y<16;y++)for(int x=0;x<16;x++)image.setRGB(x,y,(int)(0xff000000L|(((x/4+y/4)%2==0)?row[1]:row[2])))
+    javax.imageio.ImageIO.write(image,'png',target)
+   }
+  }
+ }
+ doLast{assert viewClient.file('result.txt').asFile.text.startsWith('PASS'):'Native metallurgy view failed; inspect logs'}
+}
+
+// Fast resource admission checks, before the optional native/gameplay fixtures.
+def metallurgyResources=layout.projectDirectory.dir('src/main/resources').asFile
+def metallurgyItems=['tin_ore','deepslate_tin_ore','raw_tin','tin_ingot','bronze_ingot','bronze_block','bronze_pickaxe','bronze_sword','bronze_axe','bronze_shovel','bronze_hoe','bronze_helmet','bronze_chestplate','bronze_leggings','bronze_boots']
+def metallurgyTextures=['block/tin_ore_overlay','block/bronze_block','item/raw_tin','item/tin_ingot','item/bronze_ingot','item/bronze_pickaxe','item/bronze_sword','item/bronze_axe','item/bronze_shovel','item/bronze_hoe','item/bronze_helmet','item/bronze_chestplate','item/bronze_leggings','item/bronze_boots']
+def metallurgyRecipeNames=['bronze_ingot','bronze_block','bronze_ingot_from_block','bronze_pickaxe','bronze_sword','bronze_axe','bronze_shovel','bronze_hoe','bronze_helmet','bronze_chestplate','bronze_leggings','bronze_boots']+['raw_tin','tin_ore','deepslate_tin_ore'].collectMany{material->['smelting','blasting'].collect{method->'tin_ingot_from_'+method+'_'+material}}
+def metallurgyInputs=metallurgyItems.collectMany{name->['items/'+name+'.json','models/item/'+name+'.json'].collect{new File(metallurgyResources,'assets/blockbranch/'+it)}}+
+ metallurgyTextures.collect{new File(metallurgyResources,'assets/blockbranch/textures/'+it+'.png')}+
+ metallurgyRecipeNames.collectMany{name->[new File(metallurgyResources,'data/blockbranch/recipe/'+name+'.json'),new File(metallurgyResources,'data/blockbranch/advancement/recipes/metallurgy/'+name+'.json')]}+
+ ['data/minecraft/tags/item/swords.json','data/minecraft/tags/item/axes.json','data/minecraft/tags/item/shovels.json','data/minecraft/tags/item/hoes.json','data/minecraft/tags/item/pickaxes.json','data/minecraft/tags/item/head_armor.json','data/minecraft/tags/item/chest_armor.json','data/minecraft/tags/item/leg_armor.json','data/minecraft/tags/item/foot_armor.json','assets/blockbranch/equipment/bronze.json','assets/blockbranch/textures/entity/equipment/humanoid/bronze.png','assets/blockbranch/textures/entity/equipment/humanoid_leggings/bronze.png','assets/blockbranch/textures/entity/equipment/humanoid_baby/bronze.png','assets/blockbranch/lang/en_us.json','assets/blockbranch/models/block/composited_ore.json','assets/blockbranch/models/block/tin_ore.json','assets/blockbranch/models/block/deepslate_tin_ore.json'].collect{new File(metallurgyResources,it)}
+tasks.register('verifyMetallurgyResources'){
+ inputs.files(metallurgyInputs)
+ inputs.files(fileTree("src/main/resources/assets/blockbranch/models/item"){include "bronze_*_trim.json"})
+ doLast{
+  def json=new groovy.json.JsonSlurper();def read={String name->json.parse(new File(metallurgyResources,name))}
+  for(def texture:metallurgyTextures){
+   def image=javax.imageio.ImageIO.read(new File(metallurgyResources,'assets/blockbranch/textures/'+texture+'.png'))
+   assert image!=null&&image.width==16&&image.height==16:'Metallurgy art must remain 16x: '+texture
+   if(texture=='block/tin_ore_overlay'){
+    int transparent=0,opaque=0
+    for(int y=0;y<16;y++)for(int x=0;x<16;x++){int alpha=image.getRGB(x,y)>>>24;if(alpha==0)transparent++;if(alpha==255)opaque++}
+    assert transparent>0&&opaque>0:'Ore overlay must reveal its resource-pack host'
+   }
+  }
+  for(def row:[['tin_ore','stone'],['deepslate_tin_ore','deepslate']]){
+   def model=read('assets/blockbranch/models/block/'+row[0]+'.json')
+   assert model.parent=='blockbranch:block/composited_ore'&&model.textures.base=='minecraft:block/'+row[1]&&model.textures.overlay=='blockbranch:block/tin_ore_overlay':'Keep ore/vanilla-host compositing'
+  }
+  def names=read('assets/blockbranch/lang/en_us.json')
+  for(def name:metallurgyItems){
+   def item=read('assets/blockbranch/items/'+name+'.json');def armor=name in ['bronze_helmet','bronze_chestplate','bronze_leggings','bronze_boots'];assert armor?(item.model.type=='minecraft:select'&&item.model.property=='minecraft:trim_material'&&item.model.fallback.model=='blockbranch:item/'+name):(item.model.type=='minecraft:model'&&item.model.model=='blockbranch:item/'+name):'Modern item model missing: '+name
+   assert names[(name in ['tin_ore','deepslate_tin_ore','bronze_block']?'block.':'item.')+'blockbranch.'+name]:'Missing item name: '+name
+  }
+  for(def row:[['sword','swords'],['axe','axes'],['shovel','shovels'],['hoe','hoes'],['pickaxe','pickaxes']]){
+   def tag=read('data/minecraft/tags/item/'+row[1]+'.json');assert tag.replace==false&&tag.values.contains('blockbranch:bronze_'+row[0]):'Preserve native tool/enchantment tags: '+row[0]
+  }
+  for(def row:[['helmet','head_armor'],['chestplate','chest_armor'],['leggings','leg_armor'],['boots','foot_armor']]){
+   def tag=read('data/minecraft/tags/item/'+row[1]+'.json');assert tag.replace==false&&tag.values.contains('blockbranch:bronze_'+row[0]):'Keep native armor/enchant/trim tags'
+   def definition=read('assets/blockbranch/items/bronze_'+row[0]+'.json').model
+   assert definition.cases.size()==11:'Support all pinned native trim materials'
+   for(def entry:definition.cases){
+    def key=entry.when.substring('minecraft:'.length());def model=read('assets/blockbranch/models/item/bronze_'+row[0]+'_'+key+'_trim.json')
+    assert entry.model.model=='blockbranch:item/bronze_'+row[0]+'_'+key+'_trim'&&model.textures.layer0=='blockbranch:item/bronze_'+row[0]&&model.textures.layer1=='minecraft:trims/items/'+row[0]+'_trim_'+key:'Keep resource-pack trim compositing'
+   }
+  }
+  def layers=read('assets/blockbranch/equipment/bronze.json').layers
+  for(def layer:['humanoid','humanoid_leggings','humanoid_baby']){
+   assert layers[layer][0].texture=='blockbranch:bronze'
+   def image=javax.imageio.ImageIO.read(new File(metallurgyResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/bronze.png'))
+   assert image.width==64&&image.height==(layer=='humanoid_baby'?64:32):'Use native armor UV dimensions'
+   int solid=0,clear=0;for(int y=0;y<image.height;y++)for(int x=0;x<image.width;x++){int alpha=image.getRGB(x,y)>>>24;if(alpha==255)solid++;if(alpha==0)clear++}
+   assert solid>0&&clear>0:'Armor UV atlas must contain plates and open skin regions'
+  }
+  for(def name:metallurgyRecipeNames){
+   def recipe=read('data/blockbranch/recipe/'+name+'.json');assert recipe.result.id.startsWith('blockbranch:'):'Unexpected metallurgy result'
+   def advancement=read('data/blockbranch/advancement/recipes/metallurgy/'+name+'.json')
+   assert advancement.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+name:'Use the pinned native recipe-unlock schema'
+   assert advancement.requirements.flatten().toSet()==advancement.criteria.keySet():'Recipe completion requirements must match criteria'
+   assert advancement.rewards.recipes==['blockbranch:'+name]:'Recipe book reward mismatch'
+   if(recipe.ingredient!=null)assert advancement.criteria.has_material.conditions.items[0].items==recipe.ingredient:'Ore/raw ingredient must unlock its own processing recipe'
+  }
+  println 'PASS metallurgy: 15 registered item resources, 14 original 16x sprites plus native armor atlases, vanilla-host compositing and 18 recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyMetallurgyResources')}

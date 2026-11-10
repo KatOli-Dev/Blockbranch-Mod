@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:tungsten_ore",
+    "blockbranch:deepslate_tungsten_ore",
+    "blockbranch:platinum_ore",
+    "blockbranch:deepslate_platinum_ore",
+    "blockbranch:titanium_ore",
+    "blockbranch:deepslate_titanium_ore",
+    "blockbranch:uranium_ore",
+    "blockbranch:deepslate_uranium_ore"
+  ]
+}

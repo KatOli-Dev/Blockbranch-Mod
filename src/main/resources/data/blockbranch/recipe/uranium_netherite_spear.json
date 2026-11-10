@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": "minecraft:netherite_upgrade_smithing_template",
+  "base": "minecraft:netherite_spear",
+  "addition": "blockbranch:uranium_tip",
+  "result": {
+    "id": "blockbranch:uranium_netherite_spear"
+  }
+}

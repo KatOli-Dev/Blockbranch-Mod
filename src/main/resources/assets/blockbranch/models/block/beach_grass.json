@@ -1,0 +1,6 @@
+{
+  "parent": "blockbranch:block/offset_plant_cross",
+  "textures": {
+    "cross": "blockbranch:block/beach_grass"
+  }
+}

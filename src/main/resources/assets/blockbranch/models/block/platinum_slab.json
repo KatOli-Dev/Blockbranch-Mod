@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "blockbranch:block/platinum_block",
+    "top": "blockbranch:block/platinum_block",
+    "side": "blockbranch:block/platinum_block"
+  }
+}

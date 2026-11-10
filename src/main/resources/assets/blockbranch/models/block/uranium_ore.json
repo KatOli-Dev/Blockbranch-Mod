@@ -1,0 +1,7 @@
+{
+  "parent": "blockbranch:block/composited_ore",
+  "textures": {
+    "base": "minecraft:block/stone",
+    "overlay": "blockbranch:block/uranium_ore_overlay"
+  }
+}

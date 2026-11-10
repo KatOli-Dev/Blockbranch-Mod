@@ -1,0 +1,208 @@
+{
+  "code_license": "MIT-0 (repository LICENSE); external audio is separately CC-BY-4.0",
+  "assets": [
+    {
+      "title": "20070303.duck.wav",
+      "author": "dobroide",
+      "source_url": "https://freesound.org/people/dobroide/sounds/31835/",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_text": "20070303.duck.wav by dobroide -- https://freesound.org/s/31835/ -- License: Attribution 4.0",
+      "source_sha256": "96214146128b80b45ed5e4e211eafd53d46275f6f27d0952aab461ec78827e03",
+      "event": "mallard.quack",
+      "files": [
+        {
+          "path": "assets/blockbranch/sounds/mallard/quack1.ogg",
+          "sha256": "ae333d20575956e902b6c675295d9986704d16b2f7b8c2d494f8d15ed8bf62bf"
+        },
+        {
+          "path": "assets/blockbranch/sounds/mallard/quack2.ogg",
+          "sha256": "69d4b5df1960cdd363d465627f75cb22b07bb0362baa668ad6d4960673c51f6e"
+        },
+        {
+          "path": "assets/blockbranch/sounds/mallard/quack3.ogg",
+          "sha256": "ff9ee90ba97f5b70a603fe0f109a2698f58dc2c7d73c4f2f1f9e68f4a12770ae"
+        },
+        {
+          "path": "assets/blockbranch/sounds/mallard/quack4.ogg",
+          "sha256": "0aa5f51699d40efe27e75d94cfa06ad12954baed091cce94a71fbbd09482c34f"
+        },
+        {
+          "path": "assets/blockbranch/sounds/mallard/quack5.ogg",
+          "sha256": "0bd582bbc0176ba79a05e8c813d1d8a04f2d8745e34d49cf930e573e81763c79"
+        }
+      ],
+      "modifications": "Candidate cuts with0ms attack/0ms tail padding,100ms/120ms fades;44100Hz mono channel average; shared gain-2.20dB (at most+6dB); WAV PCM16 and Ogg Vorbis q5. Source windows already include pre/postroll. No pitch change or denoising.",
+      "cuts": [
+        {
+          "name": "candidate-01",
+          "source_start_seconds": 0.26,
+          "source_end_seconds": 0.86,
+          "duration_seconds": 0.6,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.12
+        },
+        {
+          "name": "candidate-02",
+          "source_start_seconds": 0.87,
+          "source_end_seconds": 1.46,
+          "duration_seconds": 0.59,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.12
+        },
+        {
+          "name": "candidate-03",
+          "source_start_seconds": 1.47,
+          "source_end_seconds": 2.1,
+          "duration_seconds": 0.63,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.12
+        },
+        {
+          "name": "candidate-04",
+          "source_start_seconds": 2.12,
+          "source_end_seconds": 2.7599773242630388,
+          "duration_seconds": 0.6399773242630385,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.12
+        },
+        {
+          "name": "candidate-05",
+          "source_start_seconds": 2.7799773242630383,
+          "source_end_seconds": 3.5,
+          "duration_seconds": 0.7200226757369614,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.12
+        }
+      ],
+      "selection": "Five individual cuts, equal-weight random alternatives. No combined audition packaged.",
+      "events": [
+        "mallard.quack",
+        "mallard.hurt",
+        "mallard.death"
+      ],
+      "playback": "Ordinary calls use resource pitch 1.0; hurt/death use native event-reference pitch 1.1, about 10% faster playback and 9.1% shorter duration. Existing entity age/pitch variation is multiplied normally. Audio files themselves remain unchanged."
+    },
+    {
+      "title": "201009.deer.roar.02.wav",
+      "author": "dobroide",
+      "source_url": "https://freesound.org/people/dobroide/sounds/104581/",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_text": "201009.deer.roar.02.wav by dobroide -- https://freesound.org/s/104581/ -- License: Attribution 4.0",
+      "source_sha256": "5577ed088fe11f42b326ee7d7ea42779e3f1fefb37cba3b94340a91552589f42",
+      "event": "red_deer.bellow",
+      "files": [
+        {
+          "path": "assets/blockbranch/sounds/red_deer/bellow_dobroide_104581.ogg",
+          "sha256": "9d483d10d70083f920e4ec9451f78c86d64c61b90b22d2bb0bee06f739f6c388"
+        }
+      ],
+      "modifications": "Complete original recording converted from WAV PCM16 to Ogg Vorbis quality 10 for Minecraft compatibility. Original 44100Hz mono format, complete 146405-sample duration/timing retained. No trimming, fades, denoising, pitch change, gain adjustment, normalization or resampling. Vorbis encoding is lossy.",
+      "events": [
+        "red_deer.contact",
+        "red_deer.bellow",
+        "red_deer.hurt",
+        "red_deer.death"
+      ],
+      "playback": "Ordinary calls use resource pitch 1.0; hurt/death use native event-reference pitch 1.1, about 10% faster playback and 9.1% shorter duration. Existing entity age/pitch variation is multiplied normally. Audio files themselves remain unchanged."
+    },
+    {
+      "title": "Grey Seal Calling",
+      "author": "naturenotesuk",
+      "source_url": "https://freesound.org/people/naturenotesuk/sounds/740052/",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_text": "Grey Seal Calling by naturenotesuk -- https://freesound.org/s/740052/ -- License: Attribution 4.0",
+      "source_species": "Grey seal (Halichoerus grypus), not harbor seal (Phoca vitulina)",
+      "game_mapping": "User-approved use for harbor seal entity; recording species remains labelled grey seal.",
+      "source_sha256": "69802bbba2c4f5b372834f5930463e89f2017e5b14be74cd0c9854ca1374c1d5",
+      "source_pcm24_sha256": "ecff497104c86c18de52f8892aad7293724361bda582aa7fd3b5b761a8bee777",
+      "event": "harbor_seal.contact",
+      "events": [
+        "harbor_seal.contact",
+        "harbor_seal.hurt",
+        "harbor_seal.death"
+      ],
+      "files": [
+        {
+          "path": "assets/blockbranch/sounds/harbor_seal/call1.ogg",
+          "sha256": "42d0d593053bfd4442cd98c06887f5ca33f3d2802430783236ddf3e46df24d02"
+        },
+        {
+          "path": "assets/blockbranch/sounds/harbor_seal/call2.ogg",
+          "sha256": "4649c69181f99bada07a6246a9f609b603c4435c094ab22a4228aed098dfb082"
+        },
+        {
+          "path": "assets/blockbranch/sounds/harbor_seal/call3.ogg",
+          "sha256": "71505707fe27112ffdd2c19163f9f50d6a6274e43192258a248887a1f6a74771"
+        },
+        {
+          "path": "assets/blockbranch/sounds/harbor_seal/call4.ogg",
+          "sha256": "69adf4d3e5eca224f8316d8fa704c608de281b0650cf594b1445b5550b6ac7f4"
+        }
+      ],
+      "modifications": "Candidate cuts with0ms attack/0ms tail padding,100ms/150ms fades;44100Hz mono channel average; shared gain5.67dB (at most+6dB); WAV PCM16 and Ogg Vorbis q5. Source windows already include pre/postroll. No pitch change or denoising. Lossless FLAC source preserved unchanged.",
+      "cuts": [
+        {
+          "name": "candidate-01",
+          "source_start_seconds": 25.35,
+          "source_end_seconds": 26.4,
+          "duration_seconds": 1.05,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.15
+        },
+        {
+          "name": "candidate-02",
+          "source_start_seconds": 26.75,
+          "source_end_seconds": 27.8,
+          "duration_seconds": 1.05,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.15
+        },
+        {
+          "name": "candidate-03",
+          "source_start_seconds": 34.79997732426304,
+          "source_end_seconds": 35.79997732426304,
+          "duration_seconds": 1.0,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.15
+        },
+        {
+          "name": "candidate-04",
+          "source_start_seconds": 36.2,
+          "source_end_seconds": 37.45,
+          "duration_seconds": 1.25,
+          "fade_in_seconds": 0.1,
+          "fade_out_seconds": 0.15
+        }
+      ],
+      "selection": "Four individual approved clips; equal-weight independent random selection for contact, hurt and death. No combined audition.",
+      "playback": "All three seal events use resource volume/pitch 1.0. Existing entity volume and adult/pup pitch variation unchanged; no added hurt/death pitch multiplier.",
+      "approval": "User reports no human voices in the review clips and approved replacement with random selection."
+    },
+    {
+      "title": "Resonite synthesized chime",
+      "author": "Blockbranch contributors",
+      "source": "Original synthesis: scripts/assets/GenerateResonite.java",
+      "license": "MIT-0",
+      "license_file": "LICENSE",
+      "event": "resonite.chime",
+      "files": [
+        {
+          "path": "assets/blockbranch/sounds/resonite/chime1.ogg",
+          "sha256": "bc711ae31e1983f225b700ea4856202911bc51b7b816e98cc59e419c7b482929"
+        },
+        {
+          "path": "assets/blockbranch/sounds/resonite/chime2.ogg",
+          "sha256": "759f61c412768d2abdd477fd959835887dbe5eb1d8ceca7d9e006b3e83c0b029"
+        },
+        {
+          "path": "assets/blockbranch/sounds/resonite/chime3.ogg",
+          "sha256": "7d8139bed1e6c8c01502493be61a020a5ff5c290f73ab945b2d9b3a841666c47"
+        }
+      ],
+      "modifications": "Original four-partial decaying sine synthesis, 44.1kHz mono PCM16; three slight pitch variants, 1.2s; encoded Ogg Vorbis q5 with FFmpeg. No sampled or external source."
+    }
+  ]
+}

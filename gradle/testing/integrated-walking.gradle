@@ -1,0 +1,19 @@
+// QA only: one actual UI-created integrated world, native ground input.
+def walkDir=layout.projectDirectory.dir(providers.gradleProperty('integratedWalkingDirectory').getOrElse('build/integrated-walking'))
+loom.runs.register('integratedWalking') {
+    client();runDir(walkDir.asFile.absolutePath)
+    vmArg('-Xms512m');vmArg('-Xmx8G')
+    vmArg('-Dblockbranch.integratedWalking=true')
+    vmArg('-Dblockbranch.integratedWalkingResult='+walkDir.file('result.txt').asFile.absolutePath)
+    vmArg('-XX:FlightRecorderOptions=stackdepth=128')
+    vmArg('-XX:StartFlightRecording=settings='+walkDir.file('walking.jfc').asFile.absolutePath+',filename='+walkDir.file('integrated.jfr').asFile.absolutePath)
+    programArgs('--username','IntegratedWalk','--width','1024','--height','576')
+}
+tasks.register('prepareIntegratedWalking') {
+    doLast {
+        walkDir.asFile.mkdirs()
+        assert !walkDir.dir('saves/IntegratedWalking').asFile.exists():'Requires a fresh unique world; preserve prior recordings.'
+        walkDir.file('options.txt').asFile.text='renderDistance:32\nsimulationDistance:12\nmaxFps:60\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+tasks.named('runIntegratedWalking') { dependsOn tasks.named('prepareIntegratedWalking');doLast {assert walkDir.file('result.txt').asFile.text.startsWith('PASS')} }

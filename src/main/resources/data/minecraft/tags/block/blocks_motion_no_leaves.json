@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:loose_scree",
+    "blockbranch:packed_river_shingle",
+    "blockbranch:root_bound_sand",
+    "blockbranch:desert_pavement"
+  ]
+}

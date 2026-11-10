@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FFF"
+  ],
+  "key": {
+    "F": "blockbranch:reed_fibre"
+  },
+  "result": {
+    "id": "minecraft:paper",
+    "count": 3
+  }
+}

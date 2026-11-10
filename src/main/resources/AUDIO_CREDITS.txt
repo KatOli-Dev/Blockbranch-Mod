@@ -1,0 +1,26 @@
+Blockbranch external audio credits
+
+Code remains MIT-0. The recordings below retain their own CC BY 4.0 license; they are not relicensed as MIT-0.
+License: https://creativecommons.org/licenses/by/4.0/
+
+20070303.duck.wav by dobroide -- https://freesound.org/s/31835/ -- License: Attribution 4.0
+Packaged events: mallard.quack, mallard.hurt, mallard.death
+Modifications: Candidate cuts with0ms attack/0ms tail padding,100ms/120ms fades;44100Hz mono channel average; shared gain-2.20dB (at most+6dB); WAV PCM16 and Ogg Vorbis q5. Source windows already include pre/postroll. No pitch change or denoising.
+
+201009.deer.roar.02.wav by dobroide -- https://freesound.org/s/104581/ -- License: Attribution 4.0
+Packaged events: red_deer.contact, red_deer.bellow, red_deer.hurt, red_deer.death
+Modifications: Complete original recording converted from WAV PCM16 to Ogg Vorbis quality 10 for Minecraft compatibility. Original 44100Hz mono format, complete 146405-sample duration/timing retained. No trimming, fades, denoising, pitch change, gain adjustment, normalization or resampling. Vorbis encoding is lossy.
+
+Exact asset paths, hashes and cut boundaries are in AUDIO_SOURCES.json.
+
+Playback update: all deer and mallard variants use these approved sources for ordinary, hurt and death calls. Hurt/death apply native resource pitch 1.1 (also speeds playback); ordinary pitch is 1.0. Existing entity age/pitch variation remains. No further audio-file edits.
+
+Grey Seal Calling by naturenotesuk -- https://freesound.org/s/740052/ -- License: Attribution 4.0
+License: https://creativecommons.org/licenses/by/4.0/
+Recorded species: grey seal, not harbor seal; user approved its use for the harbor seal game entity.
+Packaged events: harbor_seal.contact, harbor_seal.hurt, harbor_seal.death
+Modifications: Candidate cuts with0ms attack/0ms tail padding,100ms/150ms fades;44100Hz mono channel average; shared gain5.67dB (at most+6dB); WAV PCM16 and Ogg Vorbis q5. Source windows already include pre/postroll. No pitch change or denoising. Lossless FLAC source preserved unchanged.
+Playback: equal-weight random selection among four approved clips for each event; no new seal pitch or volume multiplier.
+
+Resonite chime: original synthesis by Blockbranch contributors, MIT-0 (repository LICENSE).
+Source: scripts/assets/GenerateResonite.java; no external audio sample.

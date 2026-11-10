@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_axe",
+    "blockbranch:steel_axe",
+    "blockbranch:tungsten_steel_axe",
+    "blockbranch:stainless_steel_axe",
+    "blockbranch:silver_axe",
+    "blockbranch:platinum_alloy_axe",
+    "blockbranch:titanium_alloy_axe",
+    "blockbranch:uranium_netherite_axe"
+  ]
+}

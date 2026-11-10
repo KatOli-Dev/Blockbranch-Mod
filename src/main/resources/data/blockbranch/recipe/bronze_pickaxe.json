@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "BBB",
+    " S ",
+    " S "
+  ],
+  "key": {
+    "B": "blockbranch:bronze_ingot",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "blockbranch:bronze_pickaxe"
+  }
+}

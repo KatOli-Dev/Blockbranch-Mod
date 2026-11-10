@@ -1,0 +1,73 @@
+def uraniumReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore14-catalog19')
+def uraniumReaderOrigin=new File(uraniumReaderRoot,'ORIGIN.json')
+def uraniumReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java','metallurgy/SilverVeins.java','metallurgy/PlatinumVeins.java','metallurgy/TitaniumVeins.java','metallurgy/MagnetiteVeins.java','metallurgy/ResoniteVeins.java','metallurgy/UraniumVeins.java'].collect{new File(uraniumReaderRoot,'blockbranch/'+it)}
+def uraniumReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore14-catalog19')
+def uraniumReaderCompile=tasks.register('compileLegacyUraniumCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(uraniumReaderFiles);inputs.file(uraniumReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(uraniumReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(uraniumReaderOrigin);for(def row:origin.sources){def input=new File(uraniumReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore14-catalog19 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldUraniumClasses='+uraniumReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn uraniumReaderCompile}
+if(providers.gradleProperty('bismuthView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.bismuthView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.bismuthView=true')}
+}
+def bismuthRoot=layout.projectDirectory.dir('src/main/resources').asFile
+tasks.register('verifyBismuthResources'){
+ inputs.files(fileTree(bismuthRoot){include '**/*bismuth*','**/prospectable_ores.json','**/lang/en_us.json','**/tags/item/pickaxes.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_iron_tool.json'})
+ doLast{
+  def read={String p->new groovy.json.JsonSlurper().parse(new File(bismuthRoot,p))};def lang=read('assets/blockbranch/lang/en_us.json')
+  for(def n:['bismuth_ore','deepslate_bismuth_ore','raw_bismuth','bismuth_ingot','bismuth_steel_pickaxe']){assert read('assets/blockbranch/items/'+n+'.json').model;assert read('assets/blockbranch/models/item/'+n+'.json');assert lang[(n.endsWith('_ore')?'block.':'item.')+'blockbranch.'+n]}
+  for(def n:['block/bismuth_ore_overlay','item/raw_bismuth','item/bismuth_ingot','item/bismuth_pickaxe_inlay']){def i=javax.imageio.ImageIO.read(new File(bismuthRoot,'assets/blockbranch/textures/'+n+'.png'));assert i.width==16&&i.height==16}
+  for(def row:[['bismuth_ore','stone'],['deepslate_bismuth_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/bismuth_ore_overlay';assert read('data/blockbranch/loot_table/blocks/'+row[0]+'.json').type=='minecraft:block'}
+  def pick=read('assets/blockbranch/models/item/bismuth_steel_pickaxe.json');assert pick.textures.layer0=='blockbranch:item/steel_pickaxe'&&pick.textures.layer1=='blockbranch:item/bismuth_pickaxe_inlay'
+  def recipe=read('data/blockbranch/recipe/bismuth_steel_pickaxe.json');assert recipe.type=='minecraft:smithing_transform'&&!recipe.containsKey('template')&&recipe.base=='blockbranch:steel_pickaxe'&&recipe.addition=='blockbranch:bismuth_ingot'
+  for(def tag:['mineable/pickaxe','needs_iron_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&t.values.contains('blockbranch:bismuth_ore')&&t.values.contains('blockbranch:deepslate_bismuth_ore')}
+  assert read('data/minecraft/tags/item/pickaxes.json').values.contains('blockbranch:bismuth_steel_pickaxe')
+  def ores=read('data/blockbranch/tags/block/prospectable_ores.json');assert ores.replace==false&&ores.values.contains('minecraft:diamond_ore')&&ores.values.contains('minecraft:ancient_debris')&&ores.values.contains('blockbranch:fools_diamond_ore')&&ores.values.contains('blockbranch:uranium_ore')&&ores.values.contains('blockbranch:bismuth_ore')
+  println 'PASS bismuth: five items, four original16x overlays/materials, native host/steel compositing and restrained native smithing'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyBismuthResources')}
+if(providers.gradleProperty('pickaxeArtView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.pickaxeArtView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.pickaxeArtView=true')}
+}
+tasks.register('verifyNativePickaxeResources'){
+ inputs.files(fileTree('src/main/resources'){include '**/*pickaxe*','assets/minecraft/atlases/items.json'},file('src/client/java/blockbranch/client/metallurgy/PickaxeSpriteSource.java'),file('src/client/java/blockbranch/client/metallurgy/IngotSpriteSource.java'),file('src/client/java/blockbranch/client/metallurgy/ToolSpriteSource.java'),file('src/client/java/blockbranch/client/metallurgy/BlockSpriteSource.java'),file('src/client/java/blockbranch/client/metallurgy/ArmorSpriteSource.java'),file('src/client/java/blockbranch/client/metallurgy/ArmorLayerTexture.java'),fileTree('src/main/resources'){include '**/*_ingot*'})
+ doLast{
+  def root=bismuthRoot;def json={String p->new groovy.json.JsonSlurper().parse(new File(root,p))}
+  assert json('assets/minecraft/atlases/items.json').sources.count{it.type=='blockbranch:native_pickaxes'}==1
+  assert json('assets/minecraft/atlases/items.json').sources.any{it.type=='blockbranch:perch_bucket_drip'}
+  assert json('assets/minecraft/atlases/items.json').sources.count{it.type=='blockbranch:native_ingots'}==1
+  for(def material:['tin','lead','lead_alloy','chromium','manganese','nickel','platinum','silver','titanium','tungsten','uranium','zinc','brass','bronze','steel','tungsten_steel','stainless_steel','platinum_alloy','titanium_alloy','bismuth']){
+   def name=material+'_ingot';def image=javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/item/'+name+'.png'));assert image.width==16&&image.height==16
+   assert json('assets/blockbranch/models/item/'+name+'.json').textures.layer0=='blockbranch:item/'+name
+  }
+  assert !new File(root,'assets/minecraft/textures/item/iron_ingot.png').exists()
+  assert json('assets/minecraft/atlases/blocks.json').sources.count{it.type=='blockbranch:native_blocks'}==1
+  for(def block:['steel_block','stainless_steel_block','silver_block','platinum_block','platinum_alloy_block','titanium_alloy_block','brass_block','bronze_block','lead_block','lead_alloy_block','resonite_block','brass_bars'])assert javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/block/'+block+'.png')).width==16
+  ['native_tools','native_armor'].each{src->assert json('assets/minecraft/atlases/items.json').sources.count{it.type=='blockbranch:'+src}==1}
+  for(def material:['bronze','steel','tungsten_steel','stainless_steel','silver','platinum_alloy','titanium_alloy'])for(def kind:['axe','shovel','hoe','sword']){
+   if(material=='tungsten_steel'&&kind=='sword')continue
+   def name=material+'_'+kind;assert javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/item/'+name+'.png')).width==16
+   assert json('assets/blockbranch/models/item/'+name+'.json').textures.layer0=='blockbranch:item/'+name
+  }
+  for(def material:['bronze','steel','stainless_steel','silver','platinum_alloy','titanium_alloy'])for(def slot:['helmet','chestplate','leggings','boots'])assert javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/item/'+material+'_'+slot+'.png')).width==16
+  assert javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/item/magnetite_boots.png')).width==16
+  for(def layer:['humanoid','humanoid_leggings','humanoid_baby'])for(def name:['bronze','steel','stainless_steel','silver','platinum_alloy','titanium_alloy','titanium_alloy_gear','magnetite']){
+   def f=new File(root,'assets/blockbranch/textures/entity/equipment/'+layer+'/'+name+'.png');if(f.exists()){def image=javax.imageio.ImageIO.read(f);assert image.width==64&&(image.height==32||image.height==64)}
+  }
+  assert !new File(root,'assets/minecraft/textures/entity/equipment').exists()
+  for(def material:['bronze','steel','tungsten_steel','stainless_steel','silver','platinum_alloy','titanium_alloy']){
+   def name=material+'_pickaxe';def image=javax.imageio.ImageIO.read(new File(root,'assets/blockbranch/textures/item/'+name+'.png'));assert image.width==16&&image.height==16
+   def model=json('assets/blockbranch/models/item/'+name+'.json');assert model.parent=='minecraft:item/handheld'&&model.textures.layer0=='blockbranch:item/'+name
+  }
+  assert json('assets/blockbranch/models/item/bismuth_steel_pickaxe.json').textures.layer0=='blockbranch:item/steel_pickaxe'
+  assert !new File(root,'assets/minecraft/textures/item/iron_pickaxe.png').exists()
+  println 'PASS native pickaxe atlas: seven stable sprite/model paths, bismuth steel layering, perch source preserved; no bundled native pickaxe PNG'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyNativePickaxeResources')}

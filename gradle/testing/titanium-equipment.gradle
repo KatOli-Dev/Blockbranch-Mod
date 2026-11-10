@@ -1,0 +1,32 @@
+def titaniumCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v15')
+def titaniumCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v15/blockbranch/cubic/ColumnWorldFormat.java')
+def titaniumCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v15/ORIGIN.json')
+def titaniumCatalogCompile=tasks.register('compileLegacyTitaniumCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(titaniumCatalogSource);inputs.file(titaniumCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(titaniumCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(titaniumCatalogOrigin);assert java.security.MessageDigest.getInstance('SHA-256').digest(titaniumCatalogSource.bytes).encodeHex().toString()==origin.sha256:'Frozen catalog15 input changed'}
+}
+
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldTitaniumCatalogClasses='+titaniumCatalogClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn titaniumCatalogCompile}
+if(providers.gradleProperty('titaniumEquipmentView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.titaniumEquipmentView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.titaniumEquipmentView=true')}
+}
+def titaniumGearResources=layout.projectDirectory.dir('src/main/resources').asFile
+def titaniumGearNames=['pickaxe','sword','axe','shovel','hoe','helmet','chestplate','leggings'].collect{'titanium_alloy_'+it}
+tasks.register('verifyTitaniumEquipmentResources'){
+ inputs.files(titaniumGearNames.collectMany{n->['assets/blockbranch/items/'+n+'.json','assets/blockbranch/models/item/'+n+'.json','assets/blockbranch/textures/item/'+n+'.png','data/blockbranch/recipe/'+n+'.json','data/blockbranch/advancement/recipes/metallurgy/'+n+'.json'].collect{new File(titaniumGearResources,it)}})
+ inputs.files(fileTree(titaniumGearResources){include '**/models/item/titanium_alloy_*_trim.json','**/equipment/titanium_alloy_gear.json','**/equipment/*/titanium_alloy_gear.png','**/tags/item/*.json','**/lang/en_us.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(titaniumGearResources,path))};def names=read('assets/blockbranch/lang/en_us.json')
+  for(def n:titaniumGearNames){def image=javax.imageio.ImageIO.read(new File(titaniumGearResources,'assets/blockbranch/textures/item/'+n+'.png'));assert image.width==16&&image.height==16:'Keep gear icons 16x';def item=read('assets/blockbranch/items/'+n+'.json').model;def armor=n in ['titanium_alloy_helmet','titanium_alloy_chestplate','titanium_alloy_leggings'];assert armor?(item.type=='minecraft:select'&&item.property=='minecraft:trim_material'&&item.fallback.model=='blockbranch:item/'+n):(item.type=='minecraft:model'&&item.model=='blockbranch:item/'+n);assert names['item.blockbranch.'+n];def recipe=read('data/blockbranch/recipe/'+n+'.json');assert recipe.result.id=='blockbranch:'+n;def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&unlock.rewards.recipes==['blockbranch:'+n];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  for(def row:[['pickaxe','pickaxes'],['sword','swords'],['axe','axes'],['shovel','shovels'],['hoe','hoes'],['helmet','head_armor'],['chestplate','chest_armor'],['leggings','leg_armor']]){def t=read('data/minecraft/tags/item/'+row[1]+'.json');assert t.replace==false&&t.values.contains('blockbranch:titanium_alloy_'+row[0])}
+  for(def n:['helmet','chestplate','leggings']){def item=read('assets/blockbranch/items/titanium_alloy_'+n+'.json').model;assert item.cases.size()==11;for(def entry:item.cases){def key=entry.when.substring('minecraft:'.length());def m=read('assets/blockbranch/models/item/titanium_alloy_'+n+'_'+key+'_trim.json');assert entry.model.model=='blockbranch:item/titanium_alloy_'+n+'_'+key+'_trim'&&m.textures.layer0=='blockbranch:item/titanium_alloy_'+n&&m.textures.layer1=='minecraft:trims/items/'+n+'_trim_'+key:'Keep native resource-pack trim compositing'}}
+  def layers=read('assets/blockbranch/equipment/titanium_alloy_gear.json').layers;for(def layer:['humanoid','humanoid_leggings','humanoid_baby']){assert layers[layer][0].texture=='blockbranch:titanium_alloy_gear';def image=javax.imageio.ImageIO.read(new File(titaniumGearResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/titanium_alloy_gear.png'));assert image.width==64&&image.height==(layer=='humanoid_baby'?64:32):'Native wearable UV dimensions';int clear=0,solid=0;for(int y=0;y<image.height;y++)for(int x=0;x<image.width;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Keep open skin and armor plates'}
+  println 'PASS titanium_alloy equipment: eight items/icons/recipe-unlock pairs, 33 native trim models and three original wearable atlases'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyTitaniumEquipmentResources')}

@@ -1,0 +1,35 @@
+// Building resources and native-host compositing for the second metallurgy branch.
+def zincResources=layout.projectDirectory.dir('src/main/resources').asFile
+def zincBlocks=['zinc_ore','deepslate_zinc_ore','brass_block','brass_slab','brass_stairs','brass_bars']
+def zincItems=zincBlocks+['raw_zinc','zinc_ingot','brass_ingot']
+def zincRecipes=['brass_ingot','brass_block','brass_ingot_from_block','brass_slab','brass_stairs','brass_bars']+['raw_zinc','zinc_ore','deepslate_zinc_ore'].collectMany{material->['smelting','blasting'].collect{method->'zinc_ingot_from_'+method+'_'+material}}
+def zincInputs=zincItems.collectMany{name->['items/','models/item/'].collect{new File(zincResources,'assets/blockbranch/'+it+name+'.json')}}+
+ zincBlocks.collectMany{name->[new File(zincResources,'assets/blockbranch/blockstates/'+name+'.json'),new File(zincResources,'data/blockbranch/loot_table/blocks/'+name+'.json')]}+
+ zincRecipes.collectMany{name->[new File(zincResources,'data/blockbranch/recipe/'+name+'.json'),new File(zincResources,'data/blockbranch/advancement/recipes/metallurgy/'+name+'.json')]}+
+ ['block/zinc_ore_overlay','block/brass_block','block/brass_bars','item/raw_zinc','item/zinc_ingot','item/brass_ingot'].collect{new File(zincResources,'assets/blockbranch/textures/'+it+'.png')}
+tasks.register('verifyZincBrassResources'){
+ inputs.files(zincInputs);inputs.files(['mineable/pickaxe','needs_stone_tool','slabs','stairs'].collect{new File(zincResources,'data/minecraft/tags/block/'+it+'.json')});inputs.files(fileTree('src/main/resources/assets/blockbranch/models/block'){include 'brass_*.json','*zinc_ore.json'})
+ doLast{
+  def json=new groovy.json.JsonSlurper();def read={String name->json.parse(new File(zincResources,name))}
+  for(def sprite:['block/zinc_ore_overlay','block/brass_block','block/brass_bars','item/raw_zinc','item/zinc_ingot','item/brass_ingot']){
+   def image=javax.imageio.ImageIO.read(new File(zincResources,'assets/blockbranch/textures/'+sprite+'.png'));assert image.width==16&&image.height==16:'Keep zinc/brass art 16x'
+   if(sprite in ['block/zinc_ore_overlay','block/brass_bars']){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Transparent host mask / open bars required'}
+  }
+  def barImage=javax.imageio.ImageIO.read(new File(zincResources,'assets/blockbranch/textures/block/brass_bars.png'))
+  for(int y=0;y<16;y++)for(int x=7;x<=8;x++)assert (barImage.getRGB(x,y)>>>24)==255:'Native bar post/cap UVs require the central strip'
+  for(def row:[['zinc_ore','stone'],['deepslate_zinc_ore','deepslate']]){def model=read('assets/blockbranch/models/block/'+row[0]+'.json');assert model.parent=='blockbranch:block/composited_ore'&&model.textures.base=='minecraft:block/'+row[1]&&model.textures.overlay=='blockbranch:block/zinc_ore_overlay':'Keep native resource-pack host compositing'}
+  for(def name:['mineable/pickaxe','needs_stone_tool']){def tag=read('data/minecraft/tags/block/'+name+'.json');assert tag.replace==false&&zincBlocks.every{tag.values.contains('blockbranch:'+it)}:'Preserve native harvest tags'}
+  for(def kind:['slabs','stairs']){def tag=read('data/minecraft/tags/block/'+kind+'.json');assert tag.replace==false&&tag.values.contains('blockbranch:brass_'+(kind=='slabs'?'slab':'stairs')):'Native building tags'}
+  def names=read('assets/blockbranch/lang/en_us.json')
+  for(def name:zincItems){def model=read('assets/blockbranch/items/'+name+'.json');assert model.model.type=='minecraft:model'&&model.model.model=='blockbranch:item/'+name;assert names[(name in zincBlocks?'block.':'item.')+'blockbranch.'+name]}
+  def variants=read('assets/blockbranch/blockstates/brass_slab.json').variants;assert variants['type=double'].model=='blockbranch:block/brass_block':'Double slab uses the full brass block'
+  def bars=read('assets/blockbranch/models/item/brass_bars.json');assert bars.parent=='minecraft:item/generated'&&bars.textures.layer0=='blockbranch:block/brass_bars':'Native bar inventory sprite'
+  for(def name:zincRecipes){def recipe=read('data/blockbranch/recipe/'+name+'.json');def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+name+'.json');assert recipe.result.id.startsWith('blockbranch:');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+name&&unlock.rewards.recipes==['blockbranch:'+name];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  println 'PASS zinc/brass: 9 items, 6 original 16x sprites, native host/shape models and 12 recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyZincBrassResources')}
+if(providers.gradleProperty('zincBrassView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.zincBrassView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.zincBrassView=true')}
+}

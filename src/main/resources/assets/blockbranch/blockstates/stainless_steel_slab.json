@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "blockbranch:block/stainless_steel_slab"
+    },
+    "type=double": {
+      "model": "blockbranch:block/stainless_steel_block"
+    },
+    "type=top": {
+      "model": "blockbranch:block/stainless_steel_slab_top"
+    }
+  }
+}

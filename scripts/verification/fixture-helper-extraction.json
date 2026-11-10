@@ -1,0 +1,618 @@
+[
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Taiga.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TaigaFixtures.java",
+    "class": "Taiga",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SlopeCorrection.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SlopeCorrectionFixtures.java",
+    "class": "SlopeCorrection",
+    "method": "fixture",
+    "parameters": "Kind kind,DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SavannaUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SavannaUplandsFixtures.java",
+    "class": "SavannaUplands",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SavannaUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SavannaUplandsFixtures.java",
+    "class": "SavannaUplands",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SandyDesert.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SandyDesertFixtures.java",
+    "class": "SandyDesert",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SandyDesert.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SandyDesertFixtures.java",
+    "class": "SandyDesert",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int minGround"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SandyDesert.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SandyDesertFixtures.java",
+    "class": "SandyDesert",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int minGround,int maxGround"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/StonyShore.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/StonyShoreFixtures.java",
+    "class": "StonyShore",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/StonyShore.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/StonyShoreFixtures.java",
+    "class": "StonyShore",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdOceanFixtures.java",
+    "class": "ColdOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdOceanFixtures.java",
+    "class": "ColdOcean",
+    "method": "below",
+    "parameters": "DrainageNetwork d,int x,int z"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Forest.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ForestFixtures.java",
+    "class": "Forest",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SnowyTaiga.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SnowyTaigaFixtures.java",
+    "class": "SnowyTaiga",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdTundra.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdTundraFixtures.java",
+    "class": "ColdTundra",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdTundra.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdTundraFixtures.java",
+    "class": "ColdTundra",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DrySteppe.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DrySteppeFixtures.java",
+    "class": "DrySteppe",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DrySteppe.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DrySteppeFixtures.java",
+    "class": "DrySteppe",
+    "method": "transition",
+    "parameters": "DrainageNetwork drainage,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MangroveSwamp.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MangroveSwampFixtures.java",
+    "class": "MangroveSwamp",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,boolean second"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/GravelRiverMargin.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/GravelRiverMarginFixtures.java",
+    "class": "GravelRiverMargin",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LukewarmOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LukewarmOceanFixtures.java",
+    "class": "LukewarmOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LukewarmOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LukewarmOceanFixtures.java",
+    "class": "LukewarmOcean",
+    "method": "below",
+    "parameters": "DrainageNetwork d,int x,int z"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SnowySlopes.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SnowySlopesFixtures.java",
+    "class": "SnowySlopes",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Plains.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/PlainsFixtures.java",
+    "class": "Plains",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/BorealWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BorealWoodlandFixtures.java",
+    "class": "BorealWoodland",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/BorealWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BorealWoodlandFixtures.java",
+    "class": "BorealWoodland",
+    "method": "transition",
+    "parameters": "DrainageNetwork drainage,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Badlands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BadlandsFixtures.java",
+    "class": "Badlands",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Badlands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BadlandsFixtures.java",
+    "class": "Badlands",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Badlands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BadlandsFixtures.java",
+    "class": "Badlands",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Jungle.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/JungleFixtures.java",
+    "class": "Jungle",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/OakBirchWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/OakBirchWoodlandFixtures.java",
+    "class": "OakBirchWoodland",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DarkCherryWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DarkCherryWoodlandFixtures.java",
+    "class": "DarkCherryWoodland",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DarkCherryWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DarkCherryWoodlandFixtures.java",
+    "class": "DarkCherryWoodland",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,int kind,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/RoutedRiver.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/RoutedRiverFixtures.java",
+    "class": "RoutedRiver",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SnowyPlains.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SnowyPlainsFixtures.java",
+    "class": "SnowyPlains",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdSteppe.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdSteppeFixtures.java",
+    "class": "ColdSteppe",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdSteppe.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdSteppeFixtures.java",
+    "class": "ColdSteppe",
+    "method": "transition",
+    "parameters": "DrainageNetwork drainage,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TemperateForestVariants.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TemperateForestVariantsFixtures.java",
+    "class": "TemperateForestVariants",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TemperateForestVariants.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TemperateForestVariantsFixtures.java",
+    "class": "TemperateForestVariants",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/OldGrowthTaiga.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/OldGrowthTaigaFixtures.java",
+    "class": "OldGrowthTaiga",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/OldGrowthTaiga.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/OldGrowthTaigaFixtures.java",
+    "class": "OldGrowthTaiga",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TemperateOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TemperateOceanFixtures.java",
+    "class": "TemperateOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TemperateDeepOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TemperateDeepOceanFixtures.java",
+    "class": "TemperateDeepOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TemperateDeepOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TemperateDeepOceanFixtures.java",
+    "class": "TemperateDeepOcean",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/FrozenRiver.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/FrozenRiverFixtures.java",
+    "class": "FrozenRiver",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/BirchForest.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BirchForestFixtures.java",
+    "class": "BirchForest",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/BirchForest.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/BirchForestFixtures.java",
+    "class": "BirchForest",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,boolean second"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Grove.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/GroveFixtures.java",
+    "class": "Grove",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LowlandMeadow.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LowlandMeadowFixtures.java",
+    "class": "LowlandMeadow",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/RiverChannel.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/RiverChannelFixtures.java",
+    "class": "RiverChannel",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/RiverChannel.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/RiverChannelFixtures.java",
+    "class": "RiverChannel",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DappledForest.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DappledForestFixtures.java",
+    "class": "DappledForest",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/GravelDesert.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/GravelDesertFixtures.java",
+    "class": "GravelDesert",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/GravelDesert.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/GravelDesertFixtures.java",
+    "class": "GravelDesert",
+    "method": "transition",
+    "parameters": "DrainageNetwork drainage,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Swamp.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SwampFixtures.java",
+    "class": "Swamp",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Swamp.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SwampFixtures.java",
+    "class": "Swamp",
+    "method": "secondFixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/WarmWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/WarmWoodlandFixtures.java",
+    "class": "WarmWoodland",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/WarmWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/WarmWoodlandFixtures.java",
+    "class": "WarmWoodland",
+    "method": "transition",
+    "parameters": "DrainageNetwork drainage,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdUplandsFixtures.java",
+    "class": "ColdUplands",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/ColdUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/ColdUplandsFixtures.java",
+    "class": "ColdUplands",
+    "method": "view",
+    "parameters": "int x,int y,int z,int kind,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MountainPeaks.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MountainPeaksFixtures.java",
+    "class": "MountainPeaks",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MountainPeaks.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MountainPeaksFixtures.java",
+    "class": "MountainPeaks",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/SunflowerPlains.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SunflowerPlainsFixtures.java",
+    "class": "SunflowerPlains",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/CoastalBeach.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/CoastalBeachFixtures.java",
+    "class": "CoastalBeach",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,boolean snow"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DeepOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DeepOceanFixtures.java",
+    "class": "DeepOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DeepOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DeepOceanFixtures.java",
+    "class": "DeepOcean",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MontaneMeadow.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MontaneMeadowFixtures.java",
+    "class": "MontaneMeadow",
+    "method": "sceneAnchor",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MontaneMeadow.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MontaneMeadowFixtures.java",
+    "class": "MontaneMeadow",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/FrozenOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/FrozenOceanFixtures.java",
+    "class": "FrozenOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/FrozenOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/FrozenOceanFixtures.java",
+    "class": "FrozenOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind,java.util.function.BiPredicate<Integer, Integer> excluded"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/FrozenOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/FrozenOceanFixtures.java",
+    "class": "FrozenOcean",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ignored"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/WindsweptUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/WindsweptUplandsFixtures.java",
+    "class": "WindsweptUplands",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/WindsweptUplands.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/WindsweptUplandsFixtures.java",
+    "class": "WindsweptUplands",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,java.util.function.IntBinaryOperator ground"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/WarmOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/WarmOceanFixtures.java",
+    "class": "WarmOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/Savanna.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/SavannaFixtures.java",
+    "class": "Savanna",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DeepColdOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DeepColdOceanFixtures.java",
+    "class": "DeepColdOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MarineShelf.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MarineShelfFixtures.java",
+    "class": "MarineShelf",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MarineShelf.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MarineShelfFixtures.java",
+    "class": "MarineShelf",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/MarineShelf.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/MarineShelfFixtures.java",
+    "class": "MarineShelf",
+    "method": "deepTransition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LowGradientSandyShore.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LowGradientSandyShoreFixtures.java",
+    "class": "LowGradientSandyShore",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/InlandLakeReedbed.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/InlandLakeReedbedFixtures.java",
+    "class": "InlandLakeReedbed",
+    "method": "fixture",
+    "parameters": "DrainageNetwork drainage,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/HumidWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/HumidWoodlandFixtures.java",
+    "class": "HumidWoodland",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/HumidWoodland.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/HumidWoodlandFixtures.java",
+    "class": "HumidWoodland",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed,boolean climateOnly"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DeepLukewarmOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DeepLukewarmOceanFixtures.java",
+    "class": "DeepLukewarmOcean",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/DeepLukewarmOcean.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/DeepLukewarmOceanFixtures.java",
+    "class": "DeepLukewarmOcean",
+    "method": "shelfTransition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LakeSediment.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LakeSedimentFixtures.java",
+    "class": "LakeSediment",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/LakeSediment.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/LakeSedimentFixtures.java",
+    "class": "LakeSediment",
+    "method": "transition",
+    "parameters": "DrainageNetwork d,long seed"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TropicalForestVariants.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TropicalForestVariantsFixtures.java",
+    "class": "TropicalForestVariants",
+    "method": "fixture",
+    "parameters": "DrainageNetwork d,long seed,int kind"
+  },
+  {
+    "productionFile": "src/main/java/blockbranch/realistic/TropicalForestVariants.java",
+    "helperFile": "src/integrationTest/java/blockbranch/realistic/TropicalForestVariantsFixtures.java",
+    "class": "TropicalForestVariants",
+    "method": "view",
+    "parameters": "int x,int y,int z,boolean elevated,int kind,java.util.function.IntBinaryOperator ground"
+  }
+]

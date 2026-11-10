@@ -1,0 +1,19 @@
+package blockbranch.realistic;
+import java.nio.file.*;import java.util.*;import java.lang.management.*;import net.minecraft.server.level.*;import net.minecraft.world.level.*;
+/** Timing boundary probe; it neither admits additional chunks nor changes native RNG. */
+public final class CryptAdmissionProbe {
+ public static boolean enabled(){return Boolean.getBoolean("blockbranch.cryptAdmissionProbe");}
+ private static jdk.jfr.Recording recording;private static long started,ready;private static boolean finished;
+ private static final List<Object> marks=new ArrayList<>();private static final Map<String,Object> report=new LinkedHashMap<>();
+ public static void register(){AdmissionWorkTrace.seed(424242);net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(s->{if(enabled())try{write("work-trace.json",AdmissionWorkTrace.snapshot());write("generation-trace.json",CoastalGenerationTrace.snapshot());}catch(Exception e){throw new RuntimeException(e);}});}
+ public static void begin(ServerLevel level)throws Exception{
+  report.put("runtimeArgs",ManagementFactory.getRuntimeMXBean().getInputArguments());report.put("availableProcessors",Runtime.getRuntime().availableProcessors());report.put("cpuQuota",Files.readString(Path.of("/sys/fs/cgroup/cpu.max")));report.put("memoryLimit",Files.readString(Path.of("/sys/fs/cgroup/memory.max")));report.put("initialStatuses",statuses(level));
+  if(Boolean.getBoolean("blockbranch.cryptJfr")){recording=new jdk.jfr.Recording(jdk.jfr.Configuration.getConfiguration("profile"));recording.start();}
+  AdmissionWorkTrace.phase(1);CoastalMatchedProbe.phase="crypt-admission";started=System.nanoTime();mark("begin");
+ }
+ public static void mark(String name){if(!enabled())return;var thread=(com.sun.management.ThreadMXBean)ManagementFactory.getThreadMXBean();var row=new LinkedHashMap<String,Object>();row.put("name",name);row.put("elapsedNanos",System.nanoTime()-started);row.put("processCpuNanos",ReimaginedRemainingQualification.cpu());row.put("processAllocatedBytes",thread.getTotalThreadAllocatedBytes());row.put("serverCpuNanos",thread.getCurrentThreadCpuTime());row.put("serverAllocatedBytes",thread.getThreadAllocatedBytes(Thread.currentThread().threadId()));row.put("gcMillis",ManagementFactory.getGarbageCollectorMXBeans().stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum());row.put("heapUsed",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());row.put("quota",AdmissionWorkTrace.quota());row.put("generation",CoastalGenerationTrace.progress());marks.add(row);}
+ public static void endAdmission(ServerLevel level)throws Exception{mark("forced-calls-returned");ready=System.nanoTime();report.put("afterForcedStatuses",statuses(level));if(recording!=null){recording.stop();recording.dump(Path.of("crypt-admission.jfr"));recording.close();}AdmissionWorkTrace.phase(2);CoastalMatchedProbe.phase="crypt-ready";write("admission-boundaries.json",Map.of("context",report,"marks",marks));}
+ public static void entitiesReady(ServerLevel level)throws Exception{if(finished)return;finished=true;mark("entities-ready");report.put("afterEntitiesStatuses",statuses(level));report.put("postForcedToEntitiesNanos",System.nanoTime()-ready);write("admission-boundaries.json",Map.of("context",report,"marks",marks));}
+ private static List<Object> statuses(ServerLevel level){var rows=new ArrayList<Object>();for(int z=(-267736>>4)-20;z<=(-267736>>4)+20;z++)for(int x=(228504>>4)-20;x<=(228504>>4)+20;x++){var h=level.getChunkSource().chunkMap.getUpdatingChunkIfPresent(new ChunkPos(x,z).pack());if(h!=null){var status=h.getPersistedStatus();rows.add(Map.of("x",x,"z",z,"status",status==null?"absent":status.toString()));}}return rows;}
+ private static void write(String file,Object value)throws Exception{Files.writeString(Path.of(file),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(value));}
+}

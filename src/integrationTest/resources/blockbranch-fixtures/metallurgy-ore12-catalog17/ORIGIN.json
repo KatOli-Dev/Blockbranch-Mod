@@ -1,0 +1,63 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "4a52675f00fe4dd3ad0e4b9b29e232f659a9d2ed",
+  "purpose": "Frozen published ore12/catalog17 reader; test-only input",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "4741aa917b539a6b4848e0756e9b6df48afa681769d1e7a9abe2164152582f2a"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "e6419ed7a76abafe2e2b1a98323fcc840bae2cfc9221fbd41ffeef37cf8cb01d"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ZincVeins.java",
+      "sha256": "eccd9c388ea9cb5918a38df648b864ff5442e2b8545de78ef303495454acea7e"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ManganeseVeins.java",
+      "sha256": "fed042742109ea1ca21fa7382b7a291015e45b49225f7ec3fcc5b27802c06cc9"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TungstenVeins.java",
+      "sha256": "ec2fb7ec9f7acb1c3a8e87a302251dd836c6835514aa86ac5c67a57cd15f30b0"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/NickelVeins.java",
+      "sha256": "1b37397ac9df14962adbfbfd7995f1494c8d650d7d33d8678f6c52ac423771a3"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ChromiumVeins.java",
+      "sha256": "6c8f9d236b3f9076e5957712943e4f323dc453a656b8a5baad73b3a7ae1fbe14"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/LeadVeins.java",
+      "sha256": "3dd83ce1146df2d6505324edecd4908eda0e4bedad8d70197ce2e8f09566475e"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/FoolsDiamondVeins.java",
+      "sha256": "90fd64fd4175bcdc05a71e4e813566b1c3c60ac53ef99cbabad15a2e1a0415b4"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/SilverVeins.java",
+      "sha256": "51d77127b65fd2d8c5f63e00624006a7044ebd349e29a125cffd98cc1ebe1f7f"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/PlatinumVeins.java",
+      "sha256": "bfee9e33491abbfe8617e307859231efdeb522962667e8cca1add76d0bfdd6a7"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TitaniumVeins.java",
+      "sha256": "c1c56716523c2cf29d8d3eb1c07f7ecf86995afa73e6459696592c324c7ae887"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/MagnetiteVeins.java",
+      "sha256": "276fb79d9607fdf4714144aaa90d20c2554f3e3de709eff7102a92ba1364e00a"
+    }
+  ]
+}

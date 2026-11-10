@@ -1,0 +1,28 @@
+package blockbranch.realistic;
+import java.nio.file.*;import java.util.*;
+import net.minecraft.core.registries.Registries;import net.minecraft.world.level.levelgen.*;
+/** One bounded matched cache-cold/reference comparison; common startup is outside timings. */
+public final class WetlandHutPlanningQualification {
+ public static void register(){net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server->{try{
+  boolean parallel=Boolean.getBoolean("blockbranch.wetlandHutParallel");
+  var level=server.overworld();var original=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess());var input=RealisticGenerator.CODEC.codec().encodeStart(ops,original).getOrThrow();
+  var noise=level.registryAccess().lookupOrThrow(Registries.NOISE);var settings=level.registryAccess().lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD).value();
+  // Load/JIT common habitat/tree classes before comparing cache-cold generators.
+  WetlandHutsReference.build(level.getSeed(),original,level.getChunkSource().randomState());
+  var bean=(com.sun.management.ThreadMXBean)java.lang.management.ManagementFactory.getThreadMXBean();long thread=Thread.currentThread().threadId();var reports=new ArrayList<Object>();int index=0;
+  for(long seed:new long[]{424242,1,-17}){
+   com.google.gson.JsonElement reference=null,candidate=null;var cases=new ArrayList<Object>();
+   for(int phase=0;phase<2;phase++){
+    boolean baseline=(phase==0)==((index&1)==0);var g=RealisticGenerator.CODEC.codec().parse(ops,input).getOrThrow();var r=RandomState.create(noise,seed,settings);long setup=System.nanoTime();g.drainage(r);long setupNanos=System.nanoTime()-setup;
+    System.gc();long totalAllocated=bean.getTotalThreadAllocatedBytes(),processCpu=((com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime();long allocated=bean.getThreadAllocatedBytes(thread),cpu=bean.getCurrentThreadCpuTime(),start=System.nanoTime();int count,bytes;
+    if(baseline&&parallel){var result=WetlandHuts.buildSequential(seed,g,r);long wall=System.nanoTime()-start;reference=WetlandHuts.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,result).getOrThrow();cases.add(Map.of("implementation","geometry-sequential","wallNanos",wall,"jvmAllocatedBytes",bean.getTotalThreadAllocatedBytes()-totalAllocated,"jvmProcessCpuNanos",((com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime()-processCpu,"sites",result.plans().size(),"terrainSetupNanosExcluded",setupNanos));}
+    else if(baseline){var result=WetlandHutsReference.build(seed,g,r);long wall=System.nanoTime()-start,cpuNanos=bean.getCurrentThreadCpuTime()-cpu,allocation=bean.getThreadAllocatedBytes(thread)-allocated;reference=WetlandHutsReference.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,result).getOrThrow();count=result.plans().size();bytes=result.retainedBytes();cases.add(Map.of("implementation","frozen-planner-current-runtime","wallNanos",wall,"threadCpuNanos",cpuNanos,"allocatedBytes",allocation,"sites",count,"coordinateBytes",bytes,"terrainSetupNanosExcluded",setupNanos));}
+    else{var result=parallel?WetlandHuts.build(seed,g,r):WetlandHuts.buildSequential(seed,g,r);long wall=System.nanoTime()-start,cpuNanos=bean.getCurrentThreadCpuTime()-cpu,allocation=bean.getThreadAllocatedBytes(thread)-allocated;candidate=WetlandHuts.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,result).getOrThrow();count=result.plans().size();bytes=result.retainedBytes();long decodeStart=System.nanoTime();var decoded=WetlandHuts.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,candidate).getOrThrow();WellInteraction.require(decoded.valid(seed)&&decoded.plans().equals(result.plans()),"Cached sites and ownership unchanged");long cachedNanos=System.nanoTime()-decodeStart;if(parallel)cases.add(Map.of("implementation","geometry-one-helper","wallNanos",wall,"jvmAllocatedBytes",bean.getTotalThreadAllocatedBytes()-totalAllocated,"jvmProcessCpuNanos",((com.sun.management.OperatingSystemMXBean)java.lang.management.ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime()-processCpu,"sites",count,"coordinateBytes",bytes,"terrainSetupNanosExcluded",setupNanos,"decodeAndValidationNanos",cachedNanos));else cases.add(Map.of("implementation","candidate","wallNanos",wall,"threadCpuNanos",cpuNanos,"allocatedBytes",allocation,"sites",count,"coordinateBytes",bytes,"terrainSetupNanosExcluded",setupNanos,"decodeAndValidationNanos",cachedNanos));}
+   }
+   if(parallel)WellInteraction.require(com.google.gson.JsonParser.parseString(Files.readString(Path.of(System.getProperty("blockbranch.wetlandHutCatalogs"),"sites-"+seed+".json"))).equals(candidate),"Frozen d61ff42 complete catalog/checksum equality "+seed);
+   WellInteraction.require(reference.equals(candidate),"Exact complete cache payload/checksum equality at seed"+seed);Files.writeString(Path.of("sites-"+seed+".json"),candidate.toString());reports.add(Map.of("seed",seed,"exactFullCacheEquality",true,"cases",cases));index++;
+   Files.writeString(Path.of("planning.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(reports));
+  }
+  Files.writeString(Path.of("result.txt"),"PASS exact full-catalog comparison,3 seeds, matched cache-cold work and cached codec validation");
+ }catch(Throwable t){blockbranch.Blockbranch.LOGGER.error("HUT_PLANNING_FAIL",t);try{Files.writeString(Path.of("result.txt"),"FAIL "+t);}catch(Exception ignored){}}finally{server.halt(false);}});}
+}

@@ -1,0 +1,23 @@
+def cryptPerfDir=layout.projectDirectory.dir(providers.gradleProperty('cryptPerfDirectory').getOrElse('build/crypt-perf-baseline'))
+loom.runs.register('cryptPerformance'){server();runDir(cryptPerfDir.asFile.absolutePath);vmArg('-Xms3G');vmArg('-Xmx3G');vmArg('-XX:FlightRecorderOptions=stackdepth=256');vmArg('-Dblockbranch.reimaginedQualification=true');vmArg('-Dblockbranch.cryptAdmissionProbe=true');vmArg('-Dblockbranch.reimaginedReverse='+providers.gradleProperty('cryptReverse').getOrElse('false'));vmArg('-Dblockbranch.cryptJfr='+providers.gradleProperty('cryptJfr').getOrElse('true'));vmArg('-Dblockbranch.admissionWorkTrace=true');vmArg('-Dblockbranch.coastalDrained=true');vmArg('-Dblockbranch.reimaginedReference='+providers.gradleProperty('cryptReference').getOrElse(''));programArg('--nogui')}
+tasks.named('runCryptPerformance'){doFirst{cryptPerfDir.asFile.mkdirs();cryptPerfDir.file('result.txt').asFile.delete();cryptPerfDir.file('eula.txt').asFile.text='eula=true\n';cryptPerfDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert cryptPerfDir.file('result.txt').asFile.text=='PASS'}}
+tasks.register('checkSurfaceReservations',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.SurfaceReservationQualification';maxHeapSize='2G'}
+// Exact pre-weathering ownership invariant; no timing threshold or forced admission.
+tasks.register('checkDrainageBaseReuse',JavaExec){
+    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DrainageBaseReuseCheck';maxHeapSize='2G'
+}
+tasks.register('checkDrainageFlagTransition',JavaExec){
+    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DrainageFlagTransitionCheck';maxHeapSize='2G'
+}
+tasks.named('checkDrainageBaseReuse'){dependsOn tasks.named('checkDrainageFlagTransition')}
+// These release checks are declared after archive-guards captures the historical
+// canonical set. Wire them explicitly; do not adopt unrelated manual diagnostics.
+tasks.register('checkDrainageColdCache',JavaExec){
+    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DrainageColdCacheCheck';maxHeapSize='2G'
+}
+tasks.named('checkDrainageBaseReuse'){dependsOn tasks.named('checkDrainageColdCache')}
+tasks.named('test'){dependsOn tasks.named('checkDrainageBaseReuse')}
+tasks.named('check'){dependsOn tasks.named('checkDrainageBaseReuse')}

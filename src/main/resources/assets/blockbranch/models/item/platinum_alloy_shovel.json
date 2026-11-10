@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "blockbranch:item/platinum_alloy_shovel"
+  }
+}

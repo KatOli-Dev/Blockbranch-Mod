@@ -1,0 +1,36 @@
+def villageDir=layout.projectDirectory.dir(providers.gradleProperty('villageDirectory').getOrElse('build/village-paths'))
+loom.runs.register('villagePaths'){
+ server();runDir(villageDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.villagePaths=true');vmArg('-Dblockbranch.villageProbe='+providers.gradleProperty('villageProbe').getOrElse('false'));vmArg('-Dblockbranch.villageWitness='+layout.projectDirectory.file('src/integrationTest/resources/fixtures/overworld-coverage/starts.json').asFile.absolutePath);vmArg('-Dblockbranch.villageBaseline='+providers.gradleProperty('villageBaseline').getOrElse('false'));vmArg('-Dblockbranch.villageUncorrected='+providers.gradleProperty('villageUncorrected').getOrElse('false'));vmArg('-Dblockbranch.villageReverse='+providers.gradleProperty('villageReverse').getOrElse('false'));programArg('--nogui')
+}
+tasks.named('runVillagePaths'){doFirst{
+ villageDir.asFile.mkdirs();villageDir.file('result.txt').asFile.delete();villageDir.file('eula.txt').asFile.text='eula=true\n'
+ villageDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25679\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert villageDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def villageReference=layout.projectDirectory.dir(providers.gradleProperty('villageReference').getOrElse('build/village-paths-baseline'))
+def villageCompared=layout.projectDirectory.dir(providers.gradleProperty('villageCompared').getOrElse('build/village-paths-final'))
+tasks.register('compareVillagePaths'){doLast{
+ def parser=new groovy.json.JsonSlurper()
+ def reference=parser.parse(villageReference.file('village-paths.json').asFile)
+ def compared=parser.parse(villageCompared.file('village-paths.json').asFile)
+ assert reference.keySet()==compared.keySet()
+ reference.each{name,value->
+  assert compared[name].blocked.empty : name+' has obstructed paths'
+  ['roadHash','nonPathHash','wild'].each{field->assert value[field]==compared[name][field] : name+' differs in '+field}
+ }
+ println 'Village roads, surrounding vegetation and wild controls match for '+reference.size()+' variants'
+}}
+
+def villageForwardReport=layout.projectDirectory.file('build/village-paths-final/village-paths.json')
+def villageReverseReport=layout.projectDirectory.file('build/village-paths-final-reverse/village-paths.json')
+tasks.register('compareVillageRoadOrder'){doLast{
+ def parser=new groovy.json.JsonSlurper()
+ def forward=parser.parse(villageForwardReport.asFile)
+ def reverse=parser.parse(villageReverseReport.asFile)
+ assert forward.keySet()==reverse.keySet()
+ forward.each{name,value->
+  assert value.blocked.empty&&reverse[name].blocked.empty : name+' has obstructed paths'
+  ['roadHash','wild'].each{field->assert value[field]==reverse[name][field] : name+' differs in '+field}
+  if(value.nonPathHash!=reverse[name].nonPathHash)println name+' native off-path plants differ across order; compare same-order uncorrected control with compareVillagePaths'
+ }
+ println 'Village paths are clear and road/wild hashes match across chunk admission orders'
+}}

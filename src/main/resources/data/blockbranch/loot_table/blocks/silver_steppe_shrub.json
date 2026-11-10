@@ -1,0 +1,34 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "blockbranch:silver_steppe_shrub",
+              "condition": "minecraft:tool/can_shear"
+            },
+            {
+              "type": "minecraft:item",
+              "name": "minecraft:stick",
+              "condition": {
+                "type": "minecraft:match_block",
+                "blocks": "blockbranch:silver_steppe_shrub",
+                "state": {
+                  "clipped": "false"
+                }
+              },
+              "modifier": {
+                "type": "minecraft:explosion_decay"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

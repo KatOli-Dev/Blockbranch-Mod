@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "blockbranch:raw_bismuth",
+  "result": {
+    "id": "blockbranch:bismuth_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 100
+}

@@ -1,0 +1,19 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "blockbranch:bronze"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "blockbranch:bronze"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "blockbranch:bronze"
+      }
+    ]
+  }
+}

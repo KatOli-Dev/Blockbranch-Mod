@@ -1,0 +1,49 @@
+{
+  "required": true,
+  "package": "blockbranch.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "qa.AdmissionHeightmapMixin",
+    "qa.AdmissionWorkMixin",
+    "qa.AdmissionOceanMixin",
+    "qa.DeferredPreviewAuditMixin",
+    "qa.HutRegionTimingMixin",
+    "qa.PreviewNativeFutureMixin",
+    "qa.PreviewManagedWaitMixin",
+    "qa.PreviewQueryAuditMixin",
+    "qa.DeferredPreviewOracleMixin",
+    "qa.TreasureProgressiveReadyMixin",
+    "wildlife.NativeSpawnAuditMixin",
+    "wildlife.SpawnPredicateAuditMixin",
+    "wildlife.MobSpawnAuditMixin",
+    "wildlife.PopulationConnectionDiagnosticsMixin",
+    "wildlife.NaturalSpawnerAccess",
+    "wildlife.ProceduralSpawnSampleAuditMixin",
+    "qa.SectionGenerationWorkMixin",
+    "qa.StructureLoadAuditMixin",
+    "qa.TreasurePreviewTimingMixin",
+    "qa.TreasureMapUseTraceMixin",
+    "qa.TreasureConnectedMapMixin",
+    "qa.UniformSnapshotHoldMixin",
+    "qa.PacketOccupancyStateMixin",
+    "qa.CoastalGenerationStepMixin",
+    "qa.CoastalGenerationTaskMixin",
+    "qa.ReimaginedLightFailureMixin",
+    "qa.ReimaginedLightQueueMixin",
+    "qa.IntegratedNativeSeedMixin",
+    "qa.NativeDecorationSeedMixin",
+    "qa.CryptCoverageWorkMixin",
+    "qa.CryptPieceWorkMixin",
+    "qa.VillagePathAuditMixin",
+    "qa.VillagePathBaselineMixin",
+    "qa.VillagePathProbeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "qa.IntegratedFrameMixin",
+    "qa.CopyCacheHoldMixin",
+    "qa.PacketOccupancyObserverMixin"
+  ]
+}

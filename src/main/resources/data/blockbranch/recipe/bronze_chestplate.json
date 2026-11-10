@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "B B",
+    "BBB",
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:bronze_ingot"
+  },
+  "result": {
+    "id": "blockbranch:bronze_chestplate"
+  }
+}

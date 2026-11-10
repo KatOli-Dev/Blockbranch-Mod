@@ -1,0 +1,37 @@
+def platinumEquipmentReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore10-catalog14')
+def platinumEquipmentReaderOrigin=new File(platinumEquipmentReaderRoot,'ORIGIN.json')
+def platinumEquipmentReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java','metallurgy/SilverVeins.java','metallurgy/PlatinumVeins.java'].collect{new File(platinumEquipmentReaderRoot,'blockbranch/'+it)}
+def platinumEquipmentReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore10-catalog14')
+def platinumEquipmentReaderCompile=tasks.register('compileLegacyPlatinumEquipmentCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(platinumEquipmentReaderFiles);inputs.file(platinumEquipmentReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(platinumEquipmentReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(platinumEquipmentReaderOrigin);for(def row:origin.sources){def input=new File(platinumEquipmentReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore10-catalog14 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldPlatinumEquipmentClasses='+platinumEquipmentReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn platinumEquipmentReaderCompile}
+if(providers.gradleProperty('titaniumView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.titaniumView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.titaniumView=true')}
+}
+def titaniumResources=layout.projectDirectory.dir('src/main/resources').asFile
+def titaniumNames=['titanium_ore','deepslate_titanium_ore','raw_titanium','titanium_ingot','titanium_alloy_ingot','titanium_alloy_block','titanium_alloy_boots']
+def titaniumBlocks=['titanium_ore','deepslate_titanium_ore','titanium_alloy_block']
+def titaniumRecipes=['titanium_alloy_ingot','titanium_alloy_block','titanium_alloy_ingot_from_block','titanium_alloy_boots']+['raw_titanium','titanium_ore','deepslate_titanium_ore'].collectMany{s->['smelting','blasting'].collect{'titanium_ingot_from_'+it+'_'+s}}
+tasks.register('verifyTitaniumResources'){
+ inputs.files(fileTree(titaniumResources){include '**/*titanium*','**/lang/en_us.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_diamond_tool.json','**/tags/block/needs_iron_tool.json','**/tags/item/foot_armor.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(titaniumResources,path))};def names=read('assets/blockbranch/lang/en_us.json')
+  for(def sprite:['block/titanium_ore_overlay','block/titanium_alloy_block','item/raw_titanium','item/titanium_ingot','item/titanium_alloy_ingot','item/titanium_alloy_boots']){def image=javax.imageio.ImageIO.read(new File(titaniumResources,'assets/blockbranch/textures/'+sprite+'.png'));assert image.width==16&&image.height==16;if(sprite.endsWith('overlay')){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0}}
+  for(def n:titaniumNames){assert read('assets/blockbranch/items/'+n+'.json').model;assert read('assets/blockbranch/models/item/'+n+'.json');assert names[(n in titaniumBlocks?'block.':'item.')+'blockbranch.'+n]}
+  for(def n:titaniumBlocks){assert read('assets/blockbranch/blockstates/'+n+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+n+'.json').type=='minecraft:block'}
+  for(def row:[['titanium_ore','stone'],['deepslate_titanium_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/titanium_ore_overlay'}
+  for(def row:[['mineable/pickaxe',titaniumBlocks],['needs_diamond_tool',['titanium_ore','deepslate_titanium_ore']],['needs_iron_tool',['titanium_alloy_block']]]){def t=read('data/minecraft/tags/block/'+row[0]+'.json');assert t.replace==false&&row[1].every{t.values.contains('blockbranch:'+it)}}
+  assert read('data/blockbranch/tags/item/titanium_alloy_repair_materials.json').values==['blockbranch:titanium_alloy_ingot'];def boots=read('data/minecraft/tags/item/foot_armor.json');assert boots.replace==false&&boots.values.contains('blockbranch:titanium_alloy_boots')
+  for(def n:titaniumRecipes){assert read('data/blockbranch/recipe/'+n+'.json').result.id.startsWith('blockbranch:');def u=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert u.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&u.rewards.recipes==['blockbranch:'+n];assert u.requirements.flatten().toSet()==u.criteria.keySet()}
+  def model=read('assets/blockbranch/items/titanium_alloy_boots.json').model;assert model.type=='minecraft:select'&&model.property=='minecraft:trim_material'&&model.cases.size()==11;for(def entry:model.cases){def k=entry.when.substring('minecraft:'.length());def m=read('assets/blockbranch/models/item/titanium_alloy_boots_'+k+'_trim.json');assert m.textures.layer0=='blockbranch:item/titanium_alloy_boots'&&m.textures.layer1=='minecraft:trims/items/boots_trim_'+k}
+  def layers=read('assets/blockbranch/equipment/titanium_alloy.json').layers;for(def layer:['humanoid','humanoid_baby']){assert layers[layer][0].texture=='blockbranch:titanium_alloy';def image=javax.imageio.ImageIO.read(new File(titaniumResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/titanium_alloy.png'));assert image.width==64&&image.height==(layer=='humanoid_baby'?64:32)}
+  println 'PASS titanium: seven items, six original 16x sprites, native host/boot/trim models and ten recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyTitaniumResources')}

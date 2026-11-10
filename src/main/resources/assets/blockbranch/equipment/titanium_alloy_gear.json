@@ -1,0 +1,19 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "blockbranch:titanium_alloy_gear"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "blockbranch:titanium_alloy_gear"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "blockbranch:titanium_alloy_gear"
+      }
+    ]
+  }
+}

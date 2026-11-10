@@ -1,0 +1,11 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "d5d49c3a911300d051cd39ad195aa672ab80558c",
+  "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+  "sha256": "00adb19fedd0db7c3c56d6181cc169618961ee2f235f605860db8ccd416f4ac7",
+  "purpose": "Compile the unmodified pre-metallurgy ore layer for native definition-1/2 comparison and definition-3 rejection. Minecraft 26.3, Java 25.",
+  "format_guard": {
+    "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+    "sha256": "cadfb7be141ac7b76e4e927f6ca3e895b8eb470f96fc3d7d9bf96ad5d0b9964b"
+  }
+}

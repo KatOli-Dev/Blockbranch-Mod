@@ -1,0 +1,32 @@
+// Opt-in native collection and regression fixtures; each owns its isolated world.
+def oreReferenceDir=layout.projectDirectory.dir('build/ore-native-reference')
+loom.runs.register('oreReference'){
+ server();runDir(oreReferenceDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.oreReference=true');vmArg('-Dblockbranch.oreReferenceResult='+oreReferenceDir.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareOreReference'){
+ doLast{oreReferenceDir.asFile.mkdirs();oreReferenceDir.file('result.txt').asFile.delete();oreReferenceDir.file('eula.txt').asFile.text='eula=true\n';oreReferenceDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25607\nview-distance=2\nsimulation-distance=2\nlevel-name=reference\nlevel-type=minecraft:flat\nlevel-seed=424242\n'}
+}
+tasks.named('runOreReference'){dependsOn tasks.named('prepareOreReference');doLast{assert oreReferenceDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def oreNativeSeed=providers.gradleProperty('oreNativeSeed').getOrElse('424242')
+def oreNativeDir=layout.projectDirectory.dir(providers.gradleProperty('oreNativeDirectory').getOrElse('build/ore-native-development'))
+loom.runs.register('oreNative'){
+ server();runDir(oreNativeDir.asFile.absolutePath);vmArg('-Dblockbranch.expectNoDripstone='+providers.gradleProperty('expectNoDripstone').getOrElse('false'));vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.oreExpected='+providers.gradleProperty('oreExpected').getOrElse('2'));vmArg('-Dblockbranch.oreNative=true');vmArg('-Dblockbranch.oreNativeResult='+oreNativeDir.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareOreNative'){
+ doLast{oreNativeDir.asFile.mkdirs();oreNativeDir.file('result.txt').asFile.delete();oreNativeDir.file('eula.txt').asFile.text='eula=true\n';oreNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25608\nview-distance=2\nsimulation-distance=2\nlevel-name=ore\nlevel-type=blockbranch:realistic\nlevel-seed='+oreNativeSeed+'\nmax-tick-time=240000\n'}
+}
+tasks.named('runOreNative'){dependsOn tasks.named('prepareOreNative');doLast{assert oreNativeDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Bounded matched comparison; use a fresh directory per seed/arm.
+def orePerformanceDir=layout.projectDirectory.dir(providers.gradleProperty('orePerformanceDirectory').getOrElse('build/ore-performance'))
+def orePerformanceSeed=providers.gradleProperty('orePerformanceSeed').getOrElse('1')
+loom.runs.register('orePerformance'){
+ server();runDir(orePerformanceDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.orePerformance=true')
+}
+tasks.register('prepareOrePerformance'){
+ doLast{orePerformanceDir.asFile.mkdirs();orePerformanceDir.file('performance-result.txt').asFile.delete();orePerformanceDir.file('eula.txt').asFile.text='eula=true\n';orePerformanceDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25609\nview-distance=2\nsimulation-distance=2\nlevel-name=performance\nlevel-type=blockbranch:realistic\nlevel-seed='+orePerformanceSeed+'\nmax-tick-time=240000\n'}
+}
+tasks.named('runOrePerformance'){dependsOn tasks.named('prepareOrePerformance');doLast{assert orePerformanceDir.file('performance-result.txt').asFile.text.startsWith('PASS')}}

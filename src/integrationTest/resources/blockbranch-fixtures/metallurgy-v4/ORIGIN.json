@@ -1,0 +1,23 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "378a58c0d6a7873b0f03cfd376ce2362998d5bf6",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "77b962c892fb958bfcbc89472a66703bd674004dfa5bf0792dda97ed10b93a81"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "127b19312b2ec507172f9677f7b7b48382502871802518126c436b4de66d9ba8"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ZincVeins.java",
+      "sha256": "eccd9c388ea9cb5918a38df648b864ff5442e2b8545de78ef303495454acea7e"
+    }
+  ],
+  "purpose": "Unmodified ore4 and catalog4 readers; preserve zinc and earlier geometry and reject manganese/catalog5."
+}

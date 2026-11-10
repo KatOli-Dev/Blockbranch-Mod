@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_sword",
+    "blockbranch:steel_sword",
+    "blockbranch:stainless_steel_sword",
+    "blockbranch:silver_sword",
+    "blockbranch:platinum_alloy_sword",
+    "blockbranch:titanium_alloy_sword",
+    "blockbranch:uranium_netherite_sword"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "blockbranch:block/steel_block"
+    }
+  }
+}

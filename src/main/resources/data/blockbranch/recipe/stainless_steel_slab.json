@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:stainless_steel_block"
+  },
+  "result": {
+    "id": "blockbranch:stainless_steel_slab",
+    "count": 6
+  }
+}

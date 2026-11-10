@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "blockbranch:uranium_ingot"
+  ],
+  "result": {
+    "id": "blockbranch:uranium_tip",
+    "count": 4
+  }
+}

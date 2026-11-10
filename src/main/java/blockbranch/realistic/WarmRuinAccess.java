@@ -1,0 +1,2 @@
+package blockbranch.realistic;
+public interface WarmRuinAccess {void blockbranch$fitNativeRuin(int y);boolean blockbranch$isNativeRuin();void blockbranch$fitRuin(int y,int variant);void blockbranch$fitDeepWarmRuin(int y,int variant);boolean blockbranch$isDeepWarm();net.minecraft.core.BlockPos blockbranch$ruinLocal(int x,int y,int z);net.minecraft.core.Vec3i blockbranch$ruinSize();int blockbranch$ruinVariant();}

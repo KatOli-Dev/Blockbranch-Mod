@@ -1,0 +1,22 @@
+// Opt-in disposable native sanctuary scenes; no ordinary runtime or production archive dependency.
+def sanctuaryDir=layout.projectDirectory.dir(providers.gradleProperty('sanctuaryCoreDirectory').getOrElse('build/sanctuary-core/native'))
+def sanctuaryReopen=providers.gradleProperty('sanctuaryCoreReopen').getOrElse('false')=='true'
+loom.runs.register('sanctuaryCore'){
+ client();runDir(sanctuaryDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.sanctuaryCore=true');vmArg('-Dblockbranch.sanctuaryCoreDirectory='+sanctuaryDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.sanctuaryCoreReopen='+sanctuaryReopen)
+ vmArg('-Dblockbranch.sanctuaryCoreViews='+providers.gradleProperty('sanctuaryCoreViews').getOrElse(''))
+ vmArg('-Dblockbranch.sanctuaryCoreClientAgreement='+providers.gradleProperty('sanctuaryCoreClientAgreement').getOrElse('false'))
+ vmArg('-Dblockbranch.sanctuaryCoreBaseline='+providers.gradleProperty('sanctuaryCoreBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.sanctuaryCoreReference='+providers.gradleProperty('sanctuaryCoreReference').getOrElse(''))
+ vmArg('-Dblockbranch.sanctuaryCoreLightReference='+providers.gradleProperty('sanctuaryCoreLightReference').getOrElse(''))
+ vmArg('-Dblockbranch.sanctuaryCoreCurrentJar='+providers.gradleProperty('sanctuaryCoreCurrentJar').getOrElse(''))
+ programArgs('--username','SanctuaryQA','--width','1024','--height','576')
+}
+tasks.register('prepareSanctuaryCore'){doLast{
+ sanctuaryDir.asFile.mkdirs()
+ assert sanctuaryDir.dir('saves/SanctuaryCoreReview').asFile.exists()==sanctuaryReopen:'Use a fresh directory or explicitly reopen.'
+ assert !sanctuaryDir.file(sanctuaryReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ sanctuaryDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runSanctuaryCore'){dependsOn 'prepareSanctuaryCore';doLast{assert sanctuaryDir.file(sanctuaryReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

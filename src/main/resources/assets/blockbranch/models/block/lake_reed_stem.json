@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "blockbranch:block/lake_reed_stem"
+  }
+}

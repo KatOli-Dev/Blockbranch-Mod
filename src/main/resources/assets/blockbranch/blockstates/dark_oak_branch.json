@@ -1,0 +1,46 @@
+{
+  "variants": {
+    "axes=1,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_1_fine"
+    },
+    "axes=2,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_2_fine"
+    },
+    "axes=3,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_3_fine"
+    },
+    "axes=4,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_4_fine"
+    },
+    "axes=5,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_5_fine"
+    },
+    "axes=6,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_6_fine"
+    },
+    "axes=7,thick=false": {
+      "model": "blockbranch:block/dark_oak_branch_7_fine"
+    },
+    "axes=1,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_1_thick"
+    },
+    "axes=2,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_2_thick"
+    },
+    "axes=3,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_3_thick"
+    },
+    "axes=4,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_4_thick"
+    },
+    "axes=5,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_5_thick"
+    },
+    "axes=6,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_6_thick"
+    },
+    "axes=7,thick=true": {
+      "model": "blockbranch:block/dark_oak_branch_7_thick"
+    }
+  }
+}

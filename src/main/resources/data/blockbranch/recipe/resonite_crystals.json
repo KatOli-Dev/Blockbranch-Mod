@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "blockbranch:resonite_block"
+  ],
+  "result": {
+    "id": "blockbranch:resonite_crystal",
+    "count": 4
+  }
+}

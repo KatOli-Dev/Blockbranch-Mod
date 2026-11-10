@@ -1,0 +1,19 @@
+// Opt-in disposable native sanctuary scenes; no ordinary runtime or production archive dependency.
+def sanctuaryDir=layout.projectDirectory.dir(providers.gradleProperty('sanctuaryVisualDirectory').getOrElse('build/sanctuary-visuals/native'))
+def sanctuaryReopen=providers.gradleProperty('sanctuaryVisualReopen').getOrElse('false')=='true'
+loom.runs.register('sanctuaryVisual'){
+ client();runDir(sanctuaryDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.sanctuaryVisual=true');vmArg('-Dblockbranch.sanctuaryVisualDirectory='+sanctuaryDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.sanctuaryVisualReopen='+sanctuaryReopen)
+ vmArg('-Dblockbranch.sanctuaryVisualBaseline='+providers.gradleProperty('sanctuaryVisualBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.sanctuaryVisualReference='+providers.gradleProperty('sanctuaryVisualReference').getOrElse(''))
+ vmArg('-Dblockbranch.sanctuaryVisualCurrentJar='+providers.gradleProperty('sanctuaryVisualCurrentJar').getOrElse(''))
+ programArgs('--username','SanctuaryVisual','--width','1024','--height','576')
+}
+tasks.register('prepareSanctuaryVisual'){doLast{
+ sanctuaryDir.asFile.mkdirs()
+ assert sanctuaryDir.dir('saves/SanctuaryVisualReview').asFile.exists()==sanctuaryReopen:'Use a fresh directory or explicitly reopen.'
+ assert !sanctuaryDir.file(sanctuaryReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ sanctuaryDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runSanctuaryVisual'){dependsOn 'prepareSanctuaryVisual';doLast{assert sanctuaryDir.file(sanctuaryReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

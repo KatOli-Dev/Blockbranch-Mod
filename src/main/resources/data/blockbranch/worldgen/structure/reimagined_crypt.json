@@ -1,0 +1,7 @@
+{
+  "type": "blockbranch:reimagined_crypt_v1",
+  "biomes": "#minecraft:is_overworld",
+  "spawn_overrides": {},
+  "step": "underground_structures",
+  "terrain_adaptation": "none"
+}

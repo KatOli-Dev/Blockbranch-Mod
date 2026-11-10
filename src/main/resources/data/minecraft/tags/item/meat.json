@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:venison",
+    "blockbranch:cooked_venison",
+    "blockbranch:duck",
+    "blockbranch:cooked_duck"
+  ]
+}

@@ -1,0 +1,43 @@
+def resoniteReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore13-catalog18')
+def resoniteReaderOrigin=new File(resoniteReaderRoot,'ORIGIN.json')
+def resoniteReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java','metallurgy/SilverVeins.java','metallurgy/PlatinumVeins.java','metallurgy/TitaniumVeins.java','metallurgy/MagnetiteVeins.java','metallurgy/ResoniteVeins.java'].collect{new File(resoniteReaderRoot,'blockbranch/'+it)}
+def resoniteReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore13-catalog18')
+def resoniteReaderCompile=tasks.register('compileLegacyResoniteCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(resoniteReaderFiles);inputs.file(resoniteReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(resoniteReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(resoniteReaderOrigin);for(def row:origin.sources){def input=new File(resoniteReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore13-catalog18 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldResoniteClasses='+resoniteReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn resoniteReaderCompile}
+if(providers.gradleProperty('uraniumView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.uraniumView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.uraniumView=true')}
+}
+def uraniumClientMixins=file('src/client/resources/blockbranch.client.mixins.json')
+def uraniumRoot=layout.projectDirectory.dir('src/main/resources').asFile
+tasks.register('verifyUraniumResources'){
+ inputs.files(fileTree(uraniumRoot){include '**/*uranium*','**/*radiation*','**/lang/en_us.json','**/tags/item/*.json','**/tags/block/**/*.json','blockbranch.mixins.json'},uraniumClientMixins)
+ doLast{
+  def read={String p->new groovy.json.JsonSlurper().parse(new File(uraniumRoot,p))};def lang=read('assets/blockbranch/lang/en_us.json');def names=['uranium_ore','deepslate_uranium_ore','raw_uranium','uranium_ingot','uranium_tip','uranium_netherite_sword','uranium_netherite_axe','uranium_netherite_spear']
+  for(def n:names){assert read('assets/blockbranch/items/'+n+'.json').model;assert read('assets/blockbranch/models/item/'+n+'.json');assert lang[(n.endsWith('_ore')?'block.':'item.')+'blockbranch.'+n]}
+  for(def n:['block/uranium_ore_overlay','item/raw_uranium','item/uranium_ingot','item/uranium_tip','item/uranium_sword_tip','item/uranium_axe_tip','item/uranium_spear_tip']){def image=javax.imageio.ImageIO.read(new File(uraniumRoot,'assets/blockbranch/textures/'+n+'.png'));assert image.width==16&&image.height==16}
+  def hand=javax.imageio.ImageIO.read(new File(uraniumRoot,'assets/blockbranch/textures/item/uranium_spear_in_hand_tip.png'));assert hand.width==32&&hand.height==32;def icon=javax.imageio.ImageIO.read(new File(uraniumRoot,'assets/blockbranch/textures/mob_effect/radiation.png'));assert icon.width==18&&icon.height==18
+  for(def row:[['uranium_ore','stone'],['deepslate_uranium_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/uranium_ore_overlay';assert read('data/blockbranch/loot_table/blocks/'+row[0]+'.json').type=='minecraft:block'}
+  for(def n:['sword','axe','spear']){def m=read('assets/blockbranch/models/item/uranium_netherite_'+n+'.json');assert m.textures.layer0=='minecraft:item/netherite_'+n&&m.textures.layer1=='blockbranch:item/uranium_'+n+'_tip';def r=read('data/blockbranch/recipe/uranium_netherite_'+n+'.json');assert r.type=='minecraft:smithing_transform'&&r.template=='minecraft:netherite_upgrade_smithing_template'&&r.base=='minecraft:netherite_'+n&&r.addition=='blockbranch:uranium_tip';assert read('data/minecraft/tags/item/'+n+'s.json').values.contains('blockbranch:uranium_netherite_'+n)}
+  assert read('data/blockbranch/recipe/uranium_tips.json').result.count==4
+  for(def tag:['mineable/pickaxe','needs_diamond_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&t.values.contains('blockbranch:uranium_ore')&&t.values.contains('blockbranch:deepslate_uranium_ore')}
+  assert read('data/blockbranch/tags/item/radioactive.json').values.toSet()==names.collect{'blockbranch:'+it}.toSet();assert read('data/blockbranch/tags/item/radiation_shielding_armor.json').values.size()==8
+  assert read('data/blockbranch/damage_type/radiation.json').message_id=='radiation'&&read('data/minecraft/tags/damage_type/bypasses_armor.json').values.contains('blockbranch:radiation')
+  assert read('blockbranch.mixins.json').mixins.contains('metallurgy.UraniumLivingMixin');assert new groovy.json.JsonSlurper().parse(uraniumClientMixins).client.contains('metallurgy.RadiationHeartMixin')
+  println 'PASS uranium: eight items, 16x block/material/tool overlays, native spear/status UVs, native smithing and radiation tags'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyUraniumResources')}
+if(providers.gradleProperty('uraniumView').isPresent()&&providers.gradleProperty('metallurgyViewPack').isPresent()){
+ def overlayTarget=layout.projectDirectory.dir(providers.gradleProperty('metallurgyViewDirectory').getOrElse('build/metallurgy-visual')).file('retexture/resourcepacks/tin-host-test/assets/blockbranch/textures/item/uranium_sword_tip.png').asFile
+ def overlaySource=new File(uraniumRoot,'assets/blockbranch/textures/item/uranium_sword_tip.png')
+ tasks.named('runMetallurgyViewClient'){doFirst{overlayTarget.parentFile.mkdirs();def image=javax.imageio.ImageIO.read(overlaySource);for(int y=0;y<16;y++)for(int x=0;x<16;x++)if((image.getRGB(x,y)>>>24)!=0)image.setRGB(x,y,(int)0xffbc57cf);javax.imageio.ImageIO.write(image,'png',overlayTarget)}}
+}
+
+if(providers.gradleProperty('uraniumAxeView').isPresent())loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.uraniumAxeView=true')}

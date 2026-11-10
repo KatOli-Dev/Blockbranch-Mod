@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_hoe",
+    "blockbranch:steel_hoe",
+    "blockbranch:tungsten_steel_hoe",
+    "blockbranch:stainless_steel_hoe",
+    "blockbranch:silver_hoe",
+    "blockbranch:platinum_alloy_hoe",
+    "blockbranch:titanium_alloy_hoe"
+  ]
+}

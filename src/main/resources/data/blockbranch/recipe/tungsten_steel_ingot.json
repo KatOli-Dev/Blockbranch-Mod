@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:tungsten_ingot"
+  ],
+  "result": {
+    "id": "blockbranch:tungsten_steel_ingot",
+    "count": 4
+  }
+}

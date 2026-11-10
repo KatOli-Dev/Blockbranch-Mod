@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/carpet",
+  "textures": {
+    "wool": "blockbranch:block/woven_reed_mat"
+  }
+}

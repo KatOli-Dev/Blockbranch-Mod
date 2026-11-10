@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "blockbranch:lead_alloy_block"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "blockbranch:blocks/lead_alloy_block"
+}

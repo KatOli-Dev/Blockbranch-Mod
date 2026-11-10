@@ -1,0 +1,43 @@
+// Opt-in disposable native crypt scenes; no ordinary runtime or production archive dependency.
+def cryptDir=layout.projectDirectory.dir(providers.gradleProperty('cryptVisualDirectory').getOrElse('build/crypt-visuals/native'))
+def cryptReopen=providers.gradleProperty('cryptVisualReopen').getOrElse('false')=='true'
+loom.runs.register('cryptVisual'){
+ client();runDir(cryptDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.cryptVisual=true');vmArg('-Dblockbranch.cryptVisualDirectory='+cryptDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.cryptVisualReopen='+cryptReopen)
+ vmArg('-Dblockbranch.cryptVisualBaseline='+providers.gradleProperty('cryptVisualBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.cryptVisualReference='+providers.gradleProperty('cryptVisualReference').getOrElse(''))
+ vmArg('-Dblockbranch.cryptVisualCurrentJar='+providers.gradleProperty('cryptVisualCurrentJar').getOrElse(''))
+ programArgs('--username','CryptVisual','--width','1024','--height','576')
+}
+tasks.register('prepareCryptVisual'){doLast{
+ cryptDir.asFile.mkdirs()
+ assert cryptDir.dir('saves/CryptVisualReview').asFile.exists()==cryptReopen:'Use a fresh directory or explicitly reopen.'
+ assert !cryptDir.file(cryptReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ cryptDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runCryptVisual'){dependsOn 'prepareCryptVisual';doLast{assert cryptDir.file(cryptReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+// Opt-in authenticated crypt replacement anatomy and paired native views.
+def cryptReplacementDir=layout.projectDirectory.dir(providers.gradleProperty('cryptReplacementDirectory').getOrElse('build/crypt-replacement/native'))
+def cryptReplacementReopen=providers.gradleProperty('cryptReplacementReopen').getOrElse('false')=='true'
+loom.runs.register('cryptReplacement'){
+ client();runDir(cryptReplacementDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.cryptReplacement=true');vmArg('-Dblockbranch.cryptReplacementDirectory='+cryptReplacementDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.cryptReplacementReopen='+cryptReplacementReopen)
+ vmArg('-Dblockbranch.cryptReplacementBaseline='+providers.gradleProperty('cryptReplacementBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.cryptReplacementCurrent233Jar='+providers.gradleProperty('cryptReplacementCurrent233Jar').getOrElse(''))
+ vmArg('-Dblockbranch.cryptReplacementCurrent234Jar='+providers.gradleProperty('cryptReplacementCurrent234Jar').getOrElse(''))
+ vmArg('-Dblockbranch.mansionReplacementCurrent254Jar='+providers.gradleProperty('mansionReplacementCurrent254Jar').getOrElse(''))
+ vmArg('-Dblockbranch.cryptReplacementReference='+providers.gradleProperty('cryptReplacementReference').getOrElse(''))
+ vmArg('-Dblockbranch.cryptReplacementSpawnerTest='+providers.gradleProperty('cryptReplacementSpawnerTest').getOrElse('false'))
+ vmArg('-Dblockbranch.cryptReplacementViews='+providers.gradleProperty('cryptReplacementViews').getOrElse('0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15'))
+ programArgs('--username','CryptReview','--width','1024','--height','576')
+}
+tasks.register('prepareCryptReplacement'){doLast{
+ cryptReplacementDir.asFile.mkdirs()
+ assert cryptReplacementDir.dir('saves/CryptReplacementReview').asFile.exists()==cryptReplacementReopen:'Use a fresh directory or explicitly reopen.'
+ assert !cryptReplacementDir.file(cryptReplacementReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve previous evidence.'
+ cryptReplacementDir.file('options.txt').asFile.text='renderDistance:6\nautoJump:false\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runCryptReplacement'){dependsOn 'prepareCryptReplacement';doLast{assert cryptReplacementDir.file(cryptReplacementReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

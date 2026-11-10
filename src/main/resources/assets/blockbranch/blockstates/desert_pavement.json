@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "blockbranch:block/desert_pavement",
+        "y": 0
+      },
+      {
+        "model": "blockbranch:block/desert_pavement",
+        "y": 90
+      },
+      {
+        "model": "blockbranch:block/desert_pavement",
+        "y": 180
+      },
+      {
+        "model": "blockbranch:block/desert_pavement",
+        "y": 270
+      }
+    ]
+  }
+}

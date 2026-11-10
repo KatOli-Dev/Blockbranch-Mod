@@ -1,0 +1,94 @@
+// Inspect exact package paths, including nested types, in both release archives.
+def qaRoots = ['src/test/java','src/integrationTest/java','src/integrationTestClient/java']
+def qaTypes = qaRoots.collectMany { root ->
+    fileTree(root).matching { include '**/*.java' }.files.collect { file ->
+        project.file(root).toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/' as char).replaceAll(/\.java$/, '')
+    }
+}
+def clientTypes = fileTree('src/client/java').matching { include '**/*.java' }.files.collect {
+    file('src/client/java').toPath().relativize(it.toPath()).toString().replace(File.separatorChar, '/' as char).replaceAll(/\.java$/, '')
+}
+// Enumerate completed client output during archive execution, including clean
+// configuration-cache builds. Downstream consumers require this exact partition
+// to keep client-only classes and mixins off common dependency classpaths.
+def clientOutputDirs = sourceSets.client.output.classesDirs.files.toList() + [sourceSets.client.output.resourcesDir]
+tasks.named('jar', Jar) {
+    dependsOn tasks.named('clientClasses')
+    inputs.files(clientOutputDirs)
+    doFirst { archive ->
+        def paths = []
+        for (root in clientOutputDirs) if (root != null && root.exists()) {
+            root.eachFileRecurse(groovy.io.FileType.FILES) { path ->
+                paths.add(root.toPath().relativize(path.toPath()).toString().replace(File.separatorChar, '/' as char))
+            }
+        }
+        assert !paths.empty : 'Client output is required for split-environment packaging'
+        archive.manifest.attributes(['Fabric-Loom-Client-Only-Entries':paths.unique().sort().join(';')])
+    }
+}
+// Fixture/camera methods must remain outside their original production owners.
+def removedFixtureMethods = new groovy.json.JsonSlurper().parse(file('scripts/verification/fixture-helper-extraction.json')).groupBy { 'blockbranch/realistic/'+it['class'] }.collectEntries { owner, rows -> [(owner):rows.collect { it.method }.unique()] }
+def archives = files(tasks.named('jar').flatMap { it.archiveFile }, tasks.named('sourcesJar').flatMap { it.archiveFile })
+tasks.register('checkProductionArchives') {
+    dependsOn tasks.named('jar'), tasks.named('sourcesJar')
+    inputs.files(archives)
+    inputs.property('qaTypes',qaTypes)
+    inputs.property('clientTypes',clientTypes)
+    inputs.property('removedFixtureMethods',removedFixtureMethods)
+    doLast {
+        for (archive in archives.files) {
+            def zip=new java.util.zip.ZipFile(archive)
+            try {
+                def entries=zip.entries().toList()*.name
+                assert !entries.any { name -> qaTypes.any { type -> name==type+'.java' || name==type+'.class' || name.startsWith(type+'$') } } : 'QA leaked into '+archive
+                def clientClasses=entries.findAll { name -> clientTypes.any { type -> name==type+'.class' || name.startsWith(type+'$') } }
+                if (!clientClasses.empty) {
+                    def attributes=new java.util.jar.Manifest(zip.getInputStream(zip.getEntry('META-INF/MANIFEST.MF'))).mainAttributes
+                    def declared=(attributes.getValue('Fabric-Loom-Client-Only-Entries')?:'').split(';').findAll { !it.empty } as Set
+                    assert declared.containsAll(clientClasses) && declared.contains('blockbranch.client.mixins.json') : 'Incomplete client-only manifest in '+archive
+                    assert declared.every { entries.contains(it) } : 'Client-only manifest names missing archive entries in '+archive
+                }
+                removedFixtureMethods.each { owner, names ->
+                    def entry=zip.getEntry(owner+'.class')
+                    if(entry!=null){
+                        def actualNames=java.lang.classfile.ClassFile.of().parse(zip.getInputStream(entry).bytes).methods().collect { it.methodName().stringValue() }
+                        assert actualNames.intersect(names).empty : 'Fixture methods leaked into '+owner+' in '+archive
+                    }
+                }
+                assert !entries.any { it.startsWith('blockbranch-fixtures/') || it.startsWith('fixtures/') } : 'Test fixtures leaked into '+archive
+                assert !entries.contains('blockbranch.test.mixins.json') : 'Test mixins leaked into '+archive
+                def metadata=new groovy.json.JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+                assert metadata.id=='blockbranch'
+                assert !metadata.toString().contains('blockbranch.testing')
+                assert zip.getEntry('AUDIO_CREDITS.txt')!=null
+                assert zip.getEntry('assets/blockbranch/icon.png')!=null
+                println 'Production archive excludes '+qaTypes.size()+' QA source types: '+archive.name
+            } finally {zip.close()}
+        }
+    }
+}
+// A previously compiled QA mod must also stay off ordinary development classpaths.
+def mainRuntime = sourceSets.main.runtimeClasspath
+def clientRuntime = sourceSets.client.runtimeClasspath
+def qaOutputs = files(sourceSets.test.output,sourceSets.integrationTest.output,sourceSets.integrationTestClient.output)
+// Later scripts register more QA runs; validate the final container, not an early snapshot.
+def runSources = providers.provider { loom.runs.collectEntries { run -> [(run.name):run.sourceSet.get()] } }
+tasks.register('checkDevelopmentClasspaths') {
+    inputs.files(mainRuntime,clientRuntime,qaOutputs)
+    inputs.property('runSources',runSources)
+    doLast {
+        def actualRuns=runSources.get()
+        assert actualRuns.server=='main' && actualRuns.client=='client'
+        assert actualRuns.findAll { name, source -> name!='client'&&name!='server' }.every { name, source -> source=='integrationTest'||source=='integrationTestClient' }
+        assert (mainRuntime.files.intersect(qaOutputs.files)).empty
+        assert (clientRuntime.files.intersect(qaOutputs.files)).empty
+        println 'Ordinary server/client runtime classpaths exclude compiled development test mod'
+    }
+}
+tasks.named('check') {dependsOn tasks.named('checkProductionArchives'),tasks.named('checkDevelopmentClasspaths')}
+
+// Preserve the existing build's analytic scope. Historical/manual coverage diagnostics
+// stay explicitly callable; a name-prefix match would incorrectly adopt stale baselines.
+def checkTask = tasks.named('check').get()
+def canonicalAnalyticChecks = checkTask.taskDependencies.getDependencies(checkTask).findAll { it instanceof JavaExec }
+tasks.named('test') { dependsOn canonicalAnalyticChecks }

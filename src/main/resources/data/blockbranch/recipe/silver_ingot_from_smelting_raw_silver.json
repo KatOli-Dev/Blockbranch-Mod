@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.7,
+  "ingredient": "blockbranch:raw_silver",
+  "result": {
+    "id": "blockbranch:silver_ingot"
+  }
+}

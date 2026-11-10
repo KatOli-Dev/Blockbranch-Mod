@@ -1,0 +1,23 @@
+// Development-only Fabric test mod. Only QA runs select these runtime classpaths.
+sourceSets.create('integrationTest') {
+    compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+    runtimeClasspath += output + sourceSets.main.runtimeClasspath
+}
+sourceSets.create('integrationTestClient') {
+    compileClasspath += sourceSets.integrationTest.output + sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
+    runtimeClasspath += output + sourceSets.integrationTest.output + sourceSets.client.runtimeClasspath
+}
+configurations.integrationTestImplementation.extendsFrom(configurations.implementation)
+configurations.integrationTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+configurations.integrationTestClientImplementation.extendsFrom(configurations.clientImplementation, configurations.integrationTestImplementation)
+configurations.integrationTestClientRuntimeOnly.extendsFrom(configurations.clientRuntimeOnly, configurations.integrationTestRuntimeOnly)
+loom.mods.register('blockbranch_test') {
+    sourceSet sourceSets.integrationTest
+    sourceSet sourceSets.integrationTestClient
+}
+
+loom.runs.configureEach {
+    if (name != 'client' && name != 'server') {
+        sourceSet.set(runtimeEnvironment.map { environment -> environment == 'client' ? 'integrationTestClient' : 'integrationTest' })
+    }
+}

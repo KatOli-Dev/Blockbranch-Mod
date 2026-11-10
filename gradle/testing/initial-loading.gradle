@@ -1,0 +1,21 @@
+// Opt-in native UI startup fixture; no production run or archive dependency.
+def initialDir=layout.projectDirectory.dir(providers.gradleProperty('initialLoadingDirectory').getOrElse('build/initial-loading'))
+def initialReopen=providers.gradleProperty('initialLoadingReopen').getOrElse('false')=='true'
+def initialView=providers.gradleProperty('initialLoadingView').getOrElse('6')
+def initialSimulation=providers.gradleProperty('initialLoadingSimulation').getOrElse('6')
+loom.runs.register('initialLoading'){
+ client();runDir(initialDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx'+providers.gradleProperty('initialLoadingHeap').getOrElse('3G'));vmArg('-XX:FlightRecorderOptions=stackdepth=128')
+ vmArg('-Dblockbranch.initialLoading=true');vmArg('-Dblockbranch.initialLoadingDirectory='+initialDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.initialLoadingSeed='+providers.gradleProperty('initialLoadingSeed').getOrElse('424242'))
+ vmArg('-Dblockbranch.initialLoadingPreset='+providers.gradleProperty('initialLoadingPreset').getOrElse('blockbranch:realistic'))
+ vmArg('-Dblockbranch.initialLoadingReopen='+providers.gradleProperty('initialLoadingReopen').getOrElse('false'))
+ programArgs('--username','InitialLoading','--width','1024','--height','576')
+}
+tasks.register('prepareInitialLoading'){doLast{
+ initialDir.asFile.mkdirs()
+ def reopen=initialReopen
+ assert initialDir.dir('saves/InitialLoading').asFile.exists()==reopen:'Use a fresh unique directory, or explicitly reopen an existing fixture.'
+ assert !initialDir.file(reopen?'reopen-result.txt':'fresh-result.txt').asFile.exists():'Preserve previous evidence.'
+ initialDir.file('options.txt').asFile.text='renderDistance:'+initialView+'\nsimulationDistance:'+initialSimulation+'\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runInitialLoading'){dependsOn tasks.named('prepareInitialLoading');doLast{assert initialDir.file(initialReopen?'reopen-result.txt':'fresh-result.txt').asFile.text.startsWith('PASS')}}

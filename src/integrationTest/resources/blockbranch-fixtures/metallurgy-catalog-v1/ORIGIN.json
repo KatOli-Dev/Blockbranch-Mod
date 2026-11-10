@@ -1,0 +1,7 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "7d5929decdd11bdd1aec43c6d3addc1a862581be",
+  "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+  "sha256": "1cc3d4cfb56091c13403938de371ea0911a12bfd9777d92b5dbbe3ca8d9a54f9",
+  "purpose": "Unmodified prior tin/bronze catalog1 world guard; independently verifies rejection of catalog2 before levels load."
+}

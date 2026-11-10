@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "blockbranch:zinc_ingot"
+  ],
+  "result": {
+    "id": "blockbranch:brass_ingot",
+    "count": 4
+  }
+}

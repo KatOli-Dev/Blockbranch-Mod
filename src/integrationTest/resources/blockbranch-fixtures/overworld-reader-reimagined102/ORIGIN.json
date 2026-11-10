@@ -1,0 +1,15 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "38caf67ff2a5221044692b72e65254863432da67",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "de685e648aa082b3d05ef7627e6cbd739aef1c5ffd3dd5948826d3db3de45180"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/StructureGenerationSchema.java",
+      "sha256": "b3fc310dd2ed7048ac359c2d736bd9b2da912475df0dc759bcebe70c0fe4d93d"
+    }
+  ],
+  "purpose": "Unmodified historical overworld readers for authentic downgrade rejection and saved-definition compatibility. Frozen before the public clean-snapshot migration; original commits remain in the private archive."
+}

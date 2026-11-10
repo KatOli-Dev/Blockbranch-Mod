@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "": [
+      {"model": "blockbranch:block/beach_grass", "y": 0},
+      {"model": "blockbranch:block/beach_grass", "y": 90},
+      {"model": "blockbranch:block/beach_grass", "y": 180},
+      {"model": "blockbranch:block/beach_grass", "y": 270},
+      {"model": "blockbranch:block/beach_grass_b", "y": 0},
+      {"model": "blockbranch:block/beach_grass_b", "y": 90},
+      {"model": "blockbranch:block/beach_grass_b", "y": 180},
+      {"model": "blockbranch:block/beach_grass_b", "y": 270}
+    ]
+  }
+}

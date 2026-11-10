@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_boots",
+    "blockbranch:steel_boots",
+    "blockbranch:stainless_steel_boots",
+    "blockbranch:silver_boots",
+    "blockbranch:platinum_alloy_boots",
+    "blockbranch:titanium_alloy_boots",
+    "blockbranch:magnetite_boots"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "condition": "minecraft:tool/can_shear",
+              "name": "blockbranch:lake_reed"
+            },
+            {
+              "type": "minecraft:item",
+              "name": "blockbranch:reed_fibre",
+              "modifier": {
+                "type": "minecraft:explosion_decay"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

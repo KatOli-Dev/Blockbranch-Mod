@@ -1,0 +1,54 @@
+def coveragePreset=providers.gradleProperty('overworldPreset').getOrElse('blockbranch:integrated_coverage')
+def coverageDir=layout.projectDirectory.dir(providers.gradleProperty('overworldCoverageDirectory').getOrElse('build/overworld-coverage-current'))
+loom.runs.register('overworldCoverage'){
+ server();runDir(coverageDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.overworldCoverage=true');programArg('--nogui')
+}
+tasks.named('runOverworldCoverage'){doFirst{
+ coverageDir.asFile.mkdirs();coverageDir.file('result.txt').asFile.delete();coverageDir.file('eula.txt').asFile.text='eula=true\n'
+ coverageDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25629\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type='+coveragePreset+'\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert coverageDir.file('result.txt').asFile.text=='PASS'}}
+def functionDir=layout.projectDirectory.dir(providers.gradleProperty('overworldFunctionDirectory').getOrElse('build/overworld-functions-current'))
+loom.runs.register('overworldFunctions'){
+ server();runDir(functionDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.overworldFunctions=true');vmArg('-Dblockbranch.overworldWitness='+coverageDir.file('starts.json').asFile.absolutePath);vmArg('-Dblockbranch.overworldFunctionSite='+providers.gradleProperty('overworldFunctionSite').getOrElse('trial_chambers'));vmArg('-Dblockbranch.overworldFunctionSites='+providers.gradleProperty('overworldFunctionSites').getOrElse(providers.gradleProperty('overworldFunctionSite').getOrElse('trial_chambers')));programArg('--nogui')
+}
+tasks.named('runOverworldFunctions'){doFirst{
+ functionDir.asFile.mkdirs();functionDir.file('result.txt').asFile.delete();functionDir.file('eula.txt').asFile.text='eula=true\n'
+ functionDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25639\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type='+coveragePreset+'\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert functionDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def viewDir=layout.projectDirectory.dir(providers.gradleProperty('overworldViewDirectory').getOrElse('build/overworld-view-current'))
+loom.runs.register('overworldView'){
+ client();runDir(viewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.overworldView=true');vmArg('-Dblockbranch.overworldViewSites='+providers.gradleProperty('overworldViewSites').getOrElse('village_plains,village_taiga,abandoned_camp_swamp,monument,ancient_city,trial_chambers'));vmArg('-Dblockbranch.overworldViewDir='+viewDir.asFile.absolutePath);vmArg('-Dblockbranch.overworldViewWitness='+coverageDir.file('starts.json').asFile.absolutePath);programArgs('--username','CoverageReview','--width','1024','--height','576')
+}
+tasks.register('prepareOverworldView'){doLast{
+ viewDir.asFile.mkdirs();def world=viewDir.dir('saves/OverworldCoverage');
+ if(!world.file('level.dat').asFile.exists()){
+  ['level.dat','blockbranch-columns.txt','data/minecraft/world_gen_settings.dat','data/fabric/registry_entries.dat'].each{name->def target=world.file(name).asFile.toPath();java.nio.file.Files.createDirectories(target.parent);java.nio.file.Files.copy(functionDir.dir('structures').file(name).asFile.toPath(),target)}
+ }
+ viewDir.file('result.txt').asFile.delete();viewDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runOverworldView'){dependsOn 'prepareOverworldView';doLast{assert viewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def locateDir=layout.projectDirectory.dir(providers.gradleProperty('overworldLocateDirectory').getOrElse('build/overworld-locate-current'))
+loom.runs.register('overworldLocate'){server();runDir(locateDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.overworldLocate=true');vmArg('-Dblockbranch.overworldWitness='+coverageDir.file('starts.json').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runOverworldLocate'){doFirst{
+ locateDir.asFile.mkdirs();locateDir.file('result.txt').asFile.delete();locateDir.file('eula.txt').asFile.text='eula=true\n'
+ locateDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25649\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type='+coveragePreset+'\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert locateDir.file('result.txt').asFile.text=='PASS'}}
+def featureDir=layout.projectDirectory.dir(providers.gradleProperty('overworldFeatureDirectory').getOrElse('build/overworld-features-current'))
+loom.runs.register('overworldFeatures'){server();runDir(featureDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.overworldFeatures=true');vmArg('-Dblockbranch.overworldWitness='+coverageDir.file('starts.json').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runOverworldFeatures'){doFirst{
+ featureDir.asFile.mkdirs();featureDir.file('result.txt').asFile.delete();featureDir.file('eula.txt').asFile.text='eula=true\n'
+ featureDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25659\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type='+coveragePreset+'\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert featureDir.file('result.txt').asFile.text=='PASS'}}
+tasks.register('writeOverworldCompileClasspath'){
+ dependsOn 'compileJava'
+ def priorClasspath=sourceSets.main.compileClasspath.asPath+File.pathSeparator+sourceSets.main.output.classesDirs.asPath
+ def priorClasspathFile=layout.buildDirectory.file('overworld-compile-classpath.txt').get().asFile
+ doLast{priorClasspathFile.text=priorClasspath}
+}
+tasks.named('runOverworldFunctions'){dependsOn 'prepareOverworldPriorReader'}
+def cityDir=layout.projectDirectory.dir('build/overworld-city-current')
+loom.runs.register('overworldCity'){server();runDir(cityDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.overworldCity=true');vmArg('-Dblockbranch.overworldAnchors='+coverageDir.file('anchors.json').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runOverworldCity'){doFirst{
+ cityDir.asFile.mkdirs();cityDir.file('result.txt').asFile.delete();cityDir.file('eula.txt').asFile.text='eula=true\n'
+ cityDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25669\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type='+coveragePreset+'\nlevel-seed=424242\nmax-tick-time=600000\n'
+};doLast{assert cityDir.file('result.txt').asFile.text=='PASS'}}

@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "blockbranch:magnetite"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "blockbranch:magnetite"
+      }
+    ]
+  }
+}

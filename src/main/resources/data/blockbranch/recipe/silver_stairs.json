@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "B  ",
+    "BB ",
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:silver_block"
+  },
+  "result": {
+    "id": "blockbranch:silver_stairs",
+    "count": 4
+  }
+}

@@ -1,0 +1,36 @@
+def equipmentReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore7-catalog8')
+def equipmentReaderOrigin=new File(equipmentReaderRoot,'ORIGIN.json')
+def equipmentReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java'].collect{new File(equipmentReaderRoot,'blockbranch/'+it)}
+def equipmentReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore7-catalog8')
+def equipmentReaderCompile=tasks.register('compileLegacyEquipmentCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(equipmentReaderFiles);inputs.file(equipmentReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(equipmentReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(equipmentReaderOrigin);for(def row:origin.sources){def input=new File(equipmentReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore7-catalog8 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldEquipmentCatalogClasses='+equipmentReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn equipmentReaderCompile}
+if(providers.gradleProperty('leadView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.leadView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.leadView=true')}
+}
+def leadResources=layout.projectDirectory.dir('src/main/resources').asFile
+def leadBlocks=['lead_ore','deepslate_lead_ore']+['lead','lead_alloy'].collectMany{m->['block','slab','stairs'].collect{m+'_'+it}}
+def leadItems=leadBlocks+['raw_lead','lead_ingot','lead_alloy_ingot']
+def leadRecipes=['lead_alloy_ingot']+['lead','lead_alloy'].collectMany{m->['block','ingot_from_block','slab','stairs'].collect{m+'_'+it}}+['raw_lead','lead_ore','deepslate_lead_ore'].collectMany{s->['smelting','blasting'].collect{'lead_ingot_from_'+it+'_'+s}}
+def leadSprites=['block/lead_ore_overlay','block/lead_block','block/lead_alloy_block','item/raw_lead','item/lead_ingot','item/lead_alloy_ingot']
+tasks.register('verifyLeadResources'){
+ inputs.files(fileTree(leadResources){include '**/*lead*','**/lang/en_us.json','**/tags/block/needs_stone_tool.json','**/tags/block/mineable/pickaxe.json','**/tags/block/slabs.json','**/tags/block/stairs.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(leadResources,path))}
+  for(def sprite:leadSprites){def image=javax.imageio.ImageIO.read(new File(leadResources,'assets/blockbranch/textures/'+sprite+'.png'));assert image.width==16&&image.height==16:'Keep lead art 16x';if(!(sprite in ['block/lead_block','block/lead_alloy_block'])){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Keep native host/shape transparency'}}
+  for(def row:[['lead_ore','stone'],['deepslate_lead_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/lead_ore_overlay':'Keep native resource-pack host compositing'}
+  def names=read('assets/blockbranch/lang/en_us.json');for(def n:leadItems){def m=read('assets/blockbranch/items/'+n+'.json').model;assert m.type=='minecraft:model'&&m.model=='blockbranch:item/'+n;assert read('assets/blockbranch/models/item/'+n+'.json');assert names[(n in leadBlocks?'block.':'item.')+'blockbranch.'+n]}
+  for(def n:leadBlocks){assert read('assets/blockbranch/blockstates/'+n+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+n+'.json').type=='minecraft:block'}
+  for(def row:[['mineable/pickaxe',leadBlocks],['needs_stone_tool',leadBlocks],['slabs',['lead_slab','lead_alloy_slab']],['stairs',['lead_stairs','lead_alloy_stairs']]]){def t=read('data/minecraft/tags/block/'+row[0]+'.json');assert t.replace==false&&row[1].every{t.values.contains('blockbranch:'+it)}}
+  for(def m:['lead','lead_alloy'])assert read('assets/blockbranch/blockstates/'+m+'_slab.json').variants['type=double'].model=='blockbranch:block/'+m+'_block'
+  for(def n:leadRecipes){def recipe=read('data/blockbranch/recipe/'+n+'.json');assert recipe.result.id.startsWith('blockbranch:');def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&unlock.rewards.recipes==['blockbranch:'+n];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  println 'PASS lead: eleven items, six original 16x sprites, native host/building models and fifteen recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyLeadResources')}

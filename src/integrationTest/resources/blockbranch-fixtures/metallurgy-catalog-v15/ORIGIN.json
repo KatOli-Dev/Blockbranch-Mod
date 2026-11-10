@@ -1,0 +1,7 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "8950a72c8d78274fec8c695fed00951d865cae6a",
+  "source": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+  "sha256": "cb7a0dd70c2c88777dc819da240df536805198fbc28aca84baebb8a6ce9cb289",
+  "purpose": "Independent catalog15 reader refuses titanium equipment catalog16 before levels load"
+}

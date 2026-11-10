@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "blockbranch:block/packed_river_shingle",
+        "y": 0
+      },
+      {
+        "model": "blockbranch:block/packed_river_shingle",
+        "y": 90
+      },
+      {
+        "model": "blockbranch:block/packed_river_shingle",
+        "y": 180
+      },
+      {
+        "model": "blockbranch:block/packed_river_shingle",
+        "y": 270
+      }
+    ]
+  }
+}

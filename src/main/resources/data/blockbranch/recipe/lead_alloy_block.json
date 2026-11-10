@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BBB",
+    "BBB",
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:lead_alloy_ingot"
+  },
+  "result": {
+    "id": "blockbranch:lead_alloy_block"
+  }
+}

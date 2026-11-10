@@ -1,0 +1,37 @@
+def tungstenReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-v6')
+def tungstenReaderOrigin=new File(tungstenReaderRoot,'ORIGIN.json')
+def tungstenReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java'].collect{new File(tungstenReaderRoot,'blockbranch/'+it)}
+def tungstenReaderClasses=layout.buildDirectory.dir('historical-metallurgy-v6')
+def tungstenReaderCompile=tasks.register('compileLegacyTungstenCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(tungstenReaderFiles);inputs.file(tungstenReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(tungstenReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(tungstenReaderOrigin);for(def row:origin.sources){def input=new File(tungstenReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-v6 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldTungstenCatalogClasses='+tungstenReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn tungstenReaderCompile}
+if(providers.gradleProperty('stainlessView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.stainlessView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.stainlessView=true')}
+}
+def stainlessResources=layout.projectDirectory.dir('src/main/resources').asFile
+def stainlessBlocks=['nickel_ore','deepslate_nickel_ore','chromium_ore','deepslate_chromium_ore','stainless_steel_block','stainless_steel_slab','stainless_steel_stairs']
+def stainlessItems=stainlessBlocks+['raw_nickel','raw_chromium','nickel_ingot','chromium_ingot','stainless_steel_ingot','stainless_steel_pickaxe']
+def stainlessRecipes=['stainless_steel_ingot','stainless_steel_block','stainless_steel_ingot_from_block','stainless_steel_slab','stainless_steel_stairs','stainless_steel_pickaxe']+['nickel','chromium'].collectMany{m->['raw_'+m,m+'_ore','deepslate_'+m+'_ore'].collectMany{s->['smelting','blasting'].collect{m+'_ingot_from_'+it+'_'+s}}}
+def stainlessSprites=['block/nickel_ore_overlay','block/chromium_ore_overlay','block/stainless_steel_block','item/raw_nickel','item/raw_chromium','item/nickel_ingot','item/chromium_ingot','item/stainless_steel_ingot','item/stainless_steel_pickaxe']
+tasks.register('verifyStainlessResources'){
+ inputs.files(fileTree(stainlessResources){include '**/*stainless*','**/*nickel*','**/*chromium*','**/lang/en_us.json','**/tags/item/pickaxes.json','**/tags/block/needs_iron_tool.json','**/tags/block/needs_stone_tool.json','**/tags/block/mineable/pickaxe.json','**/tags/block/slabs.json','**/tags/block/stairs.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(stainlessResources,path))}
+  for(def sprite:stainlessSprites){def image=javax.imageio.ImageIO.read(new File(stainlessResources,'assets/blockbranch/textures/'+sprite+'.png'));assert image.width==16&&image.height==16:'Keep stainless art 16x';if(sprite!='block/stainless_steel_block'){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Keep silhouette/host transparency'}}
+  for(def metal:['nickel','chromium'])for(def row:[[metal+'_ore','stone'],['deepslate_'+metal+'_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/'+metal+'_ore_overlay':'Keep native resource-pack host compositing'}
+  def names=read('assets/blockbranch/lang/en_us.json');for(def name:stainlessItems){def m=read('assets/blockbranch/items/'+name+'.json').model;assert m.type=='minecraft:model'&&m.model=='blockbranch:item/'+name;assert read('assets/blockbranch/models/item/'+name+'.json');assert names[(name in stainlessBlocks?'block.':'item.')+'blockbranch.'+name]}
+  for(def name:stainlessBlocks){assert read('assets/blockbranch/blockstates/'+name+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+name+'.json').type=='minecraft:block'}
+  for(def row:[['mineable/pickaxe',stainlessBlocks],['needs_iron_tool',stainlessBlocks.take(4)],['needs_stone_tool',stainlessBlocks.drop(4)],['slabs',['stainless_steel_slab']],['stairs',['stainless_steel_stairs']]]){def t=read('data/minecraft/tags/block/'+row[0]+'.json');assert t.replace==false&&row[1].every{t.values.contains('blockbranch:'+it)}}
+  def picks=read('data/minecraft/tags/item/pickaxes.json');assert picks.replace==false&&picks.values.contains('blockbranch:stainless_steel_pickaxe');assert read('data/blockbranch/tags/item/stainless_steel_repair_materials.json').values==['blockbranch:stainless_steel_ingot']
+  assert read('assets/blockbranch/blockstates/stainless_steel_slab.json').variants['type=double'].model=='blockbranch:block/stainless_steel_block'
+  for(def name:stainlessRecipes){def recipe=read('data/blockbranch/recipe/'+name+'.json');assert recipe.result.id.startsWith('blockbranch:');def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+name+'.json');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+name&&unlock.rewards.recipes==['blockbranch:'+name];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  println 'PASS stainless foundation: thirteen items, nine original 16x sprites, native host/building models and eighteen recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyStainlessResources')}

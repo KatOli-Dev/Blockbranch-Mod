@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:brass_slab",
+    "blockbranch:stainless_steel_slab",
+    "blockbranch:lead_slab",
+    "blockbranch:lead_alloy_slab",
+    "blockbranch:silver_slab",
+    "blockbranch:platinum_slab"
+  ]
+}

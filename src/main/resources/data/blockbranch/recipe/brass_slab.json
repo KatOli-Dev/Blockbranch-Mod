@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:brass_block"
+  },
+  "result": {
+    "id": "blockbranch:brass_slab",
+    "count": 6
+  }
+}

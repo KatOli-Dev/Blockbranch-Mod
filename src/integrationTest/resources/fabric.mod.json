@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "blockbranch_test",
+  "version": "1.0.0",
+  "name": "Blockbranch development checks",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "blockbranch.testing.BlockbranchTestMod"
+    ],
+    "client": [
+      "blockbranch.testing.BlockbranchTestClient"
+    ]
+  },
+  "depends": {
+    "blockbranch": "*",
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "mixins": [
+    "blockbranch.test.mixins.json"
+  ]
+}

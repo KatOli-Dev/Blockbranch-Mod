@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "blockbranch:block/brass_block",
+    "top": "blockbranch:block/brass_block",
+    "side": "blockbranch:block/brass_block"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_scree": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "blockbranch:loose_scree"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_scree"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "blockbranch:gravel_from_scree"
+    ]
+  }
+}

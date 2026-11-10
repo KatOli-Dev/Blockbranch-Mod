@@ -1,0 +1,95 @@
+// Opt-in measurements: isolated worlds, unchanged generation and native TCP timeout.
+def auditView=providers.gradleProperty('terrainViewDistance').getOrElse('6')
+def auditSimulation=providers.gradleProperty('terrainSimulationDistance').getOrElse('6')
+def auditSeed=providers.gradleProperty('terrainSeed').getOrElse('424242')
+def copiesCheck=providers.gradleProperty('sectionCopiesSmoke').isPresent()
+def serverDir=layout.projectDirectory.dir(providers.gradleProperty('terrainServerDirectory').getOrElse('build/terrain-audit-server'))
+def clientDir=layout.projectDirectory.dir(providers.gradleProperty('terrainClientDirectory').getOrElse('build/terrain-audit-client'))
+loom.runs.register('terrainAuditServer'){
+    server();runDir(serverDir.asFile.absolutePath);vmArg('-Xmx'+providers.gradleProperty('terrainServerHeap').getOrElse('3G'));vmArg('-Dblockbranch.terrainAudit=true')
+    if(providers.gradleProperty('terrainInitialHeap').isPresent())vmArg('-Xms'+providers.gradleProperty('terrainInitialHeap').get())
+    vmArg('-Dblockbranch.auditStationarySeconds='+providers.gradleProperty('terrainStationarySeconds').getOrElse('0'))
+    vmArg('-Dblockbranch.auditDistance='+providers.gradleProperty('terrainDistance').getOrElse('320'))
+    vmArg('-Dblockbranch.auditNoTeleport='+providers.gradleProperty('terrainNoTeleport').getOrElse('false'))
+    vmArg('-XX:FlightRecorderOptions=stackdepth=128')
+    vmArg('-Dblockbranch.terrainAuditResult='+serverDir.file('result.txt').asFile.absolutePath)
+    vmArg('-XX:StartFlightRecording=settings=profile,filename='+serverDir.file('server.jfr').asFile.absolutePath)
+    programArg('--nogui')
+}
+loom.runs.register('terrainAuditClient'){
+    client();runDir(clientDir.asFile.absolutePath);vmArg('-Xmx'+providers.gradleProperty('terrainClientHeap').getOrElse('2G'));vmArg('-Dblockbranch.terrainAudit=true')
+    if(providers.gradleProperty('terrainInitialHeap').isPresent())vmArg('-Xms'+providers.gradleProperty('terrainInitialHeap').get())
+    vmArg('-XX:FlightRecorderOptions=stackdepth=128')
+    if(copiesCheck){
+        vmArg('-Dblockbranch.sectionCopiesSmoke=true')
+        vmArg('-Dblockbranch.sectionCopiesSmokeResult='+clientDir.file('copies-result.txt').asFile.absolutePath)
+    }
+    vmArg('-Dblockbranch.terrainAuditClientResult='+clientDir.file('result.txt').asFile.absolutePath)
+    vmArg('-XX:StartFlightRecording=settings=profile,filename='+clientDir.file('client.jfr').asFile.absolutePath)
+    programArgs('--username','TerrainAudit','--quickPlayMultiplayer','127.0.0.1:25604','--width','1024','--height','576')
+}
+tasks.register('prepareTerrainAudit'){
+    doLast{
+        serverDir.asFile.mkdirs();clientDir.asFile.mkdirs();serverDir.file('eula.txt').asFile.text='eula=true\n'
+        serverDir.file('result.txt').asFile.delete();clientDir.file('result.txt').asFile.delete()
+        clientDir.file('copies-result.txt').asFile.delete()
+        serverDir.file('server.properties').asFile.text="""online-mode=false
+server-ip=127.0.0.1
+server-port=25604
+white-list=false
+pause-when-empty-seconds=0
+view-distance=${auditView}
+simulation-distance=${auditSimulation}
+level-name=terrain
+level-type=blockbranch:realistic
+level-seed=${auditSeed}
+max-tick-time=120000
+"""
+        clientDir.file('options.txt').asFile.text="renderDistance:${auditView}\nsimulationDistance:${auditSimulation}\nmaxFps:30\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\n"
+    }
+}
+tasks.named('runTerrainAuditServer'){
+    dependsOn tasks.named('prepareTerrainAudit')
+    doLast{assert serverDir.file('result.txt').asFile.text.startsWith('PASS')}
+}
+tasks.named('runTerrainAuditClient'){doLast{
+    assert clientDir.file('result.txt').asFile.text.startsWith('PASS')
+    if(copiesCheck)assert clientDir.file('copies-result.txt').asFile.text.startsWith('PASS')
+}}
+
+def cacheDir=layout.projectDirectory.dir('build/biome-column-cache')
+loom.runs.register('biomeColumnCache'){
+    server();runDir(cacheDir.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.biomeColumnCacheSmoke=true')
+    vmArg('-Dblockbranch.biomeColumnCacheResult='+cacheDir.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+tasks.register('prepareBiomeColumnCache'){
+    doLast{
+        cacheDir.asFile.mkdirs();cacheDir.file('eula.txt').asFile.text='eula=true\n';cacheDir.file('result.txt').asFile.delete()
+        cacheDir.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25605
+view-distance=2
+simulation-distance=2
+level-type=blockbranch:realistic
+level-seed=424242
+'''
+    }
+}
+tasks.named('runBiomeColumnCache'){dependsOn tasks.named('prepareBiomeColumnCache');doLast{assert cacheDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Actual native light levels, in a disposable flat fixture world.
+def loadingLightsDir=layout.projectDirectory.dir(providers.gradleProperty('loadingLightsDirectory').getOrElse('build/loading-lights'))
+loom.runs.register('loadingLights'){
+    server();runDir(loadingLightsDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+    if(providers.gradleProperty('sectionPublicationSmoke').isPresent())vmArg('-Dblockbranch.sectionPublicationSmoke=true')
+    vmArg('-Dblockbranch.loadingLights=true');vmArg('-Dblockbranch.loadingLightsResult='+loadingLightsDir.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareLoadingLights'){
+    doLast{
+        loadingLightsDir.asFile.mkdirs();loadingLightsDir.file('result.txt').asFile.delete();loadingLightsDir.file('eula.txt').asFile.text='eula=true\n'
+        loadingLightsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25610\nview-distance=2\nsimulation-distance=2\nlevel-name=lights\nlevel-type=minecraft:flat\nlevel-seed=424242\n'
+    }
+}
+tasks.named('runLoadingLights'){dependsOn tasks.named('prepareLoadingLights');doLast{assert loadingLightsDir.file('result.txt').asFile.text.startsWith('PASS')}}

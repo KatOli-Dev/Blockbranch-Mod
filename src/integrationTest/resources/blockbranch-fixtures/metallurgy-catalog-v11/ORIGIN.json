@@ -1,0 +1,7 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "a33efaefb98a8e756558380742c612c5cbfb7626",
+  "source": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+  "sha256": "d40052c4b6374bdda946102813d60cd4fe6c789016ddcef2037f540694252b42",
+  "purpose": "Independent prior silver/platinum foundation catalog11 reader; refuses new silver equipment catalog12 before levels load"
+}

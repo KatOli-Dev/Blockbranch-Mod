@@ -1,0 +1,7 @@
+{
+  "parent": "blockbranch:block/composited_ore",
+  "textures": {
+    "base": "minecraft:block/diamond_ore",
+    "overlay": "blockbranch:block/fools_diamond_tell"
+  }
+}

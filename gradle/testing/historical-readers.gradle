@@ -1,0 +1,93 @@
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+
+// Keep the actual published reader sources: a rewritten codec is not a downgrade witness.
+// The public repository intentionally has no private history. Validate and copy the
+// unmodified frozen sources, retaining the same generated paths and reader JARs.
+abstract class ExtractHistoricalReaderSources extends DefaultTask {
+    @Input abstract Property<String> getCommit()
+    @Input abstract ListProperty<String> getTypeNames()
+    @InputDirectory @PathSensitive(PathSensitivity.RELATIVE)
+    abstract DirectoryProperty getFixtureDirectory()
+    @OutputDirectory abstract DirectoryProperty getDestinationDirectory()
+
+    @TaskAction
+    void extract() {
+        def fixture = fixtureDirectory.get().asFile
+        def origin = new JsonSlurper().parse(new File(fixture, 'ORIGIN.json'))
+        assert origin.repository == 'KatOli-Dev/Blockbranch' && origin.commit == commit.get() :
+                'Historical reader provenance changed: ' + fixture
+        def expectedPaths = typeNames.get().collect { "src/main/java/blockbranch/realistic/${it}.java".toString() }
+        // The prior-only reader selects one source from the same released101 witness.
+        def paths = origin.sources.collect { it.path }
+        assert paths.size() == paths.toSet().size() && paths.containsAll(expectedPaths) :
+                'Historical reader manifest is incomplete or duplicated: ' + fixture
+        def validated = [:]
+        origin.sources.each { row ->
+            assert row.path ==~ /src\/main\/java\/blockbranch\/realistic\/[A-Za-z]+\.java/ :
+                    'Unexpected historical source path: ' + row.path
+            def relative = row.path.substring('src/main/java/'.length())
+            def bytes = new File(fixture, relative).bytes
+            assert MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString() == row.sha256 :
+                    'Frozen historical reader input changed: ' + row.path
+            validated[row.path] = bytes
+        }
+        expectedPaths.each { path ->
+            def source = destinationDirectory.file(path.substring('src/main/java/'.length())).get().asFile
+            source.parentFile.mkdirs()
+            source.bytes = validated[path]
+        }
+    }
+}
+
+def fixtureChecks = []
+def registerReader = { String label, String fixtureLabel, String commit, List<String> names,
+                       String sourcePath, String classesPath, String jarPath ->
+    def extract = tasks.register("extract${label}ReaderSources", ExtractHistoricalReaderSources) {
+        it.commit.set(commit)
+        typeNames.set(names)
+        fixtureDirectory.set(layout.projectDirectory.dir("src/integrationTest/resources/blockbranch-fixtures/overworld-reader-${fixtureLabel}"))
+        destinationDirectory.set(layout.buildDirectory.dir(sourcePath))
+        // Revalidate frozen inputs even if an earlier extraction is still present.
+        outputs.upToDateWhen { false }
+    }
+    fixtureChecks.add(extract)
+    def compile = tasks.register("compile${label}Reader", JavaCompile) {
+        source(extract.flatMap { it.destinationDirectory }.map { directory ->
+            names.collect { name -> directory.file("blockbranch/realistic/${name}.java").asFile }
+        })
+        classpath = sourceSets.main.compileClasspath + sourceSets.main.output
+        destinationDirectory.set(layout.buildDirectory.dir(classesPath))
+        javaCompiler.set(javaToolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+        options.release.set(25)
+        options.compilerArgs.add('-proc:none')
+    }
+    tasks.register("jar${label}Reader", Jar) {
+        from(compile.flatMap { it.destinationDirectory })
+        archiveFileName.set(new File(jarPath).name)
+        destinationDirectory.set(layout.buildDirectory.dir(new File(jarPath).parent ?: '.'))
+    }
+}
+
+def released101 = '5e8583861dea9b33ca24ca872630ecab9441340a'
+def priorReader = registerReader('OverworldPrior', 'released101', released101, ['RealisticGenerator'],
+        'overworld-prior-source', 'overworld-prior-classes', 'overworld-baseline-101.jar')
+tasks.register('prepareOverworldPriorReader') { dependsOn priorReader }
+
+def integratedReaders = [
+    ['released101', released101, ['RealisticGenerator', 'StructureGenerationSchema']],
+    ['reimagined102', '38caf67ff2a5221044692b72e65254863432da67', ['RealisticGenerator', 'StructureGenerationSchema']],
+    ['coverage102', 'd94fe234f3d1813aeaac3680272b4b05c78731b4',
+        ['RealisticGenerator', 'StructureGenerationSchema', 'OverworldStructures', 'ScreeBiomeSource']]
+].collect { label, commit, names ->
+    registerReader(label.capitalize(), label, commit, names, "integrated-readers/${label}/source",
+            "integrated-readers/${label}/classes", "integrated-readers/${label}.jar")
+}
+tasks.register('prepareIntegratedReaders') { dependsOn integratedReaders }
+
+tasks.register('checkHistoricalReaderFixtures') {
+    group = 'verification'
+    description = 'Verifies pinned historical reader provenance and original source digests.'
+    dependsOn fixtureChecks
+}
+tasks.named('check') { dependsOn tasks.named('checkHistoricalReaderFixtures') }

@@ -1,0 +1,626 @@
+{
+  "abandoned_camp_bamboo_jungle": {
+    "bounds": [
+      1308563,
+      51,
+      159407,
+      1308596,
+      82,
+      159446
+    ],
+    "chunk": [
+      81786,
+      9964
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_birch_forest": {
+    "bounds": [
+      1667741,
+      54,
+      -741188,
+      1667782,
+      85,
+      -741155
+    ],
+    "chunk": [
+      104235,
+      -46323
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_cherry_grove": {
+    "bounds": [
+      1775747,
+      575,
+      -1269075,
+      1775780,
+      606,
+      -1269034
+    ],
+    "chunk": [
+      110985,
+      -79316
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_dappled_forest": {
+    "bounds": [
+      1199197,
+      66,
+      -1020948,
+      1199238,
+      98,
+      -1020915
+    ],
+    "chunk": [
+      74951,
+      -63808
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_flower_forest": {
+    "bounds": [
+      1504668,
+      332,
+      -918134,
+      1504701,
+      363,
+      -918093
+    ],
+    "chunk": [
+      94043,
+      -57382
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_forest": {
+    "bounds": [
+      372714,
+      335,
+      507587,
+      372755,
+      366,
+      507620
+    ],
+    "chunk": [
+      23296,
+      31725
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_meadow": {
+    "bounds": [
+      29180,
+      1899,
+      -399270,
+      29213,
+      1930,
+      -399229
+    ],
+    "chunk": [
+      1825,
+      -24953
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_old_growth_birch_forest": {
+    "bounds": [
+      -650596,
+      353,
+      -1659718,
+      -650563,
+      384,
+      -1659679
+    ],
+    "chunk": [
+      -40661,
+      -103731
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_old_growth_pine_taiga": {
+    "bounds": [
+      1956892,
+      1056,
+      -1970150,
+      1956925,
+      1089,
+      -1970109
+    ],
+    "chunk": [
+      122307,
+      -123133
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_old_growth_spruce_taiga": {
+    "bounds": [
+      -1281844,
+      299,
+      -2000342,
+      -1281811,
+      330,
+      -2000301
+    ],
+    "chunk": [
+      -80114,
+      -125020
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_savanna": {
+    "bounds": [
+      -1609364,
+      71,
+      218842,
+      -1609331,
+      102,
+      218883
+    ],
+    "chunk": [
+      -100584,
+      13679
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_snowy_taiga": {
+    "bounds": [
+      1788125,
+      1113,
+      1747100,
+      1788166,
+      1144,
+      1747133
+    ],
+    "chunk": [
+      111759,
+      109195
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_sparse_jungle": {
+    "bounds": [
+      -1598925,
+      54,
+      234429,
+      -1598892,
+      85,
+      234470
+    ],
+    "chunk": [
+      -99932,
+      14653
+    ],
+    "roundtrip": true,
+    "pieces": 3
+  },
+  "abandoned_camp_swamp": {
+    "bounds": [
+      1967295,
+      389,
+      -1479300,
+      1967334,
+      422,
+      -1479267
+    ],
+    "chunk": [
+      122957,
+      -92455
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_taiga": {
+    "bounds": [
+      551530,
+      1488,
+      1425619,
+      551569,
+      1519,
+      1425652
+    ],
+    "chunk": [
+      34472,
+      89102
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_windswept_forest": {
+    "bounds": [
+      1902428,
+      1957,
+      132890,
+      1902461,
+      1989,
+      132931
+    ],
+    "chunk": [
+      118903,
+      8307
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "abandoned_camp_wooded_badlands": {
+    "bounds": [
+      1571466,
+      1064,
+      -126957,
+      1571505,
+      1097,
+      -126924
+    ],
+    "chunk": [
+      98218,
+      -7934
+    ],
+    "roundtrip": true,
+    "pieces": 2
+  },
+  "ancient_city": {
+    "bounds": [
+      -1486857,
+      -76,
+      414260,
+      -1486616,
+      -22,
+      414502
+    ],
+    "chunk": [
+      -92921,
+      25899
+    ],
+    "roundtrip": true,
+    "pieces": 96
+  },
+  "desert_pyramid": {
+    "bounds": [
+      -1518480,
+      64,
+      155488,
+      -1518460,
+      78,
+      155508
+    ],
+    "chunk": [
+      -94905,
+      9718
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "jungle_pyramid": {
+    "bounds": [
+      1311840,
+      64,
+      160048,
+      1311851,
+      73,
+      160062
+    ],
+    "chunk": [
+      81990,
+      10003
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "mansion": {
+    "bounds": [
+      1307124,
+      365,
+      1217308,
+      1307184,
+      395,
+      1217386
+    ],
+    "chunk": [
+      81696,
+      76082
+    ],
+    "roundtrip": true,
+    "pieces": 617
+  },
+  "mineshaft": {
+    "bounds": [
+      1621390,
+      -5152,
+      138741,
+      1621508,
+      -5131,
+      138858
+    ],
+    "chunk": [
+      101342,
+      8674
+    ],
+    "roundtrip": true,
+    "pieces": 108
+  },
+  "mineshaft_mesa": {
+    "bounds": [
+      -1354193,
+      1189,
+      414855,
+      -1354093,
+      1216,
+      414967
+    ],
+    "chunk": [
+      -84635,
+      25934
+    ],
+    "roundtrip": true,
+    "pieces": 120
+  },
+  "monument": {
+    "bounds": [
+      -470221,
+      39,
+      750771,
+      -470164,
+      61,
+      750828
+    ],
+    "chunk": [
+      -29387,
+      46925
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "pillager_outpost": {
+    "bounds": [
+      -1799515,
+      51,
+      -179612,
+      -1799444,
+      104,
+      -179541
+    ],
+    "chunk": [
+      -112467,
+      -11224
+    ],
+    "roundtrip": true,
+    "pieces": 18
+  },
+  "ruined_portal": {
+    "bounds": [
+      -1803919,
+      -49,
+      -180218,
+      -1803911,
+      -42,
+      -180209
+    ],
+    "chunk": [
+      -112745,
+      -11263
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "ruined_portal_jungle": {
+    "bounds": [
+      491664,
+      63,
+      100592,
+      491671,
+      71,
+      100600
+    ],
+    "chunk": [
+      30729,
+      6287
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "ruined_portal_mountain": {
+    "bounds": [
+      1356544,
+      154,
+      -483536,
+      1356557,
+      162,
+      -483528
+    ],
+    "chunk": [
+      84784,
+      -30221
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "ruined_portal_ocean": {
+    "bounds": [
+      1618192,
+      -5103,
+      135344,
+      1618196,
+      -5097,
+      135350
+    ],
+    "chunk": [
+      101137,
+      8459
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "ruined_portal_swamp": {
+    "bounds": [
+      1333264,
+      62,
+      41104,
+      1333272,
+      68,
+      41112
+    ],
+    "chunk": [
+      83329,
+      2569
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "shipwreck": {
+    "bounds": [
+      1619392,
+      -5077,
+      136976,
+      1619400,
+      -5069,
+      136992
+    ],
+    "chunk": [
+      101212,
+      8561
+    ],
+    "roundtrip": true,
+    "pieces": 1
+  },
+  "stronghold": {
+    "bounds": [
+      -308,
+      -4254,
+      -1769,
+      -125,
+      -4206,
+      -1622
+    ],
+    "chunk": [
+      -13,
+      -106
+    ],
+    "roundtrip": true,
+    "pieces": 225
+  },
+  "trail_ruins": {
+    "bounds": [
+      1956842,
+      1043,
+      -1969737,
+      1956917,
+      1087,
+      -1969689
+    ],
+    "chunk": [
+      122304,
+      -123107
+    ],
+    "roundtrip": true,
+    "pieces": 19
+  },
+  "trial_chambers": {
+    "bounds": [
+      1618323,
+      -5288,
+      135957,
+      1618439,
+      -5227,
+      136105
+    ],
+    "chunk": [
+      101151,
+      8501
+    ],
+    "roundtrip": true,
+    "pieces": 241
+  },
+  "village_desert": {
+    "bounds": [
+      -1518706,
+      745,
+      154790,
+      -1518591,
+      789,
+      154902
+    ],
+    "chunk": [
+      -94915,
+      9679
+    ],
+    "roundtrip": true,
+    "pieces": 58
+  },
+  "village_plains": {
+    "bounds": [
+      -1802758,
+      48,
+      -179745,
+      -1802612,
+      88,
+      -179576
+    ],
+    "chunk": [
+      -112668,
+      -11229
+    ],
+    "roundtrip": true,
+    "pieces": 88
+  },
+  "village_savanna": {
+    "bounds": [
+      -1611828,
+      55,
+      218784,
+      -1611672,
+      95,
+      218921
+    ],
+    "chunk": [
+      -100735,
+      13680
+    ],
+    "roundtrip": true,
+    "pieces": 74
+  },
+  "village_snowy": {
+    "bounds": [
+      1519691,
+      2148,
+      2001569,
+      1519863,
+      2195,
+      2001721
+    ],
+    "chunk": [
+      94986,
+      125102
+    ],
+    "roundtrip": true,
+    "pieces": 116
+  },
+  "village_taiga": {
+    "bounds": [
+      550591,
+      1613,
+      1426495,
+      550678,
+      1668,
+      1426609
+    ],
+    "chunk": [
+      34415,
+      89158
+    ],
+    "roundtrip": true,
+    "pieces": 61
+  }
+}

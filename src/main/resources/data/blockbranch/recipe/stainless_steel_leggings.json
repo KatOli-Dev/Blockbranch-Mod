@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "BBB",
+    "B B",
+    "B B"
+  ],
+  "key": {
+    "B": "blockbranch:stainless_steel_ingot"
+  },
+  "result": {
+    "id": "blockbranch:stainless_steel_leggings"
+  }
+}

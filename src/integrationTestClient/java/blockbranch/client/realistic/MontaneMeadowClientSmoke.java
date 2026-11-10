@@ -1,0 +1,23 @@
+package blockbranch.client.realistic;
+import blockbranch.Blockbranch;
+import blockbranch.cubic.*;
+import blockbranch.realistic.RealisticProbe;
+import java.nio.file.*;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.*;
+
+/** Actual ground/overlook snow rendering and streamed native support removal/restoration. */
+public final class MontaneMeadowClientSmoke {
+ public static void register(){final String detailTag=System.getProperty("blockbranch.meadowDetailTag");ClientTickEvents.END_CLIENT_TICK.register(new ClientTickEvents.EndTick(){int stage,settled;boolean saving,done;BlockPos bed;double groundY;long deadline=System.nanoTime()+600_000_000_000L;
+ public void onEndTick(net.minecraft.client.Minecraft client){if(done||saving)return;try{if(System.nanoTime()>deadline)throw new AssertionError("Montane Meadow client timeout stage="+stage);if(client.level==null||client.player==null)return;var level=client.level;if(stage==0){if(Math.abs(client.player.getX()-1401431)>2)return;stage=1;ClientPlayNetworking.send(new RealisticProbe(90));return;}
+ if(stage==1){int x=client.player.blockPosition().getX(),z=client.player.blockPosition().getZ(),y=(int)Math.round(client.player.getY())-5;var p=new BlockPos(x,y,z);if(!level.getBiome(p).is(net.minecraft.world.level.biome.Biomes.MEADOW)||!level.getBlockState(p.above()).is(Blocks.ALLIUM))return;bed=p;stage=2;ClientPlayNetworking.send(new RealisticProbe(91));return;}if(bed==null)return;
+ if(stage==2||stage==3||stage>=6&&stage<=8){if(client.player.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION))throw new AssertionError("Open snow capture must use normal visibility");if(stage==2&&client.player.position().distanceToSqr(bed.getX(),client.player.getY(),bed.getZ())<64)return;if((stage==3||stage==8)&&client.player.getY()<groundY+20)return;if(stage==6||stage==7){double expectedX=-1555940.5,expectedZ=stage==6?-1867993.5:-1868021.5;if(Math.abs(client.player.getX()-expectedX)>2||Math.abs(client.player.getZ()-expectedZ)>2)return;}client.gui.toastManager().clear();if(!client.gui.hud.isHidden())client.gui.hud.toggle();var area=client.levelRenderer.viewArea();if(area==null)return;int loaded=0,rendered=0;for(int dz=-5;dz<=5;dz++)for(int dx=-5;dx<=5;dx++){int cx=((stage>=6?client.player.blockPosition().getX():bed.getX())>>4)+dx,cz=((stage>=6?client.player.blockPosition().getZ():bed.getZ())>>4)+dz;var t=((SparseColumn)level.getChunk(cx,cz)).blockbranch$terrain();if(t==null)continue;loaded++;int x=cx*16+8,z=cz*16+8,y=t.base().top(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE.isOpaque(),x,z,ColumnLimits.MAX_Y-1)-1;var mesh=area.getRenderSectionAt(new BlockPos(x,y,z));if(mesh!=null&&mesh.getSectionMesh().hasRenderableLayers())rendered++;}if(loaded<121||rendered<30){settled=0;return;}if(++settled<100)return;settled=0;saving=true;if(stage==2)groundY=client.player.getY();String file=stage>=6?"meadow-"+(stage==6?"purple-close-":stage==7?"white-close-":"broad-review-")+detailTag+".png":"meadow"+(stage==2?"-ground.png":"-overlook.png");net.minecraft.client.Screenshot.grab(client.gameDirectory,file,client.gameRenderer.mainRenderTarget(),1,msg->client.execute(()->{try{if(!Files.exists(client.gameDirectory.toPath().resolve("screenshots/"+file)))throw new AssertionError("Missing montane Meadow image");saving=false;stage++;if(stage<9)ClientPlayNetworking.send(new RealisticProbe(stage==3?92:stage==4?93:stage==7?96:97));}catch(Throwable e){done=true;Blockbranch.LOGGER.error("MONTANE_MEADOW_CLIENT_FAIL",e);client.stop();}}));return;}
+ if(stage==4){if(!level.getBlockState(bed).isAir()||!level.getBlockState(bed.above()).isAir())return;if(++settled<20)return;settled=0;stage=5;ClientPlayNetworking.send(new RealisticProbe(94));return;}
+ if(stage==9){Files.writeString(Path.of(System.getProperty("blockbranch.realisticClientResult")),"PASS\n");Blockbranch.LOGGER.info("MONTANE_MEADOW_DETAIL_CLIENT_PASS tag={}",detailTag);done=true;client.stop();}
+ if(stage==5){var base=((SparseColumn)level.getChunkAt(bed)).blockbranch$terrain().base();for(int y=0;y<=1;y++)if(level.getBlockState(bed.above(y))!=base.state(bed.getX(),bed.getY()+y,bed.getZ()))return;if(detailTag!=null){stage=6;settled=0;ClientPlayNetworking.send(new RealisticProbe(95));return;}Files.writeString(Path.of(System.getProperty("blockbranch.realisticClientResult")),"PASS\n");Blockbranch.LOGGER.info("MONTANE_MEADOW_CLIENT_RENDER_SUPPORT_RESTORE_PASS {}",bed);done=true;client.stop();}
+ }catch(Throwable e){done=true;Blockbranch.LOGGER.error("MONTANE_MEADOW_CLIENT_FAIL",e);client.stop();}}
+ });}
+ private MontaneMeadowClientSmoke(){}
+}

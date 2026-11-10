@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_pickaxe",
+    "blockbranch:steel_pickaxe",
+    "blockbranch:tungsten_steel_pickaxe",
+    "blockbranch:stainless_steel_pickaxe",
+    "blockbranch:silver_pickaxe",
+    "blockbranch:platinum_alloy_pickaxe",
+    "blockbranch:titanium_alloy_pickaxe",
+    "blockbranch:bismuth_steel_pickaxe"
+  ]
+}

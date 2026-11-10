@@ -1,0 +1,7 @@
+{
+  "parent": "blockbranch:block/composited_ore",
+  "textures": {
+    "base": "minecraft:block/deepslate",
+    "overlay": "blockbranch:block/manganese_ore_overlay"
+  }
+}

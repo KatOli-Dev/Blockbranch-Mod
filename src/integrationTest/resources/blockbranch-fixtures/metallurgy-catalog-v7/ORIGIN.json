@@ -1,0 +1,7 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "d177665b630a2a3033ba29abe705fd522e4baf93",
+  "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+  "sha256": "aaf87ea98548ae11779b1413bbc72f0a96bb335e24e2a39281babb5691b5f2f7",
+  "purpose": "Unmodified catalog7 guard; reject catalog8 equipment names while retaining ore7."
+}

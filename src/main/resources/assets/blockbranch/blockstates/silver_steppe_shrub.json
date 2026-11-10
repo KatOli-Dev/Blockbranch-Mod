@@ -1,0 +1,38 @@
+{
+  "variants": {
+    "clipped=false": [
+      {
+        "model": "blockbranch:block/silver_steppe_shrub"
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub",
+        "y": 90
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub",
+        "y": 180
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub",
+        "y": 270
+      }
+    ],
+    "clipped=true": [
+      {
+        "model": "blockbranch:block/silver_steppe_shrub_clipped"
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub_clipped",
+        "y": 90
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub_clipped",
+        "y": 180
+      },
+      {
+        "model": "blockbranch:block/silver_steppe_shrub_clipped",
+        "y": 270
+      }
+    ]
+  }
+}

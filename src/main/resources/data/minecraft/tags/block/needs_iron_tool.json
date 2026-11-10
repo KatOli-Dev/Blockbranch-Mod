@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:manganese_ore",
+    "blockbranch:deepslate_manganese_ore",
+    "blockbranch:nickel_ore",
+    "blockbranch:deepslate_nickel_ore",
+    "blockbranch:chromium_ore",
+    "blockbranch:deepslate_chromium_ore",
+    "blockbranch:fools_diamond_ore",
+    "blockbranch:deepslate_fools_diamond_ore",
+    "blockbranch:silver_ore",
+    "blockbranch:deepslate_silver_ore",
+    "blockbranch:platinum_block",
+    "blockbranch:platinum_slab",
+    "blockbranch:platinum_stairs",
+    "blockbranch:platinum_alloy_block",
+    "blockbranch:titanium_alloy_block",
+    "blockbranch:magnetite_ore",
+    "blockbranch:deepslate_magnetite_ore",
+    "blockbranch:resonite_ore",
+    "blockbranch:deepslate_resonite_ore",
+    "blockbranch:bismuth_ore",
+    "blockbranch:deepslate_bismuth_ore"
+  ]
+}

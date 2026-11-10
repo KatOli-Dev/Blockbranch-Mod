@@ -1,0 +1,19 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "3885c0a9383ffdf0e6ebbd3feb37cd8aa063159b",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "cd560226c11414f8bba082fce2616a7e5020eb0fc509d77068bba89c2d795b41"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "d5412526204342ea73699d34e61d8524b6e844f103dc9846882b0fee88a5c405"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    }
+  ],
+  "purpose": "Unmodified prior catalog3 and tin-definition3 readers; compare legacy output and reject new zinc/catalog4."
+}

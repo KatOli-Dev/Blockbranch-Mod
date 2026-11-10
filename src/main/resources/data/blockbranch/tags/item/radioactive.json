@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:uranium_ore",
+    "blockbranch:deepslate_uranium_ore",
+    "blockbranch:raw_uranium",
+    "blockbranch:uranium_ingot",
+    "blockbranch:uranium_tip",
+    "blockbranch:uranium_netherite_sword",
+    "blockbranch:uranium_netherite_axe",
+    "blockbranch:uranium_netherite_spear"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "blockbranch:uranium_ore",
+  "result": {
+    "id": "blockbranch:uranium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 100
+}

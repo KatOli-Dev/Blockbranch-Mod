@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_shovel",
+    "blockbranch:steel_shovel",
+    "blockbranch:tungsten_steel_shovel",
+    "blockbranch:stainless_steel_shovel",
+    "blockbranch:silver_shovel",
+    "blockbranch:platinum_alloy_shovel",
+    "blockbranch:titanium_alloy_shovel"
+  ]
+}

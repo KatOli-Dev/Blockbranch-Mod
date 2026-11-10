@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:steel_ingot",
+    "blockbranch:chromium_ingot",
+    "blockbranch:chromium_ingot",
+    "blockbranch:nickel_ingot"
+  ],
+  "result": {
+    "id": "blockbranch:stainless_steel_ingot",
+    "count": 9
+  }
+}

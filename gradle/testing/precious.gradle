@@ -1,0 +1,37 @@
+def foolsReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore9-catalog10')
+def foolsReaderOrigin=new File(foolsReaderRoot,'ORIGIN.json')
+def foolsReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java'].collect{new File(foolsReaderRoot,'blockbranch/'+it)}
+def foolsReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore9-catalog10')
+def foolsReaderCompile=tasks.register('compileLegacyFoolsCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(foolsReaderFiles);inputs.file(foolsReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(foolsReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(foolsReaderOrigin);for(def row:origin.sources){def input=new File(foolsReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore9-catalog10 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldFoolsCatalogClasses='+foolsReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn foolsReaderCompile}
+if(providers.gradleProperty('preciousView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.preciousView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.preciousView=true')}
+}
+def preciousResources=layout.projectDirectory.dir('src/main/resources').asFile
+def preciousBlocks=['silver','platinum'].collectMany{m->[m+'_ore','deepslate_'+m+'_ore',m+'_block',m+'_slab',m+'_stairs']}
+def preciousItems=preciousBlocks+['raw_silver','raw_platinum','silver_ingot','platinum_ingot','silver_pickaxe']
+def preciousRecipes=['silver_pickaxe']+['silver','platinum'].collectMany{m->['block','ingot_from_block','slab','stairs'].collect{m+'_'+it}+['raw_'+m,m+'_ore','deepslate_'+m+'_ore'].collectMany{s->['smelting','blasting'].collect{m+'_ingot_from_'+it+'_'+s}}}
+def preciousSprites=['silver','platinum'].collectMany{m->['block/'+m+'_ore_overlay','block/'+m+'_block','item/raw_'+m,'item/'+m+'_ingot']}+['item/silver_pickaxe']
+tasks.register('verifyPreciousResources'){
+ inputs.files(fileTree(preciousResources){include '**/*silver*','**/*platinum*','**/lang/en_us.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_stone_tool.json','**/tags/block/needs_iron_tool.json','**/tags/block/needs_diamond_tool.json','**/tags/block/slabs.json','**/tags/block/stairs.json','**/tags/item/pickaxes.json'})
+ doLast{
+  def read={String p->new groovy.json.JsonSlurper().parse(new File(preciousResources,p))}
+  for(def s:preciousSprites){def image=javax.imageio.ImageIO.read(new File(preciousResources,'assets/blockbranch/textures/'+s+'.png'));assert image.width==16&&image.height==16:'Keep precious art 16x';if(s.contains('ore_overlay')){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Keep native host transparency'}}
+  for(def m:['silver','platinum'])for(def row:[[m+'_ore','stone'],['deepslate_'+m+'_ore','deepslate']]){def model=read('assets/blockbranch/models/block/'+row[0]+'.json');assert model.parent=='blockbranch:block/composited_ore'&&model.textures.base=='minecraft:block/'+row[1]&&model.textures.overlay=='blockbranch:block/'+m+'_ore_overlay':'Keep native host pack compositing'}
+  def names=read('assets/blockbranch/lang/en_us.json');for(def n:preciousItems){def m=read('assets/blockbranch/items/'+n+'.json').model;assert m.type=='minecraft:model'&&m.model=='blockbranch:item/'+n;assert read('assets/blockbranch/models/item/'+n+'.json');assert names[(n in preciousBlocks?'block.':'item.')+'blockbranch.'+n]}
+  for(def n:preciousBlocks){assert read('assets/blockbranch/blockstates/'+n+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+n+'.json').type=='minecraft:block'}
+  for(def row:[['mineable/pickaxe',preciousBlocks],['needs_stone_tool',['silver_block','silver_slab','silver_stairs']],['needs_iron_tool',['silver_ore','deepslate_silver_ore','platinum_block','platinum_slab','platinum_stairs']],['needs_diamond_tool',['platinum_ore','deepslate_platinum_ore']],['slabs',['silver_slab','platinum_slab']],['stairs',['silver_stairs','platinum_stairs']]]){def t=read('data/minecraft/tags/block/'+row[0]+'.json');assert t.replace==false&&row[1].every{t.values.contains('blockbranch:'+it)}}
+  def picks=read('data/minecraft/tags/item/pickaxes.json');assert picks.replace==false&&picks.values.contains('blockbranch:silver_pickaxe');assert read('data/blockbranch/tags/item/silver_repair_materials.json').values==['blockbranch:silver_ingot']
+  for(def m:['silver','platinum'])assert read('assets/blockbranch/blockstates/'+m+'_slab.json').variants['type=double'].model=='blockbranch:block/'+m+'_block'
+  for(def n:preciousRecipes){def recipe=read('data/blockbranch/recipe/'+n+'.json');assert recipe.result.id.startsWith('blockbranch:');def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&unlock.rewards.recipes==['blockbranch:'+n];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  println 'PASS precious foundation: fifteen items, nine original 16x sprites, native host/shape models and twenty-one recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyPreciousResources')}

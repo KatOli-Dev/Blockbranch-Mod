@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "blockbranch:item/fools_diamond_dust"
+  }
+}

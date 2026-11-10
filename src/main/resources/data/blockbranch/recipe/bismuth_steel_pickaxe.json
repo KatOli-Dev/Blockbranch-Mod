@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": "blockbranch:steel_pickaxe",
+  "addition": "blockbranch:bismuth_ingot",
+  "result": {
+    "id": "blockbranch:bismuth_steel_pickaxe"
+  }
+}

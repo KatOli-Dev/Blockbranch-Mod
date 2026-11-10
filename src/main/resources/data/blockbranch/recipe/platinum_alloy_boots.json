@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "B B",
+    "B B"
+  ],
+  "key": {
+    "B": "blockbranch:platinum_alloy_ingot"
+  },
+  "result": {
+    "id": "blockbranch:platinum_alloy_boots"
+  }
+}

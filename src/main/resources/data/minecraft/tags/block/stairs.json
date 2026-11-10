@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:brass_stairs",
+    "blockbranch:stainless_steel_stairs",
+    "blockbranch:lead_stairs",
+    "blockbranch:lead_alloy_stairs",
+    "blockbranch:silver_stairs",
+    "blockbranch:platinum_stairs"
+  ]
+}

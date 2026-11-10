@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "blockbranch:item/steel_pickaxe",
+    "layer1": "blockbranch:item/bismuth_pickaxe_inlay"
+  }
+}

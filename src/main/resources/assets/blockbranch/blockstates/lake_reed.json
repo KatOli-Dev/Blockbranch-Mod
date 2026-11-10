@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "tip=false": {
+      "model": "blockbranch:block/lake_reed_stem"
+    },
+    "tip=true": {
+      "model": "blockbranch:block/lake_reed_tip"
+    }
+  }
+}

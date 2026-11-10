@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_chestplate",
+    "blockbranch:steel_chestplate",
+    "blockbranch:stainless_steel_chestplate",
+    "blockbranch:silver_chestplate",
+    "blockbranch:platinum_alloy_chestplate",
+    "blockbranch:titanium_alloy_chestplate"
+  ]
+}

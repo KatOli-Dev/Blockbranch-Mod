@@ -1,0 +1,202 @@
+[
+  {
+    "view": 8,
+    "label": "native-front-entry",
+    "camera": [
+      -17996,
+      150,
+      -439196
+    ],
+    "aim": [
+      -18012,
+      153,
+      -439196
+    ],
+    "nightVision": false,
+    "cameraRelativeToNativeCoreMin": [
+      83,
+      2,
+      26
+    ],
+    "aimRelativeToNativeCoreMin": [
+      67,
+      5,
+      26
+    ]
+  },
+  {
+    "view": 9,
+    "label": "whole-native-roof",
+    "camera": [
+      -17984,
+      188,
+      -439152
+    ],
+    "aim": [
+      -18040,
+      162,
+      -439192
+    ],
+    "nightVision": false,
+    "cameraRelativeToNativeCoreMin": [
+      95,
+      40,
+      70
+    ],
+    "aimRelativeToNativeCoreMin": [
+      39,
+      14,
+      30
+    ]
+  },
+  {
+    "view": 10,
+    "label": "native-ground-facade",
+    "camera": [
+      -18084,
+      149,
+      -439205
+    ],
+    "aim": [
+      -18076,
+      152,
+      -439194
+    ],
+    "nightVision": false,
+    "cameraRelativeToNativeCoreMin": [
+      -5,
+      1,
+      17
+    ],
+    "aimRelativeToNativeCoreMin": [
+      3,
+      4,
+      28
+    ]
+  },
+  {
+    "view": 11,
+    "label": "native-entrance-hall-stair",
+    "camera": [
+      -18009,
+      149,
+      -439197
+    ],
+    "aim": [
+      -18020,
+      154,
+      -439196
+    ],
+    "nightVision": false,
+    "cameraRelativeToNativeCoreMin": [
+      70,
+      1,
+      25
+    ],
+    "aimRelativeToNativeCoreMin": [
+      59,
+      6,
+      26
+    ]
+  },
+  {
+    "view": 12,
+    "label": "native-ground-allay-jail",
+    "camera": [
+      -18035,
+      149,
+      -439191
+    ],
+    "aim": [
+      -18028,
+      150,
+      -439199
+    ],
+    "nightVision": true,
+    "cameraRelativeToNativeCoreMin": [
+      44,
+      1,
+      31
+    ],
+    "aimRelativeToNativeCoreMin": [
+      51,
+      2,
+      23
+    ]
+  },
+  {
+    "view": 13,
+    "label": "native-upper-stair",
+    "camera": [
+      -18036,
+      157,
+      -439171
+    ],
+    "aim": [
+      -18042,
+      166,
+      -439168
+    ],
+    "nightVision": true,
+    "cameraRelativeToNativeCoreMin": [
+      43,
+      9,
+      51
+    ],
+    "aimRelativeToNativeCoreMin": [
+      37,
+      18,
+      54
+    ]
+  },
+  {
+    "view": 14,
+    "label": "native-upper-occupied-meeting-room",
+    "camera": [
+      -18074,
+      168,
+      -439191
+    ],
+    "aim": [
+      -18067,
+      169,
+      -439198
+    ],
+    "nightVision": true,
+    "cameraRelativeToNativeCoreMin": [
+      5,
+      20,
+      31
+    ],
+    "aimRelativeToNativeCoreMin": [
+      12,
+      21,
+      24
+    ]
+  },
+  {
+    "view": 15,
+    "label": "inherited-workshop-interior",
+    "camera": [
+      -18095,
+      150,
+      -439196
+    ],
+    "aim": [
+      -18098,
+      150,
+      -439206
+    ],
+    "nightVision": true,
+    "cameraRelativeToNativeCoreMin": [
+      -16,
+      2,
+      26
+    ],
+    "aimRelativeToNativeCoreMin": [
+      -19,
+      2,
+      16
+    ]
+  }
+]

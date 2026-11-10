@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "blockbranch:block/lead_alloy_block"
+    }
+  }
+}

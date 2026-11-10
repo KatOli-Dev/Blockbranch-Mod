@@ -1,0 +1,10 @@
+package blockbranch.realistic;
+import java.nio.file.*;import java.util.*;
+public final class WetlandHutSurvey {
+ public static void register(){net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server->{try{
+  var g=(RealisticGenerator)server.overworld().getChunkSource().getGenerator();var d=g.drainage(server.overworld().getChunkSource().randomState());var c=new ClimateField(server.overworld().getSeed());var rows=new ArrayList<Object>();int eligible=0;
+  for(int i=0;i<d.size();i++)if(d.parent(i)==-1&&d.closed(i)&&d.waterLevel(i)>64&&d.waterLevel(i)<=664&&Swamp.climateSuitable(c.sample(d.nodeX(i),d.nodeZ(i),d::sample))){rows.add(Map.of("lake",i,"x",d.nodeX(i),"z",d.nodeZ(i),"water",d.waterLevel(i)));eligible++;}
+  var bean=(com.sun.management.ThreadMXBean)java.lang.management.ManagementFactory.getThreadMXBean();var recording=new jdk.jfr.Recording();recording.enable("jdk.ExecutionSample").withPeriod(java.time.Duration.ofMillis(10));recording.enable("jdk.ObjectAllocationSample").withStackTrace().with("throttle","1000/s");recording.start();long thread=Thread.currentThread().threadId(),allocated=bean.getThreadAllocatedBytes(thread);long started=System.nanoTime();var catalog=WetlandHuts.build(server.overworld().getSeed(),g,server.overworld().getChunkSource().randomState());long buildNanos=System.nanoTime()-started,buildAllocated=bean.getThreadAllocatedBytes(thread)-allocated;recording.stop();recording.dump(Path.of("cold-planner.jfr"));recording.close();Files.writeString(Path.of("plans.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(catalog.plans()));Files.writeString(Path.of("cost.json"),"{\"nanos\":"+buildNanos+",\"allocatedBytes\":"+buildAllocated+",\"retainedBytes\":"+catalog.retainedBytes()+"}");
+  Files.writeString(Path.of("survey.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(rows));Files.writeString(Path.of("result.txt"),"PASS "+eligible);
+ }catch(Throwable e){blockbranch.Blockbranch.LOGGER.error("WETLAND_SURVEY_FAIL",e);}finally{server.halt(false);}});}
+}

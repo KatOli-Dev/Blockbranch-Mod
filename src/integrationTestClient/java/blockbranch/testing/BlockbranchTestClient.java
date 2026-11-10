@@ -1,0 +1,61 @@
+package blockbranch.testing;
+import net.fabricmc.api.ClientModInitializer;
+import blockbranch.client.wildlife.*;
+public final class BlockbranchTestClient implements ClientModInitializer {
+    @Override public void onInitializeClient() {
+        if(Boolean.getBoolean("blockbranch.forestGrasslandVisual"))blockbranch.client.realistic.ForestGrasslandVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.redwoodVisual"))blockbranch.client.realistic.RedwoodForestVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.horizonVisual"))blockbranch.client.horizon.HorizonVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.horizonLifecycle"))blockbranch.client.horizon.HorizonLifecycleReview.register();
+        if(Boolean.getBoolean("blockbranch.horizonReconnect"))blockbranch.client.horizon.HorizonReconnectReview.register();
+        if(Boolean.getBoolean("blockbranch.metallurgyView"))blockbranch.client.metallurgy.MetallurgyViewClient.register();
+        if(Boolean.getBoolean("blockbranch.daylightSync"))blockbranch.client.time.DaylightSyncClient.register();
+        if(Boolean.getBoolean("blockbranch.mansionReplacement"))blockbranch.client.realistic.MansionReplacementReview.register();
+        if(Boolean.getBoolean("blockbranch.cryptReplacement"))blockbranch.client.realistic.CryptReplacementReview.register();
+        if(Boolean.getBoolean("blockbranch.sanctuaryCore"))blockbranch.client.realistic.SanctuaryCoreReview.register();
+        if(Boolean.getBoolean("blockbranch.cryptVisual"))blockbranch.client.realistic.CryptVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.sanctuaryVisual"))blockbranch.client.realistic.SanctuaryVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.pyramidReplacement"))blockbranch.client.realistic.PyramidReplacementReview.register();
+        if(Boolean.getBoolean("blockbranch.pyramidVisual"))blockbranch.client.realistic.PyramidVisualReview.register();
+
+        if(Boolean.getBoolean("blockbranch.mansionPerimeterVisual"))blockbranch.client.realistic.MansionPerimeterVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.mansionVisual"))blockbranch.client.realistic.MansionVisualReview.register();
+
+        if(Boolean.getBoolean("blockbranch.jungleReplacement"))blockbranch.client.realistic.JungleReplacementReview.register();
+        if(Boolean.getBoolean("blockbranch.structureVisual"))blockbranch.client.realistic.StructureVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.initialLoading"))blockbranch.client.qa.InitialLoadingAudit.register();
+        if(Boolean.getBoolean("blockbranch.reimaginedRemainingView"))blockbranch.client.realistic.ReimaginedRemainingView.register();
+        if(Boolean.getBoolean("blockbranch.reimaginedView"))blockbranch.client.realistic.ReimaginedView.register();
+        if(Boolean.getBoolean("blockbranch.overworldView"))blockbranch.client.realistic.OverworldCoverageView.register();
+        if(Boolean.getBoolean("blockbranch.nativeOrdinaryView"))blockbranch.client.realistic.NativeOrdinaryView.register();
+        if(Boolean.getBoolean("blockbranch.nativeOrdinaryTravel"))blockbranch.client.realistic.NativeOrdinaryTravel.register();
+        if(blockbranch.realistic.HutExplorationProbe.ON)blockbranch.client.realistic.HutExplorationClient.register();
+        if(blockbranch.realistic.DeferredPreviewQualification.ON)blockbranch.client.realistic.DeferredPreviewClient.register();
+        if(blockbranch.realistic.ShipwreckConnectedProbe.ON)blockbranch.client.realistic.ShipwreckConnectedClient.register();
+        if(Boolean.getBoolean("blockbranch.coastalMatched"))blockbranch.client.realistic.CoastalMatchedClient.register();
+        blockbranch.client.realistic.RealisticTestClientRuntime.initialize();
+        if(Boolean.getBoolean("blockbranch.nativeBodiesView"))blockbranch.client.realistic.NativeHutIglooView.register();
+        if(Boolean.getBoolean("blockbranch.deepWarmRuinView"))blockbranch.client.realistic.DeepWarmRuinView.register();
+        if(Boolean.getBoolean("blockbranch.deepColdRuinView"))blockbranch.client.realistic.DeepColdRuinView.register();
+        if(Boolean.getBoolean("blockbranch.coldRuinView"))blockbranch.client.realistic.ColdRuinView.register();
+        if(Boolean.getBoolean("blockbranch.warmRuinView"))blockbranch.client.realistic.WarmRuinView.register();
+        if(Boolean.getBoolean("blockbranch.snowShelterView"))blockbranch.client.realistic.SnowShelterView.register();
+        if(Boolean.getBoolean("blockbranch.wetlandHutView"))blockbranch.client.realistic.WetlandHutView.register();
+        if(Boolean.getBoolean("blockbranch.shipwreckView"))blockbranch.client.realistic.ShipwreckView.register();
+        if(blockbranch.realistic.TreasureConnectedProbe.ON)blockbranch.client.realistic.TreasureConnectedClient.register();
+        if(Boolean.getBoolean("blockbranch.treasureView"))blockbranch.client.realistic.TreasureView.register();
+        if(Boolean.getBoolean("blockbranch.waygateTravel"))blockbranch.client.realistic.WaygateTravel.register();
+        if(Boolean.getBoolean("blockbranch.waygateView"))blockbranch.client.realistic.WaygateView.register();
+        if(Boolean.getBoolean("blockbranch.structureView"))blockbranch.client.realistic.StructureView.register();
+        if(Boolean.getBoolean("blockbranch.columnProtocolAudit"))blockbranch.client.cubic.ColumnProtocolAudit.register();
+        if(Boolean.getBoolean("blockbranch.ringWorld"))blockbranch.client.realistic.RingWorldSmoke.register();
+        if(Boolean.getBoolean("blockbranch.ringTransition"))blockbranch.client.cubic.RingTransitionSmoke.register();
+        if(Boolean.getBoolean("blockbranch.integratedWalking"))blockbranch.client.qa.IntegratedWalkingAudit.register();
+        blockbranch.client.cubic.ColumnTestClient.initialize();
+        if(Boolean.getBoolean("blockbranch.undergroundAutomaticSmoke"))blockbranch.client.realistic.UndergroundAutomaticRenderSmoke.register();
+        if(Boolean.getBoolean("blockbranch.caveApproachClientSmoke"))blockbranch.client.realistic.CaveApproachClientSmoke.register();
+        if(Boolean.getBoolean("blockbranch.undergroundClientSmoke"))blockbranch.client.realistic.UndergroundClientSmoke.register();
+        if (Boolean.getBoolean("blockbranch.terrainAudit")) blockbranch.client.qa.TerrainLoadingClient.register();
+        blockbranch.client.wildlife.WildlifeTestClient.initialize();
+    }
+}

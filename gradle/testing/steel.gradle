@@ -1,0 +1,71 @@
+// Fast resource admission checks, before the optional native/gameplay fixtures.
+def steelResources=layout.projectDirectory.dir('src/main/resources').asFile
+def steelItems=['manganese_ore','deepslate_manganese_ore','raw_manganese','manganese_ingot','steel_ingot','steel_block','steel_pickaxe','steel_sword','steel_axe','steel_shovel','steel_hoe','steel_helmet','steel_chestplate','steel_leggings','steel_boots']
+def steelTextures=['block/manganese_ore_overlay','block/steel_block','item/raw_manganese','item/manganese_ingot','item/steel_ingot','item/steel_pickaxe','item/steel_sword','item/steel_axe','item/steel_shovel','item/steel_hoe','item/steel_helmet','item/steel_chestplate','item/steel_leggings','item/steel_boots']
+def steelRecipeNames=['steel_ingot','steel_block','steel_ingot_from_block','steel_pickaxe','steel_sword','steel_axe','steel_shovel','steel_hoe','steel_helmet','steel_chestplate','steel_leggings','steel_boots']+['raw_manganese','manganese_ore','deepslate_manganese_ore'].collectMany{material->['smelting','blasting'].collect{method->'manganese_ingot_from_'+method+'_'+material}}
+def steelInputs=steelItems.collectMany{name->['items/'+name+'.json','models/item/'+name+'.json'].collect{new File(steelResources,'assets/blockbranch/'+it)}}+
+ steelTextures.collect{new File(steelResources,'assets/blockbranch/textures/'+it+'.png')}+
+ steelRecipeNames.collectMany{name->[new File(steelResources,'data/blockbranch/recipe/'+name+'.json'),new File(steelResources,'data/blockbranch/advancement/recipes/metallurgy/'+name+'.json')]}+
+ ['data/minecraft/tags/item/swords.json','data/minecraft/tags/item/axes.json','data/minecraft/tags/item/shovels.json','data/minecraft/tags/item/hoes.json','data/minecraft/tags/item/pickaxes.json','data/minecraft/tags/item/head_armor.json','data/minecraft/tags/item/chest_armor.json','data/minecraft/tags/item/leg_armor.json','data/minecraft/tags/item/foot_armor.json','assets/blockbranch/equipment/steel.json','assets/blockbranch/textures/entity/equipment/humanoid/steel.png','assets/blockbranch/textures/entity/equipment/humanoid_leggings/steel.png','assets/blockbranch/textures/entity/equipment/humanoid_baby/steel.png','assets/blockbranch/lang/en_us.json','assets/blockbranch/models/block/composited_ore.json','assets/blockbranch/models/block/manganese_ore.json','assets/blockbranch/models/block/deepslate_manganese_ore.json'].collect{new File(steelResources,it)}
+tasks.register('verifySteelResources'){
+ inputs.files(steelInputs);inputs.files(['mineable/pickaxe','needs_iron_tool','needs_stone_tool'].collect{new File(steelResources,'data/minecraft/tags/block/'+it+'.json')});inputs.file(new File(steelResources,'data/blockbranch/tags/item/steel_repair_materials.json'))
+ inputs.files(fileTree("src/main/resources/assets/blockbranch/models/item"){include "steel_*_trim.json"})
+ doLast{
+  def json=new groovy.json.JsonSlurper();def read={String name->json.parse(new File(steelResources,name))}
+  for(def texture:steelTextures){
+   def image=javax.imageio.ImageIO.read(new File(steelResources,'assets/blockbranch/textures/'+texture+'.png'))
+   assert image!=null&&image.width==16&&image.height==16:'Steel art must remain 16x: '+texture
+   if(texture=='block/manganese_ore_overlay'){
+    int transparent=0,opaque=0
+    for(int y=0;y<16;y++)for(int x=0;x<16;x++){int alpha=image.getRGB(x,y)>>>24;if(alpha==0)transparent++;if(alpha==255)opaque++}
+    assert transparent>0&&opaque>0:'Ore overlay must reveal its resource-pack host'
+   }
+  }
+  for(def row:[['manganese_ore','stone'],['deepslate_manganese_ore','deepslate']]){
+   def model=read('assets/blockbranch/models/block/'+row[0]+'.json')
+   assert model.parent=='blockbranch:block/composited_ore'&&model.textures.base=='minecraft:block/'+row[1]&&model.textures.overlay=='blockbranch:block/manganese_ore_overlay':'Keep ore/vanilla-host compositing'
+  }
+  for(def row:[['mineable/pickaxe',['manganese_ore','deepslate_manganese_ore','steel_block']],['needs_iron_tool',['manganese_ore','deepslate_manganese_ore']],['needs_stone_tool',['steel_block']]]){def tag=read('data/minecraft/tags/block/'+row[0]+'.json');assert tag.replace==false&&row[1].every{tag.values.contains('blockbranch:'+it)}:'Native steel/manganese harvest gates'}
+  assert read('data/blockbranch/tags/item/steel_repair_materials.json').values==['blockbranch:steel_ingot']:'Steel repairs with its own alloy'
+  def names=read('assets/blockbranch/lang/en_us.json')
+  for(def name:steelItems){
+   def item=read('assets/blockbranch/items/'+name+'.json');def armor=name in ['steel_helmet','steel_chestplate','steel_leggings','steel_boots'];assert armor?(item.model.type=='minecraft:select'&&item.model.property=='minecraft:trim_material'&&item.model.fallback.model=='blockbranch:item/'+name):(item.model.type=='minecraft:model'&&item.model.model=='blockbranch:item/'+name):'Modern item model missing: '+name
+   assert names[(name in ['manganese_ore','deepslate_manganese_ore','steel_block']?'block.':'item.')+'blockbranch.'+name]:'Missing item name: '+name
+  }
+  for(def row:[['sword','swords'],['axe','axes'],['shovel','shovels'],['hoe','hoes'],['pickaxe','pickaxes']]){
+   def tag=read('data/minecraft/tags/item/'+row[1]+'.json');assert tag.replace==false&&tag.values.contains('blockbranch:steel_'+row[0]):'Preserve native tool/enchantment tags: '+row[0]
+  }
+  for(def row:[['helmet','head_armor'],['chestplate','chest_armor'],['leggings','leg_armor'],['boots','foot_armor']]){
+   def tag=read('data/minecraft/tags/item/'+row[1]+'.json');assert tag.replace==false&&tag.values.contains('blockbranch:steel_'+row[0]):'Keep native armor/enchant/trim tags'
+   def definition=read('assets/blockbranch/items/steel_'+row[0]+'.json').model
+   assert definition.cases.size()==11:'Support all pinned native trim materials'
+   for(def entry:definition.cases){
+    def key=entry.when.substring('minecraft:'.length());def model=read('assets/blockbranch/models/item/steel_'+row[0]+'_'+key+'_trim.json')
+    assert entry.model.model=='blockbranch:item/steel_'+row[0]+'_'+key+'_trim'&&model.textures.layer0=='blockbranch:item/steel_'+row[0]&&model.textures.layer1=='minecraft:trims/items/'+row[0]+'_trim_'+key:'Keep resource-pack trim compositing'
+   }
+  }
+  def layers=read('assets/blockbranch/equipment/steel.json').layers
+  for(def layer:['humanoid','humanoid_leggings','humanoid_baby']){
+   assert layers[layer][0].texture=='blockbranch:steel'
+   def image=javax.imageio.ImageIO.read(new File(steelResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/steel.png'))
+   assert image.width==64&&image.height==(layer=='humanoid_baby'?64:32):'Use native armor UV dimensions'
+   int solid=0,clear=0;for(int y=0;y<image.height;y++)for(int x=0;x<image.width;x++){int alpha=image.getRGB(x,y)>>>24;if(alpha==255)solid++;if(alpha==0)clear++}
+   assert solid>0&&clear>0:'Armor UV atlas must contain plates and open skin regions'
+  }
+  for(def name:steelRecipeNames){
+   def recipe=read('data/blockbranch/recipe/'+name+'.json');assert recipe.result.id.startsWith('blockbranch:'):'Unexpected steel result'
+   def advancement=read('data/blockbranch/advancement/recipes/metallurgy/'+name+'.json')
+   assert advancement.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+name:'Use the pinned native recipe-unlock schema'
+   assert advancement.requirements.flatten().toSet()==advancement.criteria.keySet():'Recipe completion requirements must match criteria'
+   assert advancement.rewards.recipes==['blockbranch:'+name]:'Recipe book reward mismatch'
+   if(recipe.ingredient!=null)assert advancement.criteria.has_material.conditions.items[0].items==recipe.ingredient:'Ore/raw ingredient must unlock its own processing recipe'
+  }
+  println 'PASS steel: 15 registered item resources, 14 original 16x sprites plus native armor atlases, vanilla-host compositing and 18 recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifySteelResources')}
+
+if(providers.gradleProperty('steelView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.steelView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.steelView=true')}
+}

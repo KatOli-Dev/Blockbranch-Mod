@@ -1,0 +1,1512 @@
+// Compatibility alias; analytic checks continue to execute through their existing check* JavaExec tasks.
+tasks.register('realisticCheckClasses') { dependsOn tasks.named('testClasses') }
+tasks.register('compileRealisticCheckJava') { dependsOn tasks.named('compileTestJava') }
+tasks.register('processRealisticCheckResources') { dependsOn tasks.named('processTestResources') }
+sourceSets.test {
+    java.setSrcDirs(['src/test/java'])
+    compileClasspath = sourceSets.main.output + sourceSets.integrationTest.output
+    // TerrainRelief uses the Minecraft-provided primitive-map library in analytic checks.
+    runtimeClasspath = output + compileClasspath + sourceSets.main.compileClasspath.filter { it.name.startsWith("fastutil-") }
+}
+tasks.register('checkRealisticShape', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.TerrainShapeCheck'
+}
+tasks.register('checkRealisticDrainage', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.DrainageCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkRealisticShape'), tasks.named('checkRealisticDrainage') }
+tasks.register('checkAlpineScree', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.AlpineScreeCheck'
+}
+tasks.register('checkReedbed', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.ReedbedCheck'
+    maxHeapSize = '512m'
+}
+tasks.register('checkRiverMargin', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.RiverMarginCheck'
+    maxHeapSize = '512m'
+}
+tasks.register('checkSandyShore', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.SandyShoreCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkAlpineScree'), tasks.named('checkReedbed'), tasks.named('checkRiverMargin'), tasks.named('checkSandyShore') }
+tasks.register('checkLowlandMeadow', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.LowlandMeadowCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkLowlandMeadow') }
+tasks.register('checkClimateField', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.ClimateFieldCheck'
+}
+tasks.named('check') { dependsOn tasks.named('checkClimateField') }
+tasks.register('checkWoodland', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.WoodlandCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkWoodland') }
+tasks.register('checkDrySteppe', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.DrySteppeCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkDrySteppe') }
+tasks.register('checkBorealWoodland', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.BorealWoodlandCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkBorealWoodland') }
+tasks.register('checkWarmWoodland', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.WarmWoodlandCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkWarmWoodland') }
+tasks.register('checkColdSteppe', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.ColdSteppeCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkColdSteppe')}
+tasks.register('checkGravelDesert', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.GravelDesertCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkGravelDesert')}
+tasks.register('checkGravelRelief',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.GravelReliefCheck'
+    maxHeapSize='2g'
+    if(providers.gradleProperty('gravelReliefPriorReader').isPresent())systemProperty('blockbranch.gravelReliefPriorReader',layout.projectDirectory.file(providers.gradleProperty('gravelReliefPriorReader').get()).asFile.absolutePath)
+}
+tasks.named('check'){dependsOn tasks.named('checkGravelRelief')}
+tasks.register('checkSlopeCorrection', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SlopeCorrectionCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSlopeCorrection')}
+tasks.register('checkGroundFoliage', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.GroundFoliageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkGroundFoliage')}
+tasks.register('checkWoodlandFoliage', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.WoodlandFoliageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkWoodlandFoliage')}
+tasks.register('checkHumidWoodland', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.HumidWoodlandCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkHumidWoodland')}
+tasks.register('checkHumidCoverage', JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.HumidCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.register('checkColdTundra',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.ColdTundraCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkColdTundra')}
+tasks.register('checkTundraCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.TundraCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.register('checkLakeSediment',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.LakeSedimentCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkLakeSediment')}
+tasks.register('checkLakeCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.LakeCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.register('checkBiomeCoverage', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.BiomeCoverageCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkHumidCoverage'),tasks.named('checkTundraCoverage'),tasks.named('checkLakeCoverage')}
+
+
+
+
+def smokeSeed=providers.gradleProperty('realisticSmokeSeed').getOrElse('424242')
+def smokeDirectory = layout.projectDirectory.dir(providers.gradleProperty('realisticSmokeDirectory').getOrElse('build/deep-ocean-terrain-smoke'))
+loom.runs.register('realisticSmoke') {
+    server()
+    name('Realistic terrain regression')
+    runDir(smokeDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.realisticSmoke=true')
+    if(providers.gradleProperty('mapCommit').isPresent())vmArg('-Dblockbranch.mapCommit='+providers.gradleProperty('mapCommit').get())
+    if(providers.gradleProperty('focusHabitat').isPresent())vmArg('-Dblockbranch.focusHabitat='+providers.gradleProperty('focusHabitat').get())
+    if(providers.gradleProperty('caveBiomeTiming').isPresent())vmArg('-Dblockbranch.caveBiomeTiming=true')
+    if(providers.gradleProperty('formationTiming').isPresent())vmArg('-Dblockbranch.formationTiming=true')
+    if(providers.gradleProperty('litCaveTiming').isPresent())vmArg('-Dblockbranch.litCaveTiming=true')
+    if(providers.gradleProperty('litCaveSectionsOnly').isPresent())vmArg('-Dblockbranch.litCaveSectionsOnly=true')
+    if(providers.gradleProperty('litCaveRequireMoss').isPresent())vmArg('-Dblockbranch.litCaveRequireMoss=true')
+    vmArg('-Dblockbranch.realisticSmokeResult=' + smokeDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+def prepareSmoke = tasks.register('prepareRealisticSmoke') {
+    doLast {
+        def directory = smokeDirectory.asFile
+        directory.mkdirs()
+        directory.toPath().resolve('result.txt').toFile().delete()
+        directory.toPath().resolve('eula.txt').toFile().text = 'eula=true\n'
+        def properties = directory.toPath().resolve('server.properties').toFile()
+        if (!properties.exists()) properties.text = '''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25580
+view-distance=2
+simulation-distance=2
+level-name=realistic
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=2400000
+'''.replace('level-seed=424242','level-seed='+smokeSeed)
+        // The exhaustive habitat checks run in one startup callback, not normal gameplay ticks.
+        // The full terrain comparison plus habitat tour exceeded20min. Keep a bounded40min
+        // fixture-only budget; normal world/server properties are never touched.
+        properties.text = properties.text.replaceAll('(?m)^max-tick-time=(120000|300000|600000|900000|1200000)$', 'max-tick-time=2400000')
+    }
+}
+tasks.named('runRealisticSmoke') {
+    dependsOn prepareSmoke
+    doLast {
+        def result = smokeDirectory.file('result.txt').asFile
+        if (!result.exists() || result.text.trim() != 'PASS')
+            throw new GradleException('Realistic terrain checks failed; inspect ' + smokeDirectory.asFile + '/logs/latest.log')
+    }
+}
+
+def memoryDirectory = layout.projectDirectory.dir(providers.gradleProperty('realisticMemoryDirectory').getOrElse('build/deep-ocean-memory'))
+loom.runs.register('realisticMemory') {
+    server()
+    name('Tall terrain save/memory regression')
+    runDir(memoryDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.realisticMemorySmoke=true')
+    if(providers.gradleProperty('frozenRiverMemory').isPresent())vmArg('-Dblockbranch.frozenRiverMemory=true')
+    if(providers.gradleProperty('groveMemory').isPresent())vmArg('-Dblockbranch.groveMemory=true')
+    if(providers.gradleProperty('openSnowMemory').isPresent())vmArg('-Dblockbranch.openSnowMemory=true')
+    if(providers.gradleProperty('oceanMemory').isPresent())vmArg('-Dblockbranch.oceanMemory=true')
+    if(providers.gradleProperty('snowyTaigaMemory').isPresent())vmArg('-Dblockbranch.snowyTaigaMemory=true')
+    if(providers.gradleProperty('taigaMemory').isPresent())vmArg('-Dblockbranch.taigaMemory=true')
+    if(providers.gradleProperty('mangroveMemory').isPresent())vmArg('-Dblockbranch.mangroveMemory=true')
+    if(providers.gradleProperty('swampMemory').isPresent())vmArg('-Dblockbranch.swampMemory=true')
+    if(providers.gradleProperty('birchForestMemory').isPresent())vmArg('-Dblockbranch.birchForestMemory=true')
+    if(providers.gradleProperty('sunflowerMemory').isPresent())vmArg('-Dblockbranch.sunflowerMemory=true')
+    if(providers.gradleProperty('desertMemory').isPresent())vmArg('-Dblockbranch.desertMemory=true')
+    if(providers.gradleProperty('jungleMemory').isPresent())vmArg('-Dblockbranch.jungleMemory=true')
+    if(providers.gradleProperty('savannaMemory').isPresent())vmArg('-Dblockbranch.savannaMemory=true')
+    vmArg('-Dblockbranch.reedPriorProfileJar='+layout.projectDirectory.file(providers.gradleProperty('reedPriorProfileJar').getOrElse('build/reed-evidence/prior-production-577f4ca.jar')).asFile.absolutePath)
+    if(providers.gradleProperty('gravelReliefPriorReader').isPresent())vmArg('-Dblockbranch.gravelReliefPriorReader='+layout.projectDirectory.file(providers.gradleProperty('gravelReliefPriorReader').get()).asFile.absolutePath)
+    ['transitionLegacyOnly','forestGrasslandOnly','meadowForbFreshOnly','meadowForbSavedOnly','meadowForbPrepareSavedOnly','borealSurfaceOnly','borealClearOnly','tundraFloorFreshOnly','tundraFloorSavedOnly','tundraFloorPrepareSavedOnly','gravelDesertFreshOnly','gravelDesertSavedOnly','gravelDesertPrepareSavedOnly','flowerColorRequireAllSpecies','flowerColorSavedOnly','flowerColorPrepareSavedOnly','flowerColorFreshOnly','flowerColorExpectFreshDifferences','reedCompatibilityOnly','reedSavedOnly','reedPrepareSavedOnly','drySteppeCompatibilityOnly','drySteppeSavedOnly','drySteppePrepareSavedOnly','drySteppeExpectFreshDifferences'].each { flag ->
+        if(providers.gradleProperty(flag).isPresent())vmArg('-Dblockbranch.'+flag+'=true')
+    }
+    if(providers.gradleProperty('transitionPriorJar').isPresent())vmArg('-Dblockbranch.transitionPriorJar='+providers.gradleProperty('transitionPriorJar').get())
+    if(providers.gradleProperty('borealPriorProfileJar').isPresent())vmArg('-Dblockbranch.borealPriorProfileJar='+layout.projectDirectory.file(providers.gradleProperty('borealPriorProfileJar').get()).asFile.absolutePath)
+    vmArg('-Dblockbranch.memorySmokeResult=' + memoryDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+def prepareMemory = tasks.register('prepareRealisticMemory') {
+    doLast {
+        def directory = memoryDirectory.asFile
+        directory.mkdirs()
+        directory.toPath().resolve('result.txt').toFile().delete()
+        directory.toPath().resolve('eula.txt').toFile().text = 'eula=true\n'
+        def properties = directory.toPath().resolve('server.properties').toFile()
+        if (!properties.exists()) properties.text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=25581
+view-distance=16
+simulation-distance=2
+level-name=memory
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=-1
+'''
+    }
+}
+tasks.named('runRealisticMemory') {
+    dependsOn prepareMemory
+    doLast {
+        def result = memoryDirectory.file('result.txt').asFile
+        if (!result.exists() || result.text.trim() != 'PASS')
+            throw new GradleException('Tall terrain memory/save checks failed; inspect ' + memoryDirectory.asFile + '/logs/latest.log')
+    }
+}
+
+def clientDirectory = layout.projectDirectory.dir(providers.gradleProperty('realisticClientDirectory').getOrElse('build/deep-ocean-client'))
+def clientServerDirectory = layout.projectDirectory.dir(providers.gradleProperty('realisticClientServerDirectory').getOrElse('build/deep-ocean-client-server'))
+loom.runs.register('realisticClientServer') {
+    server()
+    runDir(clientServerDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.realisticClientFixture=true')
+    if(providers.gradleProperty('meadowForbClientOnly').isPresent())vmArg('-Dblockbranch.meadowForbClientOnly=true')
+    if(providers.gradleProperty('meadowForbCapturePoint').isPresent())vmArg('-Dblockbranch.meadowForbCapturePoint='+providers.gradleProperty('meadowForbCapturePoint').get())
+    if(providers.gradleProperty('tundraFloorClientOnly').isPresent())vmArg('-Dblockbranch.tundraFloorClientOnly=true')
+    if(providers.gradleProperty('tundraFloorCapturePoint').isPresent())vmArg('-Dblockbranch.tundraFloorCapturePoint='+providers.gradleProperty('tundraFloorCapturePoint').get())
+    if(providers.gradleProperty('gravelDesertClientOnly').isPresent())vmArg('-Dblockbranch.gravelDesertClientOnly=true')
+    if(providers.gradleProperty('gravelDesertCapturePoint').isPresent())vmArg('-Dblockbranch.gravelDesertCapturePoint='+providers.gradleProperty('gravelDesertCapturePoint').get())
+    if(providers.gradleProperty('drySteppeClientOnly').isPresent())vmArg('-Dblockbranch.drySteppeClientOnly=true')
+    if(providers.gradleProperty('steppeArtReview').isPresent())vmArg('-Dblockbranch.steppeArtReview=true')
+    if(providers.gradleProperty('tundraFescueCloseup').isPresent())vmArg('-Dblockbranch.tundraFescueCloseup=true')
+    if(providers.gradleProperty('reedClientOnly').isPresent())vmArg('-Dblockbranch.reedClientOnly=true')
+    if(providers.gradleProperty('flowerForestInteriorPoint').isPresent())vmArg('-Dblockbranch.flowerForestInteriorPoint='+providers.gradleProperty('flowerForestInteriorPoint').get())
+    if(providers.gradleProperty('oldGrowthCapturePoint').isPresent())vmArg('-Dblockbranch.oldGrowthCapturePoint='+providers.gradleProperty('oldGrowthCapturePoint').get())
+    if(providers.gradleProperty('lukewarmCapturePoint').isPresent())vmArg('-Dblockbranch.lukewarmCapturePoint='+providers.gradleProperty('lukewarmCapturePoint').get())
+    if(providers.gradleProperty('meadowDetailTag').isPresent())vmArg('-Dblockbranch.meadowDetailTag='+providers.gradleProperty('meadowDetailTag').get())
+    if(providers.gradleProperty('flowerVisibilityDiagnostic').isPresent())vmArg('-Dblockbranch.flowerVisibilityDiagnostic=true')
+    if(providers.gradleProperty('peaksClientOnly').isPresent())vmArg('-Dblockbranch.peaksClientOnly=true')
+    if(providers.gradleProperty('badlandsClientOnly').isPresent())vmArg('-Dblockbranch.badlandsClientOnly=true')
+    if(providers.gradleProperty('coldUplandsClientOnly').isPresent())vmArg('-Dblockbranch.coldUplandsClientOnly=true')
+    if(providers.gradleProperty('coldOceanClientOnly').isPresent())vmArg('-Dblockbranch.coldOceanClientOnly=true')
+    if(providers.gradleProperty('icebergForm').isPresent())vmArg('-Dblockbranch.icebergForm='+providers.gradleProperty('icebergForm').get())
+    if(providers.gradleProperty('icebergClientOnly').isPresent())vmArg('-Dblockbranch.icebergClientOnly=true')
+    if(providers.gradleProperty('seaIceClientOnly').isPresent())vmArg('-Dblockbranch.seaIceClientOnly=true')
+    if(providers.gradleProperty('seaIceShutdownHoldTicks').isPresent())vmArg('-Dblockbranch.seaIceShutdownHoldTicks='+providers.gradleProperty('seaIceShutdownHoldTicks').get())
+    if(providers.gradleProperty('seaIceUnderwaterDiagnostic').isPresent())vmArg('-Dblockbranch.seaIceUnderwaterDiagnostic=true')
+    if(providers.gradleProperty('seaIceUnderwater').isPresent())vmArg('-Dblockbranch.seaIceUnderwater=true')
+    if(providers.gradleProperty('seaIceDeep').isPresent())vmArg('-Dblockbranch.seaIceDeep=true')
+    if(providers.gradleProperty('stonyShoreClientOnly').isPresent())vmArg('-Dblockbranch.stonyShoreClientOnly=true')
+    if(providers.gradleProperty('warmDappledClientOnly').isPresent())vmArg('-Dblockbranch.warmDappledClientOnly=true')
+    if(providers.gradleProperty('dappledForestClient').isPresent())vmArg('-Dblockbranch.dappledForestClient=true')
+    if(providers.gradleProperty('jaggedPeaksClient').isPresent())vmArg('-Dblockbranch.jaggedPeaksClient=true')
+    if(providers.gradleProperty('erodedBadlandsClient').isPresent())vmArg('-Dblockbranch.erodedBadlandsClient=true')
+    if(providers.gradleProperty('woodedBadlandsClient').isPresent())vmArg('-Dblockbranch.woodedBadlandsClient=true')
+    if(providers.gradleProperty('frozenPeaksClient').isPresent())vmArg('-Dblockbranch.frozenPeaksClient=true')
+    if(providers.gradleProperty('savannaUplandsClientOnly').isPresent())vmArg('-Dblockbranch.savannaUplandsClientOnly=true')
+    if(providers.gradleProperty('windsweptSavannaClient').isPresent())vmArg('-Dblockbranch.windsweptSavannaClient=true')
+    if(providers.gradleProperty('windsweptClientOnly').isPresent())vmArg('-Dblockbranch.windsweptClientOnly=true')
+    if(providers.gradleProperty('windsweptForestClient').isPresent())vmArg('-Dblockbranch.windsweptForestClient=true')
+    if(providers.gradleProperty('tropicalClientOnly').isPresent())vmArg('-Dblockbranch.tropicalClientOnly=true')
+    if(providers.gradleProperty('bambooJungleClient').isPresent())vmArg('-Dblockbranch.bambooJungleClient=true')
+    if(providers.gradleProperty('existingJungleClient').isPresent())vmArg('-Dblockbranch.existingJungleClient=true')
+    if(providers.gradleProperty('darkCherryClientOnly').isPresent())vmArg('-Dblockbranch.darkCherryClientOnly=true')
+    if(providers.gradleProperty('cherryGroveClient').isPresent())vmArg('-Dblockbranch.cherryGroveClient=true')
+    if(providers.gradleProperty('temperateVariantClientOnly').isPresent())vmArg('-Dblockbranch.temperateVariantClientOnly=true')
+    if(providers.gradleProperty('oldBirchClient').isPresent())vmArg('-Dblockbranch.oldBirchClient=true')
+    if(providers.gradleProperty('oldGrowthClientOnly').isPresent())vmArg('-Dblockbranch.oldGrowthClientOnly=true')
+    if(providers.gradleProperty('oldGrowthSpruceClient').isPresent())vmArg('-Dblockbranch.oldGrowthSpruceClient=true')
+    if(providers.gradleProperty('lukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.lukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('deepLukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.deepLukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('beachClientOnly').isPresent())vmArg('-Dblockbranch.beachClientOnly=true')
+    if(providers.gradleProperty('snowyBeachClient').isPresent())vmArg('-Dblockbranch.snowyBeachClient=true')
+    if(providers.gradleProperty('riverClientOnly').isPresent())vmArg('-Dblockbranch.riverClientOnly=true')
+    if(providers.gradleProperty('frozenRiverClientOnly').isPresent())vmArg('-Dblockbranch.frozenRiverClientOnly=true')
+    if(providers.gradleProperty('terrainCollateralClientOnly').isPresent())vmArg('-Dblockbranch.terrainCollateralClientOnly=true')
+    if(providers.gradleProperty('terrainContourComparison').isPresent())vmArg('-Dblockbranch.terrainContourComparison=true')
+    if(providers.gradleProperty('terrainStructuralComparison').isPresent())vmArg('-Dblockbranch.terrainStructuralComparison=true')
+    if(providers.gradleProperty('montaneMeadowClientOnly').isPresent())vmArg('-Dblockbranch.montaneMeadowClientOnly=true')
+    if(providers.gradleProperty('snowSlopesClientOnly').isPresent())vmArg('-Dblockbranch.snowSlopesClientOnly=true')
+    if(providers.gradleProperty('snowPlainsClientOnly').isPresent())vmArg('-Dblockbranch.snowPlainsClientOnly=true')
+    if(providers.gradleProperty('temperateDeepClientOnly').isPresent())vmArg('-Dblockbranch.temperateDeepClientOnly=true')
+    if(providers.gradleProperty('oceanClientOnly').isPresent())vmArg('-Dblockbranch.oceanClientOnly=true')
+    if(providers.gradleProperty('coniferBranchComparison').isPresent())vmArg('-Dblockbranch.coniferBranchComparison=true')
+    if(providers.gradleProperty('groveComparison').isPresent())vmArg('-Dblockbranch.groveComparison=true')
+    if(providers.gradleProperty('groveClientOnly').isPresent())vmArg('-Dblockbranch.groveClientOnly=true')
+    if(providers.gradleProperty('snowyTaigaClientOnly').isPresent())vmArg('-Dblockbranch.snowyTaigaClientOnly=true')
+    if(providers.gradleProperty('taigaClientOnly').isPresent())vmArg('-Dblockbranch.taigaClientOnly=true')
+    if(providers.gradleProperty('mangroveClientOnly').isPresent())vmArg('-Dblockbranch.mangroveClientOnly=true')
+    if(providers.gradleProperty('mangroveSecondSite').isPresent())vmArg('-Dblockbranch.mangroveSecondSite=true')
+    if(providers.gradleProperty('swampClientOnly').isPresent())vmArg('-Dblockbranch.swampClientOnly=true')
+    if(providers.gradleProperty('swampSecondSite').isPresent())vmArg('-Dblockbranch.swampSecondSite=true')
+    if(providers.gradleProperty('birchForestClientOnly').isPresent())vmArg('-Dblockbranch.birchForestClientOnly=true')
+    if(providers.gradleProperty('birchForestSecondSite').isPresent())vmArg('-Dblockbranch.birchForestSecondSite=true')
+    if(providers.gradleProperty('sunflowerClientOnly').isPresent())vmArg('-Dblockbranch.sunflowerClientOnly=true')
+    if(providers.gradleProperty('desertComparison').isPresent())vmArg('-Dblockbranch.desertComparison=true')
+    if(providers.gradleProperty('desertSecondSite').isPresent())vmArg('-Dblockbranch.desertSecondSite=true')
+    if(providers.gradleProperty('jungleComparison').isPresent())vmArg('-Dblockbranch.jungleComparison=true')
+    if(providers.gradleProperty('jungleSecondSite').isPresent())vmArg('-Dblockbranch.jungleSecondSite=true')
+    programArg('--nogui')
+}
+loom.runs.register('realisticClientCheck') {
+    client()
+    runDir(clientDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.realisticClientSmoke=true')
+    if(providers.gradleProperty('meadowForbClientOnly').isPresent())vmArg('-Dblockbranch.meadowForbClientOnly=true')
+    if(providers.gradleProperty('meadowForbCapturePoint').isPresent())vmArg('-Dblockbranch.meadowForbCapturePoint='+providers.gradleProperty('meadowForbCapturePoint').get())
+    if(providers.gradleProperty('tundraFloorClientOnly').isPresent())vmArg('-Dblockbranch.tundraFloorClientOnly=true')
+    if(providers.gradleProperty('tundraFloorCapturePoint').isPresent())vmArg('-Dblockbranch.tundraFloorCapturePoint='+providers.gradleProperty('tundraFloorCapturePoint').get())
+    if(providers.gradleProperty('gravelDesertClientOnly').isPresent())vmArg('-Dblockbranch.gravelDesertClientOnly=true')
+    if(providers.gradleProperty('gravelDesertCapturePoint').isPresent())vmArg('-Dblockbranch.gravelDesertCapturePoint='+providers.gradleProperty('gravelDesertCapturePoint').get())
+    if(providers.gradleProperty('drySteppeClientOnly').isPresent())vmArg('-Dblockbranch.drySteppeClientOnly=true')
+    if(providers.gradleProperty('steppeArtReview').isPresent())vmArg('-Dblockbranch.steppeArtReview=true')
+    if(providers.gradleProperty('tundraFescueCloseup').isPresent())vmArg('-Dblockbranch.tundraFescueCloseup=true')
+    if(providers.gradleProperty('boundaryClientOnly').isPresent())vmArg('-Dblockbranch.boundaryClientOnly=true')
+    if(providers.gradleProperty('screeClientOnly').isPresent())vmArg('-Dblockbranch.screeClientOnly=true')
+    if(providers.gradleProperty('reedClientOnly').isPresent())vmArg('-Dblockbranch.reedClientOnly=true')
+    if(providers.gradleProperty('meadowDetailTag').isPresent())vmArg('-Dblockbranch.meadowDetailTag='+providers.gradleProperty('meadowDetailTag').get())
+    if(providers.gradleProperty('flowerVisibilityDiagnostic').isPresent())vmArg('-Dblockbranch.flowerVisibilityDiagnostic=true')
+    if(providers.gradleProperty('peaksClientOnly').isPresent())vmArg('-Dblockbranch.peaksClientOnly=true')
+    if(providers.gradleProperty('badlandsClientOnly').isPresent())vmArg('-Dblockbranch.badlandsClientOnly=true')
+    if(providers.gradleProperty('coldUplandsClientOnly').isPresent())vmArg('-Dblockbranch.coldUplandsClientOnly=true')
+    if(providers.gradleProperty('coldOceanClientOnly').isPresent())vmArg('-Dblockbranch.coldOceanClientOnly=true')
+    if(providers.gradleProperty('icebergForm').isPresent())vmArg('-Dblockbranch.icebergForm='+providers.gradleProperty('icebergForm').get())
+    if(providers.gradleProperty('icebergClientOnly').isPresent())vmArg('-Dblockbranch.icebergClientOnly=true')
+    if(providers.gradleProperty('seaIceClientOnly').isPresent())vmArg('-Dblockbranch.seaIceClientOnly=true')
+    if(providers.gradleProperty('seaIceShutdownHoldTicks').isPresent())vmArg('-Dblockbranch.seaIceShutdownHoldTicks='+providers.gradleProperty('seaIceShutdownHoldTicks').get())
+    if(providers.gradleProperty('seaIceUnderwaterDiagnostic').isPresent())vmArg('-Dblockbranch.seaIceUnderwaterDiagnostic=true')
+    if(providers.gradleProperty('seaIceUnderwater').isPresent())vmArg('-Dblockbranch.seaIceUnderwater=true')
+    if(providers.gradleProperty('seaIceDeep').isPresent())vmArg('-Dblockbranch.seaIceDeep=true')
+    if(providers.gradleProperty('stonyShoreClientOnly').isPresent())vmArg('-Dblockbranch.stonyShoreClientOnly=true')
+    if(providers.gradleProperty('warmDappledClientOnly').isPresent())vmArg('-Dblockbranch.warmDappledClientOnly=true')
+    if(providers.gradleProperty('dappledForestClient').isPresent())vmArg('-Dblockbranch.dappledForestClient=true')
+    if(providers.gradleProperty('jaggedPeaksClient').isPresent())vmArg('-Dblockbranch.jaggedPeaksClient=true')
+    if(providers.gradleProperty('erodedBadlandsClient').isPresent())vmArg('-Dblockbranch.erodedBadlandsClient=true')
+    if(providers.gradleProperty('woodedBadlandsClient').isPresent())vmArg('-Dblockbranch.woodedBadlandsClient=true')
+    if(providers.gradleProperty('frozenPeaksClient').isPresent())vmArg('-Dblockbranch.frozenPeaksClient=true')
+    if(providers.gradleProperty('savannaUplandsClientOnly').isPresent())vmArg('-Dblockbranch.savannaUplandsClientOnly=true')
+    if(providers.gradleProperty('windsweptSavannaClient').isPresent())vmArg('-Dblockbranch.windsweptSavannaClient=true')
+    if(providers.gradleProperty('windsweptClientOnly').isPresent())vmArg('-Dblockbranch.windsweptClientOnly=true')
+    if(providers.gradleProperty('windsweptForestClient').isPresent())vmArg('-Dblockbranch.windsweptForestClient=true')
+    if(providers.gradleProperty('tropicalClientOnly').isPresent())vmArg('-Dblockbranch.tropicalClientOnly=true')
+    if(providers.gradleProperty('bambooJungleClient').isPresent())vmArg('-Dblockbranch.bambooJungleClient=true')
+    if(providers.gradleProperty('existingJungleClient').isPresent())vmArg('-Dblockbranch.existingJungleClient=true')
+    if(providers.gradleProperty('darkCherryClientOnly').isPresent())vmArg('-Dblockbranch.darkCherryClientOnly=true')
+    if(providers.gradleProperty('cherryGroveClient').isPresent())vmArg('-Dblockbranch.cherryGroveClient=true')
+    if(providers.gradleProperty('temperateVariantClientOnly').isPresent())vmArg('-Dblockbranch.temperateVariantClientOnly=true')
+    if(providers.gradleProperty('oldBirchClient').isPresent())vmArg('-Dblockbranch.oldBirchClient=true')
+    if(providers.gradleProperty('oldGrowthClientOnly').isPresent())vmArg('-Dblockbranch.oldGrowthClientOnly=true')
+    if(providers.gradleProperty('oldGrowthSpruceClient').isPresent())vmArg('-Dblockbranch.oldGrowthSpruceClient=true')
+    if(providers.gradleProperty('lukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.lukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('deepLukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.deepLukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('beachClientOnly').isPresent())vmArg('-Dblockbranch.beachClientOnly=true')
+    if(providers.gradleProperty('snowyBeachClient').isPresent())vmArg('-Dblockbranch.snowyBeachClient=true')
+    if(providers.gradleProperty('riverClientOnly').isPresent())vmArg('-Dblockbranch.riverClientOnly=true')
+    if(providers.gradleProperty('frozenRiverClientOnly').isPresent())vmArg('-Dblockbranch.frozenRiverClientOnly=true')
+    if(providers.gradleProperty('terrainCollateralClientOnly').isPresent())vmArg('-Dblockbranch.terrainCollateralClientOnly=true')
+    if(providers.gradleProperty('terrainContourComparison').isPresent())vmArg('-Dblockbranch.terrainContourComparison=true')
+    if(providers.gradleProperty('terrainStructuralComparison').isPresent())vmArg('-Dblockbranch.terrainStructuralComparison=true')
+    if(providers.gradleProperty('montaneMeadowClientOnly').isPresent())vmArg('-Dblockbranch.montaneMeadowClientOnly=true')
+    if(providers.gradleProperty('snowSlopesClientOnly').isPresent())vmArg('-Dblockbranch.snowSlopesClientOnly=true')
+    if(providers.gradleProperty('snowPlainsClientOnly').isPresent())vmArg('-Dblockbranch.snowPlainsClientOnly=true')
+    if(providers.gradleProperty('temperateDeepClientOnly').isPresent())vmArg('-Dblockbranch.temperateDeepClientOnly=true')
+    if(providers.gradleProperty('oceanClientOnly').isPresent())vmArg('-Dblockbranch.oceanClientOnly=true')
+    if(providers.gradleProperty('coniferBranchComparison').isPresent())vmArg('-Dblockbranch.coniferBranchComparison=true')
+    if(providers.gradleProperty('groveComparison').isPresent())vmArg('-Dblockbranch.groveComparison=true')
+    if(providers.gradleProperty('groveClientOnly').isPresent())vmArg('-Dblockbranch.groveClientOnly=true')
+    if(providers.gradleProperty('snowyTaigaClientOnly').isPresent())vmArg('-Dblockbranch.snowyTaigaClientOnly=true')
+    if(providers.gradleProperty('taigaClientOnly').isPresent())vmArg('-Dblockbranch.taigaClientOnly=true')
+    if(providers.gradleProperty('mangroveClientOnly').isPresent())vmArg('-Dblockbranch.mangroveClientOnly=true')
+    if(providers.gradleProperty('mangroveSecondSite').isPresent())vmArg('-Dblockbranch.mangroveSecondSite=true')
+    if(providers.gradleProperty('swampClientOnly').isPresent())vmArg('-Dblockbranch.swampClientOnly=true')
+    if(providers.gradleProperty('swampSecondSite').isPresent())vmArg('-Dblockbranch.swampSecondSite=true')
+    if(providers.gradleProperty('birchForestClientOnly').isPresent())vmArg('-Dblockbranch.birchForestClientOnly=true')
+    if(providers.gradleProperty('birchForestSecondSite').isPresent())vmArg('-Dblockbranch.birchForestSecondSite=true')
+    if(providers.gradleProperty('sunflowerClientOnly').isPresent())vmArg('-Dblockbranch.sunflowerClientOnly=true')
+    if(providers.gradleProperty('desertComparison').isPresent())vmArg('-Dblockbranch.desertComparison=true')
+    if(providers.gradleProperty('desertSecondSite').isPresent())vmArg('-Dblockbranch.desertSecondSite=true')
+    if(providers.gradleProperty('jungleComparison').isPresent())vmArg('-Dblockbranch.jungleComparison=true')
+    if(providers.gradleProperty('jungleSecondSite').isPresent())vmArg('-Dblockbranch.jungleSecondSite=true')
+    if(providers.gradleProperty('forestClientOnly').isPresent())vmArg('-Dblockbranch.forestClientOnly=true')
+    if(providers.gradleProperty('plainsClientOnly').isPresent())vmArg('-Dblockbranch.plainsClientOnly=true')
+    if(providers.gradleProperty('desertClientOnly').isPresent())vmArg('-Dblockbranch.desertClientOnly=true')
+    if(providers.gradleProperty('jungleClientOnly').isPresent())vmArg('-Dblockbranch.jungleClientOnly=true')
+    if(providers.gradleProperty('savannaClientOnly').isPresent())vmArg('-Dblockbranch.savannaClientOnly=true')
+    if(providers.gradleProperty('deepClientOnly').isPresent())vmArg('-Dblockbranch.deepClientOnly=true')
+    if(providers.gradleProperty('shelfClientOnly').isPresent())vmArg('-Dblockbranch.shelfClientOnly=true')
+    if(providers.gradleProperty('flowerVisibilityDiagnostic').isPresent())vmArg('-Dblockbranch.flowerVisibilityDiagnostic=true')
+    if(providers.gradleProperty('peaksClientOnly').isPresent())vmArg('-Dblockbranch.peaksClientOnly=true')
+    if(providers.gradleProperty('badlandsClientOnly').isPresent())vmArg('-Dblockbranch.badlandsClientOnly=true')
+    if(providers.gradleProperty('coldUplandsClientOnly').isPresent())vmArg('-Dblockbranch.coldUplandsClientOnly=true')
+    if(providers.gradleProperty('coldOceanClientOnly').isPresent())vmArg('-Dblockbranch.coldOceanClientOnly=true')
+    if(providers.gradleProperty('icebergForm').isPresent())vmArg('-Dblockbranch.icebergForm='+providers.gradleProperty('icebergForm').get())
+    if(providers.gradleProperty('icebergClientOnly').isPresent())vmArg('-Dblockbranch.icebergClientOnly=true')
+    if(providers.gradleProperty('seaIceClientOnly').isPresent())vmArg('-Dblockbranch.seaIceClientOnly=true')
+    if(providers.gradleProperty('seaIceShutdownHoldTicks').isPresent())vmArg('-Dblockbranch.seaIceShutdownHoldTicks='+providers.gradleProperty('seaIceShutdownHoldTicks').get())
+    if(providers.gradleProperty('seaIceUnderwaterDiagnostic').isPresent())vmArg('-Dblockbranch.seaIceUnderwaterDiagnostic=true')
+    if(providers.gradleProperty('seaIceUnderwater').isPresent())vmArg('-Dblockbranch.seaIceUnderwater=true')
+    if(providers.gradleProperty('seaIceDeep').isPresent())vmArg('-Dblockbranch.seaIceDeep=true')
+    if(providers.gradleProperty('stonyShoreClientOnly').isPresent())vmArg('-Dblockbranch.stonyShoreClientOnly=true')
+    if(providers.gradleProperty('warmDappledClientOnly').isPresent())vmArg('-Dblockbranch.warmDappledClientOnly=true')
+    if(providers.gradleProperty('dappledForestClient').isPresent())vmArg('-Dblockbranch.dappledForestClient=true')
+    if(providers.gradleProperty('jaggedPeaksClient').isPresent())vmArg('-Dblockbranch.jaggedPeaksClient=true')
+    if(providers.gradleProperty('erodedBadlandsClient').isPresent())vmArg('-Dblockbranch.erodedBadlandsClient=true')
+    if(providers.gradleProperty('woodedBadlandsClient').isPresent())vmArg('-Dblockbranch.woodedBadlandsClient=true')
+    if(providers.gradleProperty('frozenPeaksClient').isPresent())vmArg('-Dblockbranch.frozenPeaksClient=true')
+    if(providers.gradleProperty('savannaUplandsClientOnly').isPresent())vmArg('-Dblockbranch.savannaUplandsClientOnly=true')
+    if(providers.gradleProperty('windsweptSavannaClient').isPresent())vmArg('-Dblockbranch.windsweptSavannaClient=true')
+    if(providers.gradleProperty('windsweptClientOnly').isPresent())vmArg('-Dblockbranch.windsweptClientOnly=true')
+    if(providers.gradleProperty('windsweptForestClient').isPresent())vmArg('-Dblockbranch.windsweptForestClient=true')
+    if(providers.gradleProperty('tropicalClientOnly').isPresent())vmArg('-Dblockbranch.tropicalClientOnly=true')
+    if(providers.gradleProperty('bambooJungleClient').isPresent())vmArg('-Dblockbranch.bambooJungleClient=true')
+    if(providers.gradleProperty('existingJungleClient').isPresent())vmArg('-Dblockbranch.existingJungleClient=true')
+    if(providers.gradleProperty('darkCherryClientOnly').isPresent())vmArg('-Dblockbranch.darkCherryClientOnly=true')
+    if(providers.gradleProperty('cherryGroveClient').isPresent())vmArg('-Dblockbranch.cherryGroveClient=true')
+    if(providers.gradleProperty('temperateVariantClientOnly').isPresent())vmArg('-Dblockbranch.temperateVariantClientOnly=true')
+    if(providers.gradleProperty('oldBirchClient').isPresent())vmArg('-Dblockbranch.oldBirchClient=true')
+    if(providers.gradleProperty('oldGrowthClientOnly').isPresent())vmArg('-Dblockbranch.oldGrowthClientOnly=true')
+    if(providers.gradleProperty('oldGrowthSpruceClient').isPresent())vmArg('-Dblockbranch.oldGrowthSpruceClient=true')
+    if(providers.gradleProperty('lukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.lukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('deepLukewarmOceanClientOnly').isPresent())vmArg('-Dblockbranch.deepLukewarmOceanClientOnly=true')
+    if(providers.gradleProperty('beachClientOnly').isPresent())vmArg('-Dblockbranch.beachClientOnly=true')
+    if(providers.gradleProperty('snowyBeachClient').isPresent())vmArg('-Dblockbranch.snowyBeachClient=true')
+    if(providers.gradleProperty('riverClientOnly').isPresent())vmArg('-Dblockbranch.riverClientOnly=true')
+    if(providers.gradleProperty('frozenRiverClientOnly').isPresent())vmArg('-Dblockbranch.frozenRiverClientOnly=true')
+    if(providers.gradleProperty('terrainCollateralClientOnly').isPresent())vmArg('-Dblockbranch.terrainCollateralClientOnly=true')
+    if(providers.gradleProperty('terrainContourComparison').isPresent())vmArg('-Dblockbranch.terrainContourComparison=true')
+    if(providers.gradleProperty('terrainStructuralComparison').isPresent())vmArg('-Dblockbranch.terrainStructuralComparison=true')
+    if(providers.gradleProperty('lakeClientOnly').isPresent())vmArg('-Dblockbranch.lakeClientOnly=true')
+    if(providers.gradleProperty('tundraClientOnly').isPresent())vmArg('-Dblockbranch.tundraClientOnly=true')
+    if(providers.gradleProperty('humidClientOnly').isPresent())vmArg('-Dblockbranch.humidClientOnly=true')
+    vmArg('-Dblockbranch.realisticClientResult=' + clientDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username', 'RealisticCheck', '--quickPlayMultiplayer', '127.0.0.1:25582', '--width', '1024', '--height', '576')
+}
+def realisticClientOnboarded=providers.gradleProperty('realisticClientOnboarded').isPresent()
+def realisticCaptureDistance=providers.gradleProperty('realisticCaptureDistance').getOrElse(providers.gradleProperty('icebergClientOnly').isPresent()?'24':'16').toInteger()
+if(realisticCaptureDistance<2||realisticCaptureDistance>32)throw new GradleException('realisticCaptureDistance must be between 2 and 32')
+// Some fixture witnesses inspect a fixed 16-chunk disc independently of view distance.
+if(providers.gradleProperty('realisticCaptureDistance').isPresent()&&!providers.gradleProperty('reedClientOnly').isPresent())throw new GradleException('realisticCaptureDistance overrides require reedClientOnly; other fixtures retain their calibrated defaults')
+def realisticFixtureSeed=providers.gradleProperty('realisticFixtureSeed').getOrElse('424242')
+def prepareClient = tasks.register('prepareRealisticClient') {
+    doLast {
+        def directory = clientDirectory.asFile
+        directory.mkdirs()
+        directory.toPath().resolve('result.txt').toFile().delete()
+        directory.toPath().resolve('screenshots/deep-open-ocean-surface.png').toFile().delete()
+        directory.toPath().resolve('screenshots/deep-open-ocean-bed-night-vision.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-marine-shelf-surface.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-marine-shelf-underwater.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-routed-river-surface.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-routed-river-underwater.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-inland-lake-surface.png').toFile().delete()
+        directory.toPath().resolve('screenshots/open-inland-lake-underwater.png').toFile().delete()
+        directory.toPath().resolve('screenshots/cold-dwarf-shrub-tundra.png').toFile().delete()
+        directory.toPath().resolve('screenshots/inland-lake-reedbed.png').toFile().delete()
+        directory.toPath().resolve('screenshots/gravel-bed-river-margin.png').toFile().delete()
+        directory.toPath().resolve('screenshots/low-gradient-sandy-shore.png').toFile().delete()
+        directory.toPath().resolve('screenshots/rolling-lowland-forb-grass-meadow.png').toFile().delete()
+        directory.toPath().resolve('screenshots/alpine-scree.png').toFile().delete()
+        directory.toPath().resolve('screenshots/dappled-oak-birch-woodland.png').toFile().delete()
+        directory.toPath().resolve('screenshots/dappled-oak-birch-canopy.png').toFile().delete()
+        directory.toPath().resolve('screenshots/dry-continental-scrub-steppe.png').toFile().delete()
+        directory.toPath().resolve('screenshots/boreal-spruce-birch-woodland.png').toFile().delete()
+        directory.toPath().resolve('screenshots/boreal-spruce-birch-canopy.png').toFile().delete()
+        directory.toPath().resolve('screenshots/warm-subhumid-oak-pine-woodland.png').toFile().delete()
+        directory.toPath().resolve('screenshots/warm-subhumid-oak-pine-canopy.png').toFile().delete()
+        directory.toPath().resolve('screenshots/cold-continental-fescue-steppe.png').toFile().delete()
+        directory.toPath().resolve('screenshots/continental-gravel-desert.png').toFile().delete()
+        directory.toPath().resolve('screenshots/moderate-slope-meadow-woodland.png').toFile().delete()
+        directory.toPath().resolve('screenshots/humid-subtropical-oak-fern-woodland.png').toFile().delete()
+        directory.toPath().resolve('screenshots/humid-subtropical-oak-fern-canopy.png').toFile().delete()
+        directory.toPath().resolve('screenshots/woodland-ground-after.png').toFile().delete()
+        directory.toPath().resolve('screenshots/woodland-canopy-after.png').toFile().delete()
+        directory.toPath().resolve('options.txt').toFile().text = ('renderDistance:'+realisticCaptureDistance+'\nsimulationDistance:5\nmaxFps:60\nenableVsync:false\ntutorialStep:none\n'+(realisticClientOnboarded?'onboardAccessibility:false\n':''))
+        def serverDirectory = clientServerDirectory.asFile
+        serverDirectory.mkdirs()
+        serverDirectory.toPath().resolve('eula.txt').toFile().text = 'eula=true\n'
+        serverDirectory.toPath().resolve('server.properties').toFile().text = '''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25582
+view-distance=16
+simulation-distance=2
+level-name=client-fixture
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''.replace('view-distance=16','view-distance='+realisticCaptureDistance).replace('level-seed=424242','level-seed='+realisticFixtureSeed)
+    }
+}
+tasks.named('runRealisticClientServer') { dependsOn prepareClient }
+tasks.named('runRealisticClientCheck') {
+    doLast {
+        def result = clientDirectory.file('result.txt').asFile
+        if (!result.exists() || result.text.trim() != 'PASS') throw new GradleException('Realistic client checks failed')
+    }
+}
+
+def screeDirectory = layout.projectDirectory.dir('build/deep-ocean-scree-regression')
+loom.runs.register('screeSmoke') {
+    server()
+    name('Alpine scree content and falling regression')
+    runDir(screeDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.screeSmoke=true')
+    vmArg('-Dblockbranch.screeSmokeResult=' + screeDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+def prepareScree = tasks.register('prepareScreeSmoke') {
+    doLast {
+        def directory = screeDirectory.asFile
+        directory.mkdirs()
+        directory.toPath().resolve('result.txt').toFile().delete()
+        directory.toPath().resolve('eula.txt').toFile().text = 'eula=true\n'
+        def properties = directory.toPath().resolve('server.properties').toFile()
+        if (!properties.exists()) properties.text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=25583
+view-distance=2
+simulation-distance=2
+level-name=scree
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runScreeSmoke') {
+    dependsOn prepareScree
+    doLast {
+        def result = screeDirectory.file('result.txt').asFile
+        if (!result.exists() || result.text.trim() != 'PASS') throw new GradleException('Alpine scree checks failed; inspect ' + screeDirectory.asFile + '/logs/latest.log')
+    }
+}
+
+tasks.register('checkBoundaryAudit', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.BoundaryAuditCheck'
+    maxHeapSize = '512m'
+}
+
+// Short registry-backed serialization compatibility check, separate from exhaustive terrain fixtures.
+def codecDirectory=layout.projectDirectory.dir(providers.gradleProperty('realisticCodecDirectory').getOrElse('build/deep-ocean-v23-codec'))
+loom.runs.register('habitatCodec') {
+    server()
+    runDir(codecDirectory.asFile.absolutePath)
+    vmArg('-Xmx1G')
+    vmArg('-Dblockbranch.habitatCodecSmoke=true')
+    vmArg('-Dblockbranch.habitatCodecResult='+codecDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+def prepareCodec=tasks.register('prepareHabitatCodec') {
+    doLast {
+        def dir=codecDirectory.asFile;dir.mkdirs()
+        dir.toPath().resolve('result.txt').toFile().delete()
+        dir.toPath().resolve('eula.txt').toFile().text='eula=true\n'
+        dir.toPath().resolve('server.properties').toFile().text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25584\nview-distance=2\nsimulation-distance=2\nlevel-name=codec\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=180000\n'
+    }
+}
+tasks.named('runHabitatCodec') {
+    dependsOn prepareCodec
+    doLast {def result=codecDirectory.file('result.txt').asFile;if(!result.exists()||result.text.trim()!='PASS')throw new GradleException('Habitat codec compatibility check failed')}
+}
+
+tasks.register('checkRiverChannel',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.RiverChannelCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkRiverChannel')}
+
+tasks.register('checkRiverChannelCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.RiverChannelCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkRiverChannelCoverage')}
+
+tasks.register('checkMarineShelf',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.MarineShelfCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMarineShelf')}
+
+tasks.register('checkMarineShelfCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.MarineShelfCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkMarineShelfCoverage')}
+
+tasks.register('checkDeepOcean',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DeepOceanCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkDeepOcean')}
+tasks.register('checkDeepOceanCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DeepOceanCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkDeepOceanCoverage')}
+
+tasks.register('checkSavanna',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SavannaCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSavanna')}
+
+tasks.register('checkSavannaCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SavannaCoverageCheck'
+    maxHeapSize='512m'
+}
+
+tasks.register('checkJungle',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.JungleCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkJungle')}
+tasks.register('checkJungleCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.JungleCoverageCheck'
+    maxHeapSize='512m'
+}
+
+tasks.register('checkJungleArchitecture',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.JungleArchitectureCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkJungleArchitecture')}
+
+tasks.register('checkSandyDesert',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SandyDesertCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSandyDesert')}
+
+tasks.register('checkSandyDesertCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SandyDesertCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSandyDesertCoverage')}
+
+// Broad temperate grassland partition and paired-plant regressions.
+['Plains','PlainsCoverage'].each { checkName ->
+    tasks.register('check' + checkName, JavaExec) {
+        dependsOn tasks.named('testClasses')
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = 'blockbranch.realistic.' + checkName + 'Check'
+        maxHeapSize = '512m'
+    }
+}
+tasks.named('check') { dependsOn tasks.named('checkPlains') }
+
+['SunflowerPlains','SunflowerCoverage'].each { checkName ->
+    tasks.register('check' + checkName, JavaExec) {
+        dependsOn tasks.named('testClasses')
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = 'blockbranch.realistic.' + checkName + 'Check'
+        maxHeapSize = '512m'
+    }
+}
+tasks.named('check') { dependsOn tasks.named('checkSunflowerPlains') }
+
+['Forest','ForestCoverage'].each { checkName ->
+    tasks.register('check' + checkName, JavaExec) {
+        dependsOn tasks.named('testClasses')
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = 'blockbranch.realistic.' + checkName + 'Check'
+        maxHeapSize = '512m'
+    }
+}
+tasks.named('check') { dependsOn tasks.named('checkForest') }
+
+['BirchForest','BirchCoverage'].each { checkName ->
+    tasks.register('check' + checkName, JavaExec) {
+        dependsOn tasks.named('testClasses')
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = 'blockbranch.realistic.' + checkName + 'Check'
+        maxHeapSize = '512m'
+    }
+}
+tasks.named('check') { dependsOn tasks.named('checkBirchForest') }
+
+tasks.register('checkSwamp',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SwampCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSwamp')}
+tasks.register('checkSwampCoverage',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SwampCoverageCheck'
+    maxHeapSize='512m'
+}
+tasks.register('checkSwampSurface',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SwampSurfaceCheck'
+    maxHeapSize='512m'
+}
+tasks.named('checkSwamp'){dependsOn tasks.named('checkSwampSurface')}
+tasks.register('checkReedPattern',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.ReedPatternCheck'
+ maxHeapSize='512m'
+}
+tasks.named('checkReedbed'){dependsOn tasks.named('checkReedPattern')}
+tasks.register('checkWoodlandDetails',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.WoodlandDetailsCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkWoodlandDetails')}
+
+tasks.register('checkMangrove',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MangroveCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMangrove')}
+
+tasks.register('checkTaiga',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.TaigaCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkTaiga')}
+
+tasks.register('checkTaigaGround',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.TaigaGroundCheck'
+ maxHeapSize='512m'
+}
+tasks.named('checkTaiga'){dependsOn tasks.named('checkTaigaGround')}
+
+tasks.register('checkSnowyTaiga',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SnowyTaigaCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSnowyTaiga')}
+
+tasks.register('checkConiferBranch',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.ConiferBranchCheck'
+ maxHeapSize='512m'
+}
+tasks.named('checkTaiga'){dependsOn tasks.named('checkConiferBranch')}
+
+tasks.register('checkTemperateOcean',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.TemperateOceanCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkTemperateOcean')}
+
+tasks.register('checkTemperateDeepOcean',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.TemperateDeepOceanCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkTemperateDeepOcean')}
+
+tasks.register('checkSnowyPlains',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SnowyPlainsCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSnowyPlains')}
+
+ tasks.register('checkSnowySlopes',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SnowySlopesCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSnowySlopes')}
+
+ tasks.register('checkMontaneMeadow',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MontaneMeadowCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMontaneMeadow')}
+ tasks.register('checkMeadowFlowerSpacing',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MeadowFlowerSpacingCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMeadowFlowerSpacing')}
+ tasks.register('checkGrove',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.GroveCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkGrove')}
+
+tasks.register('checkRoutedRiver',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.RoutedRiverCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkRoutedRiver')}
+tasks.register('checkRiverBanks',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.RiverBankCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkRiverBanks')}
+tasks.register('checkFrozenRiver',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.FrozenRiverCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkFrozenRiver')}
+
+tasks.register('checkTerrainContours', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.TerrainContoursCheck'
+    maxHeapSize = '1g'
+}
+tasks.named('check') { dependsOn tasks.named('checkTerrainContours') }
+
+tasks.register('checkSurfacePatches', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.SurfacePatchesCheck'
+}
+tasks.named('check') { dependsOn tasks.named('checkSurfacePatches') }
+
+tasks.register('checkColdSurface', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.ColdSurfaceCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkColdSurface') }
+
+tasks.register('checkDrainageCache',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.DrainageCacheCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkDrainageCache')}
+
+
+tasks.register('checkRiverBankRelief',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.RiverBankReliefCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkRiverBankRelief')}
+
+tasks.register('checkSurfaceMaterialFields',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SurfaceMaterialFieldsCheck'
+}
+tasks.register('checkSurfaceDomains',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SurfaceDomainsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSurfaceMaterialFields'),tasks.named('checkSurfaceDomains')}
+tasks.register('checkSurfaceRouting',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SurfaceRoutingCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSurfaceRouting')}
+
+tasks.register('checkCoastalBeach',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.CoastalBeachCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkCoastalBeach')}
+
+tasks.register('checkLukewarmOcean',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.LukewarmOceanCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkLukewarmOcean')}
+
+tasks.register('checkOldGrowthTaiga',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.OldGrowthTaigaCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkOldGrowthTaiga')}
+
+tasks.register('checkOldGrowthFloor',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.OldGrowthFloorCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkOldGrowthFloor')}
+
+tasks.register('checkTemperateForestVariants',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.TemperateForestVariantsCheck'
+    maxHeapSize='1G'
+}
+tasks.register('checkFlowerForestPalette',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.FlowerForestPaletteCheck'
+}
+tasks.named('check'){dependsOn tasks.named('checkFlowerForestPalette')}
+tasks.named('check'){dependsOn tasks.named('checkTemperateForestVariants')}
+
+tasks.register('checkDarkCherryWoodland',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DarkCherryWoodlandCheck'
+    maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkDarkCherryWoodland')}
+tasks.register('checkRedwoodForest',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.RedwoodForestCheck'
+    maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkRedwoodForest')}
+tasks.register('checkMossHabitat',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.MossHabitatCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMossHabitat')}
+tasks.register('checkDarkOakBranch',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DarkOakBranchCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkDarkOakBranch')}
+tasks.register('checkTropicalForestVariants',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.TropicalForestVariantsCheck'
+    maxHeapSize='768m'
+}
+tasks.register('checkJungleLargeFern',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.JungleLargeFernCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkTropicalForestVariants'),tasks.named('checkJungleLargeFern')}
+
+tasks.register('checkWindsweptUplands',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.WindsweptUplandsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkWindsweptUplands')}
+
+tasks.register('checkWindsweptQuality',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.WindsweptQualityCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkWindsweptQuality')}
+
+
+tasks.register('checkSavannaUplands',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SavannaUplandsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSavannaUplands')}
+
+
+tasks.register('checkMountainPeaks',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.MountainPeaksCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMountainPeaks')}
+
+
+tasks.register('checkBadlands',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.BadlandsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkBadlands')}
+
+tasks.register('checkSpawnRegions',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SpawnRegionsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSpawnRegions')}
+
+
+tasks.register('checkColdUplands',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.ColdUplandsCheck'
+    maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkColdUplands')}
+
+tasks.register('checkWarmDappled',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.WarmDappledCheck'
+    maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkWarmDappled')}
+
+tasks.register('checkCoastalLandforms',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.CoastalLandformsCheck'
+    maxHeapSize='1g'
+}
+tasks.named('check'){dependsOn tasks.named('checkCoastalLandforms')}
+
+tasks.register('checkSeaIcePolicy',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SeaIcePolicyCheck'
+ maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSeaIcePolicy')}
+
+tasks.register('checkFrozenOcean',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.FrozenOceanCheck'
+ maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkFrozenOcean')}
+
+tasks.register('checkSeaIceFractures',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SeaIceFractureCheck'
+ maxHeapSize='768m'
+}
+tasks.named('check'){dependsOn tasks.named('checkSeaIceFractures')}
+
+// Preformation-backed landform diagnostic.
+tasks.register('checkErodedBadlands',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.ErodedBadlandsCheck'
+    maxHeapSize='512m'
+}
+
+tasks.named('check'){dependsOn tasks.named('checkErodedBadlands')}
+
+tasks.register('checkIcebergShapes',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.IcebergShapeCheck'
+    maxHeapSize='512m'
+}
+
+tasks.register('checkIcebergField',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.IcebergFieldCheck'
+    maxHeapSize='512m'
+}
+
+tasks.named('check'){dependsOn tasks.named('checkIcebergShapes'),tasks.named('checkIcebergField')}
+
+tasks.register('checkColdOceans',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.ColdOceanCheck'
+ maxHeapSize='2G'
+}
+tasks.named('check'){dependsOn tasks.named('checkColdOceans')}
+
+tasks.register('diagnoseSandyCoast',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SandyCoastDiagnostic';maxHeapSize='2G'}
+
+tasks.register('surveyIcebergDensity',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.IcebergDensitySurvey';maxHeapSize='2G'}
+
+tasks.register('checkSandyCoast',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SandyCoastCheck';maxHeapSize='2G'}
+tasks.named('check'){dependsOn tasks.named('checkSandyCoast')}
+tasks.register('checkFrozenSeabed',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.FrozenSeabedCheck';maxHeapSize='2G'}
+tasks.named('check'){dependsOn tasks.named('checkFrozenSeabed')}
+tasks.register('checkBambooSoil',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.BambooSoilCheck';maxHeapSize='2G'}
+tasks.named('check'){dependsOn tasks.named('checkBambooSoil')}
+
+// Geometry-only underground foundation; native profile integration is a later slice.
+tasks.register('checkUndergroundStructure', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.UndergroundStructureCheck'
+    maxHeapSize = '256m'
+}
+tasks.named('check') { dependsOn tasks.named('checkUndergroundStructure') }
+tasks.register('checkCaveApproach', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.realistic.CaveApproachCheck'
+    maxHeapSize = '768m'
+}
+tasks.named('check') { dependsOn tasks.named('checkCaveApproach') }
+
+// Opens an isolated copy of a tested cave world for actual native image review.
+def undergroundClientDirectory=layout.projectDirectory.dir(providers.gradleProperty('undergroundClientDirectory').getOrElse('build/underground-client-review'))
+loom.runs.register('undergroundClient') {
+    client();runDir(undergroundClientDirectory.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.undergroundClientSmoke=true')
+    vmArg('-Dblockbranch.undergroundClientResult='+undergroundClientDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username','CaveReview','--width','1024','--height','576')
+}
+tasks.register('prepareUndergroundClient') {
+    doLast {
+        undergroundClientDirectory.asFile.mkdirs();undergroundClientDirectory.file('result.txt').asFile.delete()
+        undergroundClientDirectory.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+tasks.named('runUndergroundClient') {
+    dependsOn tasks.named('prepareUndergroundClient')
+    doLast {assert undergroundClientDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+// Passive rendering verification through native Create World and saved-world UI.
+def undergroundAutomaticDistance=providers.gradleProperty('undergroundRenderDistance').getOrElse('4').toInteger()
+if(undergroundAutomaticDistance<4||undergroundAutomaticDistance>12)throw new GradleException('Bounded underground qualification uses render distances4..12')
+def undergroundAutomaticDirectory=layout.projectDirectory.dir(providers.gradleProperty('undergroundAutomaticDirectory').getOrElse('build/underground-automatic-render'))
+loom.runs.register('undergroundAutomatic') {
+    client();runDir(undergroundAutomaticDirectory.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.undergroundAutomaticSmoke=true')
+    vmArg('-Dblockbranch.undergroundAutomaticSeed='+providers.gradleProperty('undergroundSeed').getOrElse('424242'))
+    vmArg('-Dblockbranch.undergroundQualification='+providers.gradleProperty('undergroundQualification').getOrElse('false'))
+    vmArg('-Dblockbranch.undergroundAutomaticReload='+providers.gradleProperty('undergroundAutomaticReload').getOrElse('false'))
+    vmArg('-Dblockbranch.undergroundAutomaticResult='+undergroundAutomaticDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username','AutomaticCave','--width','1024','--height','576')
+}
+tasks.register('prepareUndergroundAutomatic') {
+    doLast {
+        undergroundAutomaticDirectory.asFile.mkdirs();undergroundAutomaticDirectory.file('result.txt').asFile.delete()
+        undergroundAutomaticDirectory.file('options.txt').asFile.text='renderDistance:'+undergroundAutomaticDistance+'\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+tasks.named('runUndergroundAutomatic') {
+    dependsOn tasks.named('prepareUndergroundAutomatic')
+    doLast {assert undergroundAutomaticDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+// Passive static review of a copied tested entrance world, using normal renderer readiness.
+def uniformSnapshotDirectory=layout.projectDirectory.dir('build/uniform-snapshot-smoke')
+loom.runs.register('uniformSnapshotSmoke') {
+    server();runDir(uniformSnapshotDirectory.asFile.absolutePath);vmArg('-Xmx1G')
+    vmArg('-Dblockbranch.uniformSnapshotSmoke=true')
+    vmArg('-Dblockbranch.uniformSnapshotResult='+uniformSnapshotDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+tasks.register('prepareUniformSnapshotSmoke') {
+    doLast {
+        uniformSnapshotDirectory.asFile.mkdirs();uniformSnapshotDirectory.file('result.txt').asFile.delete()
+        uniformSnapshotDirectory.file('eula.txt').asFile.text='eula=true\n'
+        uniformSnapshotDirectory.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=0\nlevel-type=minecraft:flat\nview-distance=2\nsimulation-distance=2\n'
+    }
+}
+tasks.named('runUniformSnapshotSmoke') {
+    dependsOn tasks.named('prepareUniformSnapshotSmoke')
+    doLast {assert uniformSnapshotDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+def caveApproachClientDirectory=layout.projectDirectory.dir(providers.gradleProperty('caveApproachClientDirectory').getOrElse('build/cave-approach-client'))
+loom.runs.register('caveApproachClient') {
+    client();runDir(caveApproachClientDirectory.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.caveApproachClientSmoke=true')
+    if(providers.gradleProperty('baselineRetentionAudit').isPresent())vmArg('-Dblockbranch.baselineRetentionAudit=true')
+    if(providers.gradleProperty('baselineFullViews').isPresent())vmArg('-Dblockbranch.baselineFullViews=true')
+    if(providers.gradleProperty('baselineRetentionCycles').isPresent())vmArg('-Dblockbranch.baselineRetentionCycles='+providers.gradleProperty('baselineRetentionCycles').get())
+    if(providers.gradleProperty('poseDiagnosticSmoke').isPresent())vmArg('-Dblockbranch.poseDiagnosticSmoke=true')
+    if(providers.gradleProperty('sectionStateProbe').isPresent())vmArg('-Dblockbranch.sectionStateProbe='+providers.gradleProperty('sectionStateProbe').get())
+    vmArg('-Dblockbranch.oreReview='+providers.gradleProperty('oreReview').getOrElse('false'))
+    if(providers.gradleProperty('meshOnlySmoke').isPresent())vmArg('-Dblockbranch.meshOnlySmoke=true')
+    if(providers.gradleProperty('packetOccupancySmoke').isPresent())vmArg('-Dblockbranch.packetOccupancySmoke=true')
+    vmArg('-Dblockbranch.litCaveReview='+providers.gradleProperty('litCaveReview').getOrElse('false'))
+    vmArg('-Dblockbranch.dripstoneReview='+providers.gradleProperty('dripstoneReview').getOrElse('false'))
+    if(providers.gradleProperty('sectionCopiesSmoke').isPresent()){
+        vmArg('-Dblockbranch.sectionCopiesSmoke=true')
+        vmArg('-Dblockbranch.sectionCopiesRequireDripstone='+providers.gradleProperty('sectionCopiesRequireDripstone').getOrElse('false'))
+        vmArg('-Dblockbranch.sectionCopiesSmokeResult='+caveApproachClientDirectory.file('copies-result.txt').asFile.absolutePath)
+    }
+    vmArg('-Dblockbranch.dripstoneTargets='+providers.gradleProperty('dripstoneTargets').getOrElse('0,0,0'))
+    vmArg('-Dblockbranch.caveApproachPoints='+providers.gradleProperty('caveApproachPoints').getOrElse(''))
+    vmArg('-Dblockbranch.caveEntryPoints='+providers.gradleProperty('caveEntryPoints').getOrElse(''))
+    vmArg('-Dblockbranch.caveApproachClientResult='+caveApproachClientDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username','CaveReview','--width','1024','--height','576')
+}
+tasks.register('prepareCaveApproachClient') {
+    doLast {
+        caveApproachClientDirectory.asFile.mkdirs();caveApproachClientDirectory.file('result.txt').asFile.delete()
+        caveApproachClientDirectory.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+tasks.named('runCaveApproachClient') {
+    dependsOn tasks.named('prepareCaveApproachClient')
+    doLast {assert caveApproachClientDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+// This project uses assertion-bearing JavaExec programs, not framework-discovered test classes.
+// `test` remains a standard entry point for the canonical analytic build checks.
+tasks.named('test') {
+    failOnNoDiscoveredTests = false
+}
+
+// Habitat-count baselines over the current terrain (no support for older terrain
+// shapes is required). A mismatch after an intentional terrain change, such as a
+// preset shape_version bump, means the counts need refreshing; keep the other
+// assertions. Explicit/manual: not part of `check`.
+['checkBiomeCoverage','checkDeepOceanCoverage','checkHumidCoverage','checkLakeCoverage','checkMarineShelfCoverage','checkRiverChannelCoverage','checkTundraCoverage'].each { coverageName ->
+    tasks.named(coverageName) {
+        group='coverage verification'
+        description='Manual habitat-count coverage diagnostic over current terrain; refresh the expected counts when terrain shape changes intentionally.'
+    }
+}
+
+// Exact original-noise oracle; no timing assertion or native fixture dependency.
+tasks.register('checkTerrainPhases',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.TerrainPhaseCheck'}
+tasks.named('check'){dependsOn 'checkTerrainPhases'}
+
+// Optional bounded topology witness; never an elapsed-time build gate.
+def startupSeeds=providers.gradleProperty('drainageStartupSeeds').getOrElse('424242,1,-17').split(',') as List
+tasks.register('measureDrainageStartup',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.DrainageStartupWitness';minHeapSize='512m';maxHeapSize='3G';args startupSeeds}
+
+// Definition-1 temperate edge predicates and frozen historical root reader.
+tasks.register('checkForestGrasslandTransition',JavaExec){
+    dependsOn tasks.named('testClasses')
+    classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.ForestGrasslandTransitionCheck'
+    maxHeapSize='1g'
+}
+tasks.named('check'){dependsOn tasks.named('checkForestGrasslandTransition')}
+
+def transitionVisualDir=layout.projectDirectory.dir(providers.gradleProperty('forestGrasslandVisualDirectory').getOrElse('build/transition-evidence/visual'))
+loom.runs.register('forestGrasslandVisual'){
+    client();runDir(transitionVisualDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.forestGrasslandVisual=true')
+    vmArg('-Dblockbranch.forestGrasslandVisualDirectory='+transitionVisualDir.asFile.absolutePath)
+    vmArg('-Dblockbranch.forestGrasslandWitness='+layout.projectDirectory.file('build/transition-evidence/fresh/witness.json').asFile.absolutePath)
+    programArgs('--username','TransitionVisual','--width','1024','--height','576')
+}
+tasks.register('prepareForestGrasslandVisual'){doLast{
+    transitionVisualDir.asFile.mkdirs()
+    assert !transitionVisualDir.dir('saves/ForestGrasslandVisualReview').asFile.exists():'Preserve previous visual evidence; select a fresh directory.'
+    transitionVisualDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runForestGrasslandVisual'){dependsOn 'prepareForestGrasslandVisual';doLast{assert transitionVisualDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def redwoodVisualDir=layout.projectDirectory.dir(providers.gradleProperty('redwoodVisualDirectory').getOrElse('build/redwood-evidence/visual'))
+loom.runs.register('redwoodForestVisual'){
+    client();runDir(redwoodVisualDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.redwoodVisual=true')
+    vmArg('-Dblockbranch.redwoodVisualDirectory='+redwoodVisualDir.asFile.absolutePath)
+    // Witness JSON {"root":[x,y,z]}: a giant redwood in a dense flat stand (see docs/DEVELOPMENT.md).
+    vmArg('-Dblockbranch.redwoodWitness='+layout.projectDirectory.file(providers.gradleProperty('redwoodWitness').getOrElse('build/redwood-evidence/witness.json')).asFile.absolutePath)
+    programArgs('--username','RedwoodVisual','--width','1024','--height','576')
+}
+tasks.register('prepareRedwoodForestVisual'){doLast{
+    redwoodVisualDir.asFile.mkdirs()
+    assert !redwoodVisualDir.dir('saves/RedwoodForestVisualReview').asFile.exists():'Preserve previous visual evidence; select a fresh directory.'
+    redwoodVisualDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runRedwoodForestVisual'){dependsOn 'prepareRedwoodForestVisual';doLast{assert redwoodVisualDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('checkHardwareTier', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.performance.HardwareTierCheck'
+}
+tasks.named('check') { dependsOn tasks.named('checkHardwareTier') }
+
+tasks.register('checkHorizonSelection', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.horizon.HorizonSelectionCheck'
+}
+tasks.named('check') { dependsOn tasks.named('checkHorizonSelection') }
+tasks.register('checkHorizonProtocol', JavaExec) {
+    dependsOn 'compileIntegrationTestJava'
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    mainClass = 'blockbranch.horizon.HorizonProtocolCheck'
+    systemProperty 'blockbranch.horizon', 'true'
+    maxHeapSize = '1G'
+    // The bootstrap writes logs/ into the working directory; keep it under build/.
+    workingDir = layout.buildDirectory.dir('horizon-protocol').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
+tasks.named('check') { dependsOn tasks.named('checkHorizonProtocol') }
+
+// Matched horizon captures (see HorizonVisualReview); -PhorizonVisualDirectory selects a fresh build/ directory.
+def horizonVisualDir=layout.projectDirectory.dir(providers.gradleProperty('horizonVisualDirectory').getOrElse('build/horizon-evidence/visual'))
+loom.runs.register('horizonVisual'){
+    client();runDir(horizonVisualDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.horizon=true')
+    vmArg('-Dblockbranch.horizonVisual=true')
+    vmArg('-Dblockbranch.horizonVisualDirectory='+horizonVisualDir.asFile.absolutePath)
+    // -PhorizonVisualViews=water reviews only the shoreline view; =structures a placed tower and the nearest planned surface structure; =wells the nearest atlas wells.
+    providers.gradleProperty('horizonVisualViews').orNull?.with{vmArg('-Dblockbranch.horizonVisualViews='+it)}
+    // -PhorizonVisualRadius narrows the horizon radius (default 2048 blocks), so a review of nearby structures settles sooner.
+    providers.gradleProperty('horizonVisualRadius').orNull?.with{vmArg('-Dblockbranch.horizon.radius='+(it as int))}
+    programArgs('--username','HorizonVisual','--width','1280','--height','720')
+}
+// -PhorizonVisualMaxFps caps the frame rate (260, the default, is unlimited), for timing runs, where uncapped rendering can compete with tile sampling for a laptop's CPU.
+def horizonVisualMaxFps=providers.gradleProperty('horizonVisualMaxFps').getOrElse('260') as int
+assert horizonVisualMaxFps>=10&&horizonVisualMaxFps<=260:'horizonVisualMaxFps must be 10-260'
+tasks.register('prepareHorizonVisual'){doLast{
+    horizonVisualDir.asFile.mkdirs()
+    assert !horizonVisualDir.dir('saves/HorizonVisualReview').asFile.exists():'Preserve previous visual evidence; select a fresh directory.'
+    // Clouds stay at their vanilla height, often below realistic terrain; they are off so captures compare terrain alone.
+    horizonVisualDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:'+horizonVisualMaxFps+'\ninactivityFpsLimit:"minimized"\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\nrenderClouds:\"false\"\n'
+}}
+tasks.named('runHorizonVisual'){dependsOn 'prepareHorizonVisual';environment('ALSOFT_DRIVERS','null');doLast{assert horizonVisualDir.file('result.txt').asFile.text.startsWith('PASS')}}
+// Horizon lifecycle (see HorizonLifecycleReview): edit refresh, dimension return, saved-source invalidation, quit and reopen.
+// -PhorizonLifecycleDirectory selects a fresh build/ directory. A 1,024-block radius and 30 FPS keep the software renderer light.
+def horizonLifecycleDir=layout.projectDirectory.dir(providers.gradleProperty('horizonLifecycleDirectory').getOrElse('build/horizon-evidence/lifecycle'))
+loom.runs.register('horizonLifecycle'){
+    client();runDir(horizonLifecycleDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.horizon=true')
+    vmArg('-Dblockbranch.horizon.radius=1024')
+    vmArg('-Dblockbranch.horizonLifecycle=true')
+    vmArg('-Dblockbranch.horizonLifecycleDirectory='+horizonLifecycleDir.asFile.absolutePath)
+    programArgs('--username','HorizonLifecycle','--width','854','--height','480')
+}
+tasks.register('prepareHorizonLifecycle'){doLast{
+    horizonLifecycleDir.asFile.mkdirs()
+    assert !horizonLifecycleDir.dir('saves/HorizonLifecycleReview').asFile.exists():'Preserve previous lifecycle evidence; select a fresh directory.'
+    horizonLifecycleDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\ninactivityFpsLimit:"minimized"\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\nrenderClouds:\"false\"\n'
+}}
+tasks.named('runHorizonLifecycle'){dependsOn 'prepareHorizonLifecycle';environment('ALSOFT_DRIVERS','null');doLast{assert horizonLifecycleDir.file('result.txt').asFile.text.startsWith('PASS')}}
+// Horizon wells against native generation (see HorizonWellCheck): a server-only run on a fresh -PhorizonWellDirectory.
+def horizonWellDir=layout.projectDirectory.dir(providers.gradleProperty('horizonWellDirectory').getOrElse('build/horizon-evidence/wells'))
+loom.runs.register('horizonWell'){
+    server();runDir(horizonWellDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+    vmArg('-Dblockbranch.horizonWell=true')
+    vmArg('-Dblockbranch.horizonWellDirectory='+horizonWellDir.asFile.absolutePath)
+}
+tasks.named('runHorizonWell'){doFirst{
+    def dir=horizonWellDir.asFile;dir.mkdirs()
+    assert !new File(dir,'world').exists()&&!new File(dir,'result.txt').exists():'Preserve previous well evidence; select a fresh directory.'
+    new File(dir,'eula.txt').text='eula=true\n'
+    new File(dir,'server.properties').text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25616\nlevel-name=world\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nview-distance=2\nsimulation-distance=2\nmax-tick-time=600000\n'
+};doLast{assert horizonWellDir.file('result.txt').asFile.text.startsWith('PASS')}}
+// Horizon dedicated-server reconnect (see HorizonReconnectCheck): start runHorizonReconnectServer, wait for
+// `Done`, then run runHorizonReconnectClient with the same fresh -PhorizonReconnectDirectory. Loopback only.
+def horizonReconnectDir=layout.projectDirectory.dir(providers.gradleProperty('horizonReconnectDirectory').getOrElse('build/horizon-evidence/reconnect'))
+def horizonReconnectPort=providers.gradleProperty('horizonReconnectPort').getOrElse('25614')
+loom.runs.register('horizonReconnectServer'){
+    server();runDir(horizonReconnectDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+    vmArg('-Dblockbranch.horizon=true')
+    vmArg('-Dblockbranch.horizonReconnect=true')
+    vmArg('-Dblockbranch.horizonReconnectDirectory='+horizonReconnectDir.asFile.absolutePath)
+}
+loom.runs.register('horizonReconnectClient'){
+    client();runDir(horizonReconnectDir.dir('client').asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.horizon=true')
+    vmArg('-Dblockbranch.horizon.radius=1024')
+    vmArg('-Dblockbranch.horizonReconnect=true')
+    vmArg('-Dblockbranch.horizonReconnectDirectory='+horizonReconnectDir.asFile.absolutePath)
+    vmArg('-Dblockbranch.horizonReconnectAddress=127.0.0.1:'+horizonReconnectPort)
+    programArgs('--username','HorizonReconnect','--quickPlayMultiplayer','127.0.0.1:'+horizonReconnectPort,'--width','854','--height','480')
+}
+tasks.named('runHorizonReconnectServer'){doFirst{
+    def dir=horizonReconnectDir.asFile;dir.mkdirs()
+    assert !new File(dir,'world').exists()&&!new File(dir,'server.txt').exists():'Preserve previous reconnect evidence; select a fresh directory.'
+    new File(dir,'eula.txt').text='eula=true\n'
+    new File(dir,'server.properties').text='online-mode=false\nwhite-list=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port='+horizonReconnectPort+'\nlevel-name=world\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nview-distance=6\nsimulation-distance=5\nmax-tick-time=600000\n'
+};doLast{assert horizonReconnectDir.file('server.txt').asFile.text.startsWith('PASS')}}
+tasks.named('runHorizonReconnectClient'){environment('ALSOFT_DRIVERS','null');doFirst{
+    def dir=horizonReconnectDir.dir('client').asFile;dir.mkdirs()
+    assert !horizonReconnectDir.file('result.txt').asFile.exists():'Preserve previous reconnect evidence; select a fresh directory.'
+    new File(dir,'options.txt').text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\ninactivityFpsLimit:"minimized"\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\nrenderClouds:\"false\"\n'
+};doLast{assert horizonReconnectDir.file('result.txt').asFile.text.startsWith('PASS')}}

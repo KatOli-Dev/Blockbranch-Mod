@@ -1,0 +1,88 @@
+import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
+import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.util.zip.CRC32
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies { classpath 'com.google.code.gson:gson:2.14.0' }
+}
+
+// Runs inside Gradle's JVM so the ordinary build never needs an asset-tool interpreter.
+abstract class VerifyWildlifeItemResources extends DefaultTask {
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract DirectoryProperty getResourcesDirectory()
+
+    @TaskAction
+    void verify() {
+        def assets = resourcesDirectory.dir('assets/blockbranch').get().asFile
+        def data = resourcesDirectory.dir('data/blockbranch').get().asFile
+        def parser = new GsonBuilder().setStrictness(Strictness.STRICT).create()
+        def json = { File path ->
+            def text = Files.readString(path.toPath())
+            assert !text.startsWith('\uFEFF') : "Unexpected UTF-8 BOM: $path"
+            parser.fromJson(text, Map)
+        }
+        def names = json(new File(assets, 'lang/en_us.json'))
+        def species = ['wild_boar', 'red_deer', 'american_bison', 'brown_bear',
+                       'mallard', 'eurasian_beaver', 'european_perch', 'harbor_seal']
+        def items = species.collect { it + '_spawn_egg' } +
+                ['venison', 'cooked_venison', 'duck', 'cooked_duck', 'perch', 'cooked_perch', 'perch_bucket']
+        items.each { item ->
+            assert names['item.blockbranch.' + item]?.trim() : "Missing item name: $item"
+            def model = json(new File(assets, "items/${item}.json")).model
+            assert model.type == 'minecraft:model' : "Invalid item model: $item"
+            def definition = json(new File(assets, "models/${model.model.replaceFirst('^blockbranch:', '')}.json"))
+            (definition.textures ?: [:]).values().each { texture ->
+                if (texture.startsWith('blockbranch:')) {
+                    VerifyWildlifeItemResources.verifyPng(new File(assets, "textures/${texture.substring('blockbranch:'.length())}.png"))
+                }
+            }
+        }
+        ['venison', 'duck', 'perch'].each { raw ->
+            ['smelting', 'smoking', 'campfire_cooking'].each { method ->
+                def key = "cooked_${raw}_from_${method}"
+                def recipe = json(new File(data, "recipe/${key}.json"))
+                def unlock = json(new File(data, "advancement/recipes/food/${key}.json"))
+                assert recipe.type == 'minecraft:' + method : "Invalid cooking type: $key"
+                assert unlock.rewards.recipes == ['blockbranch:' + key] : "Invalid recipe reward: $key"
+                assert unlock.criteria.values().any { criterion ->
+                    criterion.trigger == 'minecraft:inventory_changed' &&
+                            criterion.conditions.items.any { it.items == 'blockbranch:' + raw }
+                } : "Missing ingredient unlock: $key"
+            }
+        }
+        species.each { name ->
+            assert json(new File(data, "loot_table/entities/${name}.json")).type == 'minecraft:entity' :
+                    "Invalid entity loot table: $name"
+        }
+        logger.lifecycle('PASS 15 item names/models/PNG CRCs;9 cooking recipe/unlock pairs;8 entity loot tables')
+    }
+
+    static void verifyPng(File path) {
+        byte[] bytes = path.bytes
+        assert bytes.length >= 8 && ByteBuffer.wrap(bytes).getLong() == 0x89504e470d0a1a0aL : "Invalid PNG signature: $path"
+        int offset = 8
+        while (offset < bytes.length) {
+            assert bytes.length - offset >= 12 : "Truncated PNG chunk: $path"
+            long length = Integer.toUnsignedLong(ByteBuffer.wrap(bytes, offset, 4).getInt())
+            assert length <= bytes.length - offset - 12 : "Truncated PNG payload: $path"
+            int size = (int) length
+            def crc = new CRC32()
+            crc.update(bytes, offset + 4, size + 4)
+            long expected = Integer.toUnsignedLong(ByteBuffer.wrap(bytes, offset + 8 + size, 4).getInt())
+            assert crc.value == expected : "Invalid PNG CRC: $path at $offset"
+            offset += size + 12
+        }
+        assert offset == bytes.length : "Invalid PNG length: $path"
+    }
+}
+
+tasks.register('verifyWildlifeItemResources', VerifyWildlifeItemResources) {
+    group = 'verification'
+    description = 'Validate wildlife item assets and cooking recipe unlock references.'
+    resourcesDirectory.set(layout.projectDirectory.dir('src/main/resources'))
+}
+tasks.named('check') { dependsOn tasks.named('verifyWildlifeItemResources') }

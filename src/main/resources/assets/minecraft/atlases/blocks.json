@@ -1,0 +1,7 @@
+{
+  "sources": [
+    {
+      "type": "blockbranch:native_blocks"
+    }
+  ]
+}

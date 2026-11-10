@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:lead_alloy_block"
+  },
+  "result": {
+    "id": "blockbranch:lead_alloy_slab",
+    "count": 6
+  }
+}

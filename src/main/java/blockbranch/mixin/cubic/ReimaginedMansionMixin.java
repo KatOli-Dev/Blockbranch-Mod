@@ -1,0 +1,7 @@
+package blockbranch.mixin.cubic;
+import java.util.*;import blockbranch.realistic.*;import net.minecraft.world.level.*;import net.minecraft.world.level.chunk.ChunkGenerator;import net.minecraft.world.level.levelgen.structure.*;import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;import net.minecraft.world.level.levelgen.structure.structures.*;import net.minecraft.util.RandomSource;import org.spongepowered.asm.mixin.Mixin;import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+@Mixin(WoodlandMansionStructure.class)
+abstract class ReimaginedMansionMixin {
+ @WrapMethod(method="findGenerationPoint") private Optional<Structure.GenerationStub> blockbranch$layout(Structure.GenerationContext c,Operation<Optional<Structure.GenerationStub>> original){if(!(c.chunkGenerator() instanceof RealisticGenerator g)||g.reimaginedDefinition()==0)return original.call(c);return ReimaginedMansionPiece.generate(c,g);}
+ @WrapMethod(method="afterPlace") private void blockbranch$nativeFoundations(WorldGenLevel world,StructureManager manager,ChunkGenerator generator,RandomSource random,BoundingBox clip,ChunkPos chunk,PiecesContainer pieces,Operation<Void> original){if(pieces.pieces().stream().anyMatch(p->p instanceof ReimaginedMansionPiece))pieces=new PiecesContainer(pieces.pieces().stream().filter(p->p instanceof WoodlandMansionPieces.WoodlandMansionPiece).toList());original.call(world,manager,generator,random,clip,chunk,pieces);}
+}

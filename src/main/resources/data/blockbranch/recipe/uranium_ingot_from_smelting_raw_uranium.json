@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "blockbranch:raw_uranium",
+  "result": {
+    "id": "blockbranch:uranium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

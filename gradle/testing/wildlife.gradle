@@ -1,0 +1,761 @@
+def wildlifeDirectory = layout.projectDirectory.dir(providers.gradleProperty('wildlifeSmokeDirectory').getOrElse('build/wildlife-smoke-v2'))
+loom.runs.register('wildlifeSmoke') {
+    server()
+    name('Wildlife native regression')
+    runDir(wildlifeDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeSmoke=true')
+    vmArg('-Dblockbranch.wildlifeSmokeResult=' + wildlifeDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+tasks.register('prepareWildlifeSmoke') {
+    doLast {
+        def directory = wildlifeDirectory.asFile
+        directory.mkdirs()
+        new File(directory, 'result.txt').delete()
+        new File(directory, 'eula.txt').text = 'eula=true\n'
+        new File(directory, 'server.properties').text = '''online-mode=false
+server-ip=127.0.0.1
+server-port=25585
+white-list=false
+view-distance=2
+simulation-distance=2
+level-name=wildlife
+level-type=minecraft:flat
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runWildlifeSmoke') {
+    dependsOn tasks.named('prepareWildlifeSmoke')
+    doLast { assert wildlifeDirectory.file('result.txt').asFile.text.trim() == 'PASS' }
+}
+
+def wildlifeClient = layout.projectDirectory.dir('build/wildlife-client')
+def wildlifeServer = layout.projectDirectory.dir('build/wildlife-client-server')
+loom.runs.register('wildlifeClientServer') {
+    server()
+    runDir(wildlifeServer.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true')
+    programArg('--nogui')
+}
+loom.runs.register('wildlifeClientCheck') {
+    client()
+    runDir(wildlifeClient.asFile.absolutePath)
+    vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true')
+    vmArg('-Dblockbranch.wildlifeClientResult=' + wildlifeClient.file('result.txt').asFile.absolutePath)
+    programArgs('--username','WildlifeCheck','--quickPlayMultiplayer','127.0.0.1:25586','--width','1024','--height','576')
+}
+tasks.register('prepareWildlifeReview') {
+    doLast {
+        wildlifeServer.asFile.mkdirs()
+        wildlifeClient.asFile.mkdirs()
+        wildlifeServer.file('eula.txt').asFile.text='eula=true\n'
+        wildlifeServer.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25586
+white-list=false
+view-distance=8
+simulation-distance=2
+level-name=wildlife-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        wildlifeClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:5\nmaxFps:60\nenableVsync:false\ntutorialStep:none\n'
+    }
+}
+tasks.named('runWildlifeClientServer') { dependsOn tasks.named('prepareWildlifeReview') }
+tasks.named('runWildlifeClientCheck') {
+    doFirst { wildlifeClient.file('result.txt').asFile.delete() }
+    doLast { assert wildlifeClient.file('result.txt').asFile.text.trim() == 'PASS' }
+}
+
+def deerDirectory = layout.projectDirectory.dir(providers.gradleProperty('deerSmokeDirectory').getOrElse('build/deer-smoke'))
+loom.runs.register('deerSmoke') {
+    server();runDir(deerDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.deerSmoke=true')
+    vmArg('-Dblockbranch.deerSmokeResult=' + deerDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+tasks.register('prepareDeerSmoke') {
+    doLast {
+        deerDirectory.asFile.mkdirs();deerDirectory.file('result.txt').asFile.delete()
+        deerDirectory.file('eula.txt').asFile.text='eula=true\n'
+        deerDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25587
+view-distance=2
+simulation-distance=2
+level-name=deer
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runDeerSmoke') {
+    dependsOn tasks.named('prepareDeerSmoke')
+    doLast { assert deerDirectory.file('result.txt').asFile.text.trim()=='PASS' }
+}
+
+def deerClient = layout.projectDirectory.dir('build/deer-client')
+def deerServer = layout.projectDirectory.dir('build/deer-client-server')
+loom.runs.register('deerClientServer') {
+    server();runDir(deerServer.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true');vmArg('-Dblockbranch.deerReview=true');vmArg('-Dblockbranch.wildlifeSurvey=true')
+    vmArg('-Dblockbranch.wildlifeSurveyResult='+deerServer.file('survey-result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+loom.runs.register('deerClientCheck') {
+    client();runDir(deerClient.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true');vmArg('-Dblockbranch.deerReview=true');vmArg('-Dblockbranch.wildlifeSurvey=true');if(!providers.gradleProperty('skipWildlifeReviewAudio').isPresent())vmArg('-Dblockbranch.wildlifeAudioReview=true')
+    vmArg('-Dblockbranch.wildlifeClientResult='+deerClient.file('result.txt').asFile.absolutePath)
+    programArgs('--username','DeerCheck','--quickPlayMultiplayer','127.0.0.1:25588','--width','1024','--height','576')
+}
+tasks.register('prepareDeerClient') {
+    doLast {
+        deerServer.asFile.mkdirs();deerClient.asFile.mkdirs();deerServer.file('survey-result.txt').asFile.delete()
+        deerServer.file('eula.txt').asFile.text='eula=true\n'
+        deerServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25588
+view-distance=8
+simulation-distance=8
+level-name=deer-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        deerClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_blocks:0.0\n'
+    }
+}
+tasks.named('runDeerClientServer'){dependsOn tasks.named('prepareDeerClient')}
+tasks.named('runDeerClientCheck'){
+    doFirst{deerClient.file('result.txt').asFile.delete()}
+    doLast{assert deerClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def scaleClient=layout.projectDirectory.dir('build/wildlife-scale-client')
+def scaleServer=layout.projectDirectory.dir('build/wildlife-scale-server')
+loom.runs.register('wildlifeScaleServer'){
+    server();runDir(scaleServer.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true');vmArg('-Dblockbranch.wildlifeScaleReview=true');programArg('--nogui')
+}
+loom.runs.register('wildlifeScaleClient'){
+    client();runDir(scaleClient.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.wildlifeReview=true');vmArg('-Dblockbranch.wildlifeScaleReview=true')
+    vmArg('-Dblockbranch.wildlifeClientResult='+scaleClient.file('result.txt').asFile.absolutePath)
+    programArgs('--username','ScaleCheck','--quickPlayMultiplayer','127.0.0.1:25589','--width','1280','--height','720')
+}
+tasks.register('prepareWildlifeScale'){
+    doLast{
+        scaleServer.asFile.mkdirs();scaleClient.asFile.mkdirs();scaleServer.file('eula.txt').asFile.text='eula=true\n'
+        scaleServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25589
+view-distance=8
+simulation-distance=8
+level-name=scale-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        scaleClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\n'
+    }
+}
+tasks.named('runWildlifeScaleServer'){dependsOn tasks.named('prepareWildlifeScale')}
+tasks.named('runWildlifeScaleClient'){
+    doFirst{scaleClient.file('result.txt').asFile.delete()}
+    doLast{assert scaleClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def bisonDirectory=layout.projectDirectory.dir(providers.gradleProperty('bisonSmokeDirectory').getOrElse('build/bison-smoke'))
+loom.runs.register('bisonSmoke'){
+    server();runDir(bisonDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.bisonSmoke=true');vmArg('-Dblockbranch.bisonSmokeResult='+bisonDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareBisonSmoke'){
+    doLast{
+        bisonDirectory.asFile.mkdirs();bisonDirectory.file('result.txt').asFile.delete();bisonDirectory.file('eula.txt').asFile.text='eula=true\n'
+        bisonDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25590
+view-distance=2
+simulation-distance=2
+level-name=bison
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runBisonSmoke'){
+    dependsOn tasks.named('prepareBisonSmoke')
+    doLast{assert bisonDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def bisonClient=layout.projectDirectory.dir(providers.gradleProperty('bisonClientDirectory').getOrElse('build/bison-client'))
+def bisonServer=layout.projectDirectory.dir(providers.gradleProperty('bisonServerDirectory').getOrElse('build/bison-client-server'))
+loom.runs.register('bisonClientServer'){
+    server();runDir(bisonServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.bisonReview=true');programArg('--nogui')
+}
+loom.runs.register('bisonClientCheck'){
+    client();runDir(bisonClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.bisonReview=true')
+    vmArg('-Dblockbranch.bisonClientResult='+bisonClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('bisonAudioReview').isPresent())vmArg('-Dblockbranch.bisonAudioReview=true')
+    programArgs('--username','BisonCheck','--quickPlayMultiplayer','127.0.0.1:25591','--width','1280','--height','720')
+}
+tasks.register('prepareBisonReview'){
+    doLast{
+        bisonServer.asFile.mkdirs();bisonClient.asFile.mkdirs();bisonServer.file('eula.txt').asFile.text='eula=true\n'
+        bisonServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25591
+view-distance=8
+simulation-distance=8
+level-name=bison-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        bisonClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_blocks:0.0\n'
+    }
+}
+tasks.named('runBisonClientServer'){dependsOn tasks.named('prepareBisonReview')}
+tasks.named('runBisonClientCheck'){
+    doFirst{bisonClient.file('result.txt').asFile.delete()}
+    doLast{assert bisonClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def bearDirectory=layout.projectDirectory.dir(providers.gradleProperty('bearSmokeDirectory').getOrElse('build/bear-smoke'))
+loom.runs.register('bearSmoke'){
+    server();runDir(bearDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.bearSmoke=true')
+    vmArg('-Dblockbranch.bearSmokeResult='+bearDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareBearSmoke'){
+    doLast{
+        bearDirectory.asFile.mkdirs();bearDirectory.file('result.txt').asFile.delete();bearDirectory.file('eula.txt').asFile.text='eula=true\n'
+        bearDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25592
+view-distance=2
+simulation-distance=2
+level-name=brown-bear
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runBearSmoke'){
+    dependsOn tasks.named('prepareBearSmoke')
+    doLast{assert bearDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def bearClient=layout.projectDirectory.dir(providers.gradleProperty('bearClientDirectory').getOrElse('build/bear-client'))
+def bearServer=layout.projectDirectory.dir(providers.gradleProperty('bearServerDirectory').getOrElse('build/bear-client-server'))
+loom.runs.register('bearClientServer'){
+    server();runDir(bearServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.bearReview=true');programArg('--nogui')
+}
+loom.runs.register('bearClientCheck'){
+    client();runDir(bearClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.bearReview=true')
+    vmArg('-Dblockbranch.bearClientResult='+bearClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('bearAudioReview').isPresent())vmArg('-Dblockbranch.bearAudioReview=true')
+    programArgs('--username','BearCheck','--quickPlayMultiplayer','127.0.0.1:25593','--width','1280','--height','720')
+}
+tasks.register('prepareBearReview'){
+    doLast{
+        bearServer.asFile.mkdirs();bearClient.asFile.mkdirs();bearServer.file('eula.txt').asFile.text='eula=true\n'
+        bearServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25593
+view-distance=8
+simulation-distance=8
+level-name=bear-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        bearClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_block:0.0\nsoundCategory_player:0.0\n'
+    }
+}
+tasks.named('runBearClientServer'){dependsOn tasks.named('prepareBearReview')}
+tasks.named('runBearClientCheck'){
+    doFirst{bearClient.file('result.txt').asFile.delete()}
+    doLast{assert bearClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def mallardDirectory=layout.projectDirectory.dir(providers.gradleProperty('mallardSmokeDirectory').getOrElse('build/mallard-smoke'))
+loom.runs.register('mallardSmoke'){
+    server();runDir(mallardDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.mallardSmoke=true')
+    vmArg('-Dblockbranch.mallardSmokeResult='+mallardDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareMallardSmoke'){
+    doLast{
+        mallardDirectory.asFile.mkdirs();mallardDirectory.file('result.txt').asFile.delete();mallardDirectory.file('eula.txt').asFile.text='eula=true\n'
+        mallardDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25594
+view-distance=2
+simulation-distance=2
+level-name=mallard
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runMallardSmoke'){
+    dependsOn tasks.named('prepareMallardSmoke')
+    doLast{assert mallardDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+
+def mallardClient=layout.projectDirectory.dir(providers.gradleProperty('mallardClientDirectory').getOrElse('build/mallard-client'))
+def mallardServer=layout.projectDirectory.dir(providers.gradleProperty('mallardServerDirectory').getOrElse('build/mallard-client-server'))
+loom.runs.register('mallardClientServer'){
+    server();runDir(mallardServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.mallardReview=true');programArg('--nogui')
+}
+loom.runs.register('mallardClientCheck'){
+    client();runDir(mallardClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.mallardReview=true')
+    vmArg('-Dblockbranch.mallardClientResult='+mallardClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('mallardAudioReview').isPresent())vmArg('-Dblockbranch.mallardAudioReview=true')
+    programArgs('--username','MallardCheck','--quickPlayMultiplayer','127.0.0.1:25595','--width','1280','--height','720')
+}
+tasks.register('prepareMallardReview'){
+    doLast{
+        mallardServer.asFile.mkdirs();mallardClient.asFile.mkdirs();mallardServer.file('eula.txt').asFile.text='eula=true\n'
+        mallardServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25595
+view-distance=8
+simulation-distance=8
+level-name=mallard-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        mallardClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_block:0.0\nsoundCategory_player:0.0\n'
+    }
+}
+tasks.named('runMallardClientServer'){dependsOn tasks.named('prepareMallardReview')}
+tasks.named('runMallardClientCheck'){
+    doFirst{mallardClient.file('result.txt').asFile.delete()}
+    doLast{assert mallardClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def beaverDirectory=layout.projectDirectory.dir(providers.gradleProperty('beaverSmokeDirectory').getOrElse('build/beaver-smoke'))
+loom.runs.register('beaverSmoke'){
+    server();runDir(beaverDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.beaverSmoke=true')
+    vmArg('-Dblockbranch.beaverSmokeResult='+beaverDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareBeaverSmoke'){
+    doLast{
+        beaverDirectory.asFile.mkdirs();beaverDirectory.file('result.txt').asFile.delete();beaverDirectory.file('eula.txt').asFile.text='eula=true\n'
+        beaverDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25596
+view-distance=2
+simulation-distance=2
+level-name=beaver
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runBeaverSmoke'){
+    dependsOn tasks.named('prepareBeaverSmoke')
+    doLast{assert beaverDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def beaverClient=layout.projectDirectory.dir(providers.gradleProperty('beaverClientDirectory').getOrElse('build/beaver-client'))
+def beaverServer=layout.projectDirectory.dir(providers.gradleProperty('beaverServerDirectory').getOrElse('build/beaver-client-server'))
+loom.runs.register('beaverClientServer'){
+    server();runDir(beaverServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.beaverReview=true');programArg('--nogui')
+}
+loom.runs.register('beaverClientCheck'){
+    client();runDir(beaverClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.beaverReview=true')
+    vmArg('-Dblockbranch.beaverClientResult='+beaverClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('beaverAudioReview').isPresent())vmArg('-Dblockbranch.beaverAudioReview=true')
+    programArgs('--username','BeaverCheck','--quickPlayMultiplayer','127.0.0.1:25597','--width','1280','--height','720')
+}
+tasks.register('prepareBeaverReview'){
+    doLast{
+        beaverServer.asFile.mkdirs();beaverClient.asFile.mkdirs();beaverServer.file('eula.txt').asFile.text='eula=true\n'
+        beaverServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25597
+view-distance=8
+simulation-distance=8
+level-name=beaver-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        beaverClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_block:0.0\nsoundCategory_player:0.0\n'
+    }
+}
+tasks.named('runBeaverClientServer'){dependsOn tasks.named('prepareBeaverReview')}
+tasks.named('runBeaverClientCheck'){
+    doFirst{beaverClient.file('result.txt').asFile.delete()}
+    doLast{assert beaverClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def perchDirectory=layout.projectDirectory.dir(providers.gradleProperty('perchSmokeDirectory').getOrElse('build/perch-smoke'))
+loom.runs.register('perchSmoke'){
+    server();runDir(perchDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.perchSmoke=true')
+    vmArg('-Dblockbranch.perchSmokeResult='+perchDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('preparePerchSmoke'){
+    doLast{
+        perchDirectory.asFile.mkdirs();perchDirectory.file('result.txt').asFile.delete();perchDirectory.file('eula.txt').asFile.text='eula=true\n'
+        perchDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25598
+view-distance=2
+simulation-distance=2
+level-name=perch
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:river","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runPerchSmoke'){
+    dependsOn tasks.named('preparePerchSmoke')
+    doLast{assert perchDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+
+def perchClient=layout.projectDirectory.dir(providers.gradleProperty('perchClientDirectory').getOrElse('build/perch-client'))
+def perchServer=layout.projectDirectory.dir(providers.gradleProperty('perchServerDirectory').getOrElse('build/perch-client-server'))
+loom.runs.register('perchClientServer'){
+    server();runDir(perchServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.perchReview=true');programArg('--nogui')
+}
+loom.runs.register('perchClientCheck'){
+    client();runDir(perchClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.perchReview=true')
+    vmArg('-Dblockbranch.perchClientResult='+perchClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('perchAudioReview').isPresent())vmArg('-Dblockbranch.perchAudioReview=true')
+    programArgs('--username','PerchCheck','--quickPlayMultiplayer','127.0.0.1:25599','--width','1280','--height','720')
+}
+tasks.register('preparePerchReview'){
+    doLast{
+        perchServer.asFile.mkdirs();perchClient.asFile.mkdirs();perchServer.file('eula.txt').asFile.text='eula=true\n'
+        perchServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25599
+view-distance=8
+simulation-distance=8
+level-name=perch-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        perchClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_block:0.0\nsoundCategory_player:0.0\n'
+    }
+}
+tasks.named('runPerchClientServer'){dependsOn tasks.named('preparePerchReview')}
+tasks.named('runPerchClientCheck'){
+    doFirst{perchClient.file('result.txt').asFile.delete()}
+    doLast{assert perchClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def sealDirectory=layout.projectDirectory.dir(providers.gradleProperty('sealSmokeDirectory').getOrElse('build/seal-smoke'))
+loom.runs.register('sealSmoke'){
+    server();runDir(sealDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.sealSmoke=true')
+    vmArg('-Dblockbranch.sealSmokeResult='+sealDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareSealSmoke'){
+    doLast{
+        sealDirectory.asFile.mkdirs();sealDirectory.file('result.txt').asFile.delete();sealDirectory.file('eula.txt').asFile.text='eula=true\n'
+        sealDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25600
+pause-when-empty-seconds=0
+view-distance=2
+simulation-distance=2
+level-name=seal
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runSealSmoke'){
+    dependsOn tasks.named('prepareSealSmoke')
+    doLast{assert sealDirectory.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+def sealClient=layout.projectDirectory.dir(providers.gradleProperty('sealClientDirectory').getOrElse('build/seal-client'))
+def sealServer=layout.projectDirectory.dir(providers.gradleProperty('sealServerDirectory').getOrElse('build/seal-client-server'))
+loom.runs.register('sealClientServer'){
+    server();runDir(sealServer.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.sealReview=true');programArg('--nogui')
+}
+loom.runs.register('sealClientCheck'){
+    client();runDir(sealClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.sealReview=true')
+    vmArg('-Dblockbranch.sealClientResult='+sealClient.file('result.txt').asFile.absolutePath)
+    if(providers.gradleProperty('sealAudioReview').isPresent())vmArg('-Dblockbranch.sealAudioReview=true')
+    programArgs('--username','SealCheck','--quickPlayMultiplayer','127.0.0.1:25601','--width','1280','--height','720')
+}
+tasks.register('prepareSealReview'){
+    doLast{
+        sealServer.asFile.mkdirs();sealClient.asFile.mkdirs();sealServer.file('eula.txt').asFile.text='eula=true\n'
+        sealServer.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25601
+view-distance=8
+simulation-distance=8
+level-name=seal-review
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        sealClient.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:8\nmaxFps:60\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\nsoundCategory_ambient:0.0\nsoundCategory_neutral:0.0\nsoundCategory_weather:0.0\nsoundCategory_block:0.0\nsoundCategory_player:0.0\n'
+    }
+}
+tasks.named('runSealClientServer'){dependsOn tasks.named('prepareSealReview')}
+tasks.named('runSealClientCheck'){
+    doFirst{sealClient.file('result.txt').asFile.delete()}
+    doLast{assert sealClient.file('result.txt').asFile.text.trim()=='PASS'}
+}
+
+// Bounded stock integration audit; isolated flat world, no gameplay server settings.
+def integrationDirectory=layout.projectDirectory.dir('build/wildlife-integration')
+loom.runs.register('wildlifeIntegration'){
+    server();runDir(integrationDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.integrationSmoke=true');vmArg('-Dblockbranch.integrationResult='+integrationDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareWildlifeIntegration'){
+    doLast{
+        integrationDirectory.asFile.mkdirs();integrationDirectory.file('result.txt').asFile.delete();integrationDirectory.file('eula.txt').asFile.text='eula=true\n'
+        integrationDirectory.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25602
+pause-when-empty-seconds=0
+view-distance=2
+simulation-distance=2
+level-name=integration
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runWildlifeIntegration'){dependsOn tasks.named('prepareWildlifeIntegration');doLast{assert integrationDirectory.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def populationServer=layout.projectDirectory.dir(providers.gradleProperty('populationServerDirectory').getOrElse('build/wildlife-population-server'))
+def populationClient=layout.projectDirectory.dir(providers.gradleProperty('populationClientDirectory').getOrElse('build/wildlife-population-client'))
+loom.runs.register('wildlifePopulationServer'){
+    server();runDir(populationServer.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.populationAudit=true')
+    if(providers.gradleProperty('populationServerProcessors').isPresent())vmArg('-XX:ActiveProcessorCount='+providers.gradleProperty('populationServerProcessors').get())
+    vmArg('-Dblockbranch.populationTicks='+providers.gradleProperty('populationTicks').getOrElse('1200'))
+    vmArg('-Dblockbranch.populationSites='+providers.gradleProperty('populationSites').getOrElse(''))
+    vmArg('-Dblockbranch.populationResult='+populationServer.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+loom.runs.register('wildlifePopulationClient'){
+    client();runDir(populationClient.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.populationAudit=true')
+    vmArg('-Dblockbranch.populationClientResult='+populationClient.file('result.txt').asFile.absolutePath)
+    programArgs('--username','PopulationAudit','--quickPlayMultiplayer','127.0.0.1:25603','--width','1024','--height','576')
+}
+tasks.register('prepareWildlifePopulation'){
+    doLast{
+        populationServer.asFile.mkdirs();populationClient.asFile.mkdirs();populationServer.file('eula.txt').asFile.text='eula=true\n'
+        populationServer.file('result.txt').asFile.delete();populationClient.file('result.txt').asFile.delete()
+        populationServer.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25603
+white-list=false
+pause-when-empty-seconds=0
+view-distance=6
+simulation-distance=6
+level-name=population
+level-type=blockbranch:realistic
+level-seed=424242
+max-tick-time=120000
+'''
+        populationClient.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:6\nmaxFps:30\nenableVsync:false\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+tasks.named('runWildlifePopulationServer'){dependsOn tasks.named('prepareWildlifePopulation')}
+tasks.named('runWildlifePopulationClient'){doLast{assert populationClient.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def utilityDirectory=layout.projectDirectory.dir('build/vanilla-utility')
+loom.runs.register('vanillaUtility'){
+    server();runDir(utilityDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.utilitySmoke=true')
+    vmArg('-Dblockbranch.utilityResult='+utilityDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareVanillaUtility'){
+    doLast{
+        utilityDirectory.asFile.mkdirs();utilityDirectory.file('eula.txt').asFile.text='eula=true\n';utilityDirectory.file('result.txt').asFile.delete()
+        utilityDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25604
+pause-when-empty-seconds=0
+view-distance=2
+simulation-distance=2
+level-name=utility
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runVanillaUtility'){dependsOn tasks.named('prepareVanillaUtility');doLast{assert utilityDirectory.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def wolfDeerDirectory=layout.projectDirectory.dir('build/wolf-deer')
+loom.runs.register('wolfDeer'){
+    server();runDir(wolfDeerDirectory.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wolfDeerSmoke=true')
+    vmArg('-Dblockbranch.wolfDeerResult='+wolfDeerDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareWolfDeer'){
+    doLast{
+        wolfDeerDirectory.asFile.mkdirs();wolfDeerDirectory.file('eula.txt').asFile.text='eula=true\n';wolfDeerDirectory.file('result.txt').asFile.delete()
+        wolfDeerDirectory.file('server.properties').asFile.text='''online-mode=false
+white-list=false
+server-ip=127.0.0.1
+server-port=25606
+pause-when-empty-seconds=0
+view-distance=2
+simulation-distance=2
+level-name=wolf-deer
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runWolfDeer'){dependsOn tasks.named('prepareWolfDeer');doLast{assert wolfDeerDirectory.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Actual Create World UI / integrated server; opt-in, isolated from ordinary play.
+def singleplayerDirectory=layout.projectDirectory.dir(providers.gradleProperty('singleplayerDirectory').getOrElse('build/wildlife-singleplayer-gate'))
+loom.runs.register('wildlifeSingleplayer'){
+    client();runDir(singleplayerDirectory.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.singleplayerSmoke=true')
+    vmArg('-Dblockbranch.itemReview='+providers.gradleProperty('itemReview').getOrElse('false'))
+    vmArg('-Dblockbranch.modIconArtReview='+providers.gradleProperty('modIconArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.sealArtReview='+providers.gradleProperty('sealArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.beaverStrideArtReview='+providers.gradleProperty('beaverStrideArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.sealStrideArtReview='+providers.gradleProperty('sealStrideArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.sealSwimArtReview='+providers.gradleProperty('sealSwimArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.mallardFlightArtReview='+providers.gradleProperty('mallardFlightArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.bisonArtReview='+providers.gradleProperty('bisonArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.bisonThreatArtReview='+providers.gradleProperty('bisonThreatArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.bisonGrazeArtReview='+providers.gradleProperty('bisonGrazeArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.beaverGroomArtReview='+providers.gradleProperty('beaverGroomArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.beaverArtReview='+providers.gradleProperty('beaverArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.beaverWaterArtReview='+providers.gradleProperty('beaverWaterArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.bearArtReview='+providers.gradleProperty('bearArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.bearForageArtReview='+providers.gradleProperty('bearForageArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.pigletArtReview='+providers.gradleProperty('pigletArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.boarRootArtReview='+providers.gradleProperty('boarRootArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.boarArtReview='+providers.gradleProperty('boarArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.deerAntlerArtReview='+providers.gradleProperty('deerAntlerArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.deerArtReview='+providers.gradleProperty('deerArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.deerJuvenileArtReview='+providers.gradleProperty('deerJuvenileArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.deerRestArtReview='+providers.gradleProperty('deerRestArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.deerGrazeArtReview='+providers.gradleProperty('deerGrazeArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.foodArtReviewSubject='+providers.gradleProperty('foodArtReviewSubject').getOrElse('duck'))
+    vmArg('-Dblockbranch.foodArtReview='+providers.gradleProperty('foodArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.perchLandArtReview='+providers.gradleProperty('perchLandArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.perchArtReview='+providers.gradleProperty('perchArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.mallardArtReview='+providers.gradleProperty('mallardArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.mallardJuvenileArtReview='+providers.gradleProperty('mallardJuvenileArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.mallardJuvenileWaterReview='+providers.gradleProperty('mallardJuvenileWaterReview').getOrElse('false'))
+    vmArg('-Dblockbranch.mallardPeckArtReview='+providers.gradleProperty('mallardPeckArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.milestoneVideoReview='+providers.gradleProperty('milestoneVideoReview').getOrElse('false'))
+    vmArg('-Dblockbranch.eggArtReview='+providers.gradleProperty('eggArtReview').getOrElse('false'))
+    vmArg('-Dblockbranch.singleplayerReload='+providers.gradleProperty('singleplayerReload').getOrElse('false'))
+    vmArg('-Dblockbranch.singleplayerReconcileDiagnostic='+providers.gradleProperty('singleplayerReconcileDiagnostic').getOrElse('false'))
+    vmArg('-Dblockbranch.singleplayerResult='+singleplayerDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username','WildlifeCheck','--width','1024','--height','576')
+}
+tasks.register('prepareWildlifeSingleplayer'){
+    doLast{
+        singleplayerDirectory.asFile.mkdirs();singleplayerDirectory.file('result.txt').asFile.delete()
+        singleplayerDirectory.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:6\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+    }
+}
+def singleplayerExpectedPrefix=providers.gradleProperty('singleplayerReconcileDiagnostic').getOrElse('false')=='true'?'DIAGNOSTIC':'PASS'
+tasks.named('runWildlifeSingleplayer'){
+    dependsOn tasks.named('prepareWildlifeSingleplayer')
+    doLast{assert singleplayerDirectory.file('result.txt').asFile.text.startsWith(singleplayerExpectedPrefix)}
+}
+
+// Keep review candidates distinct from the artifact currently being playtested.
+if(providers.gradleProperty('wildlifeCandidate').getOrElse('false')=='true'){
+    tasks.named('jar'){archiveClassifier.set(providers.gradleProperty('wildlifeCandidateClassifier').getOrElse('player-integration-candidate'))}
+}
+
+def itemDirectory=layout.projectDirectory.dir(providers.gradleProperty('itemSmokeDirectory').getOrElse('build/wildlife-items'))
+loom.runs.register('wildlifeItems'){
+    server();runDir(itemDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.itemSmoke=true');vmArg('-Dblockbranch.itemSmokeResult='+itemDirectory.file('result.txt').asFile.absolutePath);programArg('--nogui')
+}
+tasks.register('prepareWildlifeItems'){
+    doLast{
+        itemDirectory.asFile.mkdirs();itemDirectory.file('result.txt').asFile.delete();itemDirectory.file('eula.txt').asFile.text='eula=true\n'
+        itemDirectory.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25608
+pause-when-empty-seconds=0
+view-distance=2
+simulation-distance=2
+level-name=items
+level-type=minecraft:flat
+generator-settings={"biome":"minecraft:plains","layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"structure_overrides":[]}
+level-seed=424242
+max-tick-time=120000
+'''
+    }
+}
+tasks.named('runWildlifeItems'){dependsOn tasks.named('prepareWildlifeItems');doLast{assert itemDirectory.file('result.txt').asFile.text.startsWith('PASS')}}
+
+
+apply from: 'gradle/testing/wildlife-resources.gradle'
+
+// Isolated native sound loading/random selection/decoder check; no listening verdict.
+def approvedAudioDirectory=layout.projectDirectory.dir('build/wildlife-approved-audio-native')
+loom.runs.register('wildlifeApprovedAudio'){
+    client();runDir(approvedAudioDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+    vmArg('-Dblockbranch.approvedAudioCheck=true')
+    vmArg('-Dblockbranch.approvedAudioResult='+approvedAudioDirectory.file('result.txt').asFile.absolutePath)
+    programArgs('--username','AudioCheck','--width','640','--height','480')
+}
+tasks.named('runWildlifeApprovedAudio'){
+    doFirst{
+        approvedAudioDirectory.asFile.mkdirs();approvedAudioDirectory.file('result.txt').asFile.delete()
+        approvedAudioDirectory.file('options.txt').asFile.text='onboardAccessibility:false\nmaxFps:30\nenableVsync:false\nsoundCategory_music:0.0\n'
+    }
+    doLast{assert approvedAudioDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}

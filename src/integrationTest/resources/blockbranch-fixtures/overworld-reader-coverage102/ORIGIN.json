@@ -1,0 +1,23 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "d94fe234f3d1813aeaac3680272b4b05c78731b4",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "f2e066236802b3f1366f8b406619a8361b30ca425d9be28cffff8357a9f4bf8e"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/StructureGenerationSchema.java",
+      "sha256": "48ae33b05bc4074b45945ea8052508a45ca5270ac89204d32c71a2d7cd945440"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OverworldStructures.java",
+      "sha256": "d3e374aa33eb3470abca731b1fb3c04fbbe64708ed70a2a49f4ae93c47789804"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/ScreeBiomeSource.java",
+      "sha256": "4fb5dfa4370002a669528ede6352a77ec08a7c6b6ab7cc9d973686078f2183e5"
+    }
+  ],
+  "purpose": "Unmodified historical overworld readers for authentic downgrade rejection and saved-definition compatibility. Frozen before the public clean-snapshot migration; original commits remain in the private archive."
+}

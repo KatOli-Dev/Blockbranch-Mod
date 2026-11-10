@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:tin_ore",
+    "blockbranch:deepslate_tin_ore",
+    "blockbranch:bronze_block",
+    "blockbranch:zinc_ore",
+    "blockbranch:deepslate_zinc_ore",
+    "blockbranch:brass_block",
+    "blockbranch:brass_slab",
+    "blockbranch:brass_stairs",
+    "blockbranch:brass_bars",
+    "blockbranch:steel_block",
+    "blockbranch:stainless_steel_block",
+    "blockbranch:stainless_steel_slab",
+    "blockbranch:stainless_steel_stairs",
+    "blockbranch:lead_ore",
+    "blockbranch:deepslate_lead_ore",
+    "blockbranch:lead_block",
+    "blockbranch:lead_slab",
+    "blockbranch:lead_stairs",
+    "blockbranch:lead_alloy_block",
+    "blockbranch:lead_alloy_slab",
+    "blockbranch:lead_alloy_stairs",
+    "blockbranch:silver_block",
+    "blockbranch:silver_slab",
+    "blockbranch:silver_stairs"
+  ]
+}

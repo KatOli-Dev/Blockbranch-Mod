@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "B  ",
+    "BB ",
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:lead_block"
+  },
+  "result": {
+    "id": "blockbranch:lead_stairs",
+    "count": 4
+  }
+}

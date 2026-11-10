@@ -1,0 +1,32 @@
+def platinumCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v13')
+def platinumCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v13/blockbranch/cubic/ColumnWorldFormat.java')
+def platinumCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v13/ORIGIN.json')
+def platinumCatalogCompile=tasks.register('compileLegacyPlatinumCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(platinumCatalogSource);inputs.file(platinumCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(platinumCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(platinumCatalogOrigin);assert java.security.MessageDigest.getInstance('SHA-256').digest(platinumCatalogSource.bytes).encodeHex().toString()==origin.sha256:'Frozen catalog13 input changed'}
+}
+
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldPlatinumCatalogClasses='+platinumCatalogClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn platinumCatalogCompile}
+if(providers.gradleProperty('platinumEquipmentView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.platinumEquipmentView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.platinumEquipmentView=true')}
+}
+def platinumGearResources=layout.projectDirectory.dir('src/main/resources').asFile
+def platinumGearNames=['sword','axe','shovel','hoe','helmet','chestplate','leggings','boots'].collect{'platinum_alloy_'+it}
+tasks.register('verifyPlatinumEquipmentResources'){
+ inputs.files(platinumGearNames.collectMany{n->['assets/blockbranch/items/'+n+'.json','assets/blockbranch/models/item/'+n+'.json','assets/blockbranch/textures/item/'+n+'.png','data/blockbranch/recipe/'+n+'.json','data/blockbranch/advancement/recipes/metallurgy/'+n+'.json'].collect{new File(platinumGearResources,it)}})
+ inputs.files(fileTree(platinumGearResources){include '**/models/item/platinum_alloy_*_trim.json','**/equipment/platinum_alloy.json','**/equipment/*/platinum_alloy.png','**/tags/item/*.json','**/lang/en_us.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(platinumGearResources,path))};def names=read('assets/blockbranch/lang/en_us.json')
+  for(def n:platinumGearNames){def image=javax.imageio.ImageIO.read(new File(platinumGearResources,'assets/blockbranch/textures/item/'+n+'.png'));assert image.width==16&&image.height==16:'Keep gear icons 16x';def item=read('assets/blockbranch/items/'+n+'.json').model;def armor=n in ['platinum_alloy_helmet','platinum_alloy_chestplate','platinum_alloy_leggings','platinum_alloy_boots'];assert armor?(item.type=='minecraft:select'&&item.property=='minecraft:trim_material'&&item.fallback.model=='blockbranch:item/'+n):(item.type=='minecraft:model'&&item.model=='blockbranch:item/'+n);assert names['item.blockbranch.'+n];def recipe=read('data/blockbranch/recipe/'+n+'.json');assert recipe.result.id=='blockbranch:'+n;def unlock=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert unlock.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&unlock.rewards.recipes==['blockbranch:'+n];assert unlock.requirements.flatten().toSet()==unlock.criteria.keySet()}
+  for(def row:[['sword','swords'],['axe','axes'],['shovel','shovels'],['hoe','hoes'],['helmet','head_armor'],['chestplate','chest_armor'],['leggings','leg_armor'],['boots','foot_armor']]){def t=read('data/minecraft/tags/item/'+row[1]+'.json');assert t.replace==false&&t.values.contains('blockbranch:platinum_alloy_'+row[0])}
+  for(def n:['helmet','chestplate','leggings','boots']){def item=read('assets/blockbranch/items/platinum_alloy_'+n+'.json').model;assert item.cases.size()==11;for(def entry:item.cases){def key=entry.when.substring('minecraft:'.length());def m=read('assets/blockbranch/models/item/platinum_alloy_'+n+'_'+key+'_trim.json');assert entry.model.model=='blockbranch:item/platinum_alloy_'+n+'_'+key+'_trim'&&m.textures.layer0=='blockbranch:item/platinum_alloy_'+n&&m.textures.layer1=='minecraft:trims/items/'+n+'_trim_'+key:'Keep native resource-pack trim compositing'}}
+  def layers=read('assets/blockbranch/equipment/platinum_alloy.json').layers;for(def layer:['humanoid','humanoid_leggings','humanoid_baby']){assert layers[layer][0].texture=='blockbranch:platinum_alloy';def image=javax.imageio.ImageIO.read(new File(platinumGearResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/platinum_alloy.png'));assert image.width==64&&image.height==(layer=='humanoid_baby'?64:32):'Native wearable UV dimensions';int clear=0,solid=0;for(int y=0;y<image.height;y++)for(int x=0;x<image.width;x++){int a=image.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0:'Keep open skin and armor plates'}
+  println 'PASS platinum_alloy equipment: eight items/icons/recipe-unlock pairs, 44 native trim models and three original wearable atlases'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyPlatinumEquipmentResources')}

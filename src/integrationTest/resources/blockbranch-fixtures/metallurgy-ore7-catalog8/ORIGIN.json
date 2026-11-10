@@ -1,0 +1,39 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "a32395ee7fd97f7300a79161f2bbb13a4b0b74bf",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "2a6184d81da3c05d5634c92112f8d387fc15eb69d4e9b81443cf19877801a7b4"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "8cba9439e613c4b427ff06345dd29427bd91d470dc06f1895e9270823e6d5234"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ZincVeins.java",
+      "sha256": "eccd9c388ea9cb5918a38df648b864ff5442e2b8545de78ef303495454acea7e"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ManganeseVeins.java",
+      "sha256": "fed042742109ea1ca21fa7382b7a291015e45b49225f7ec3fcc5b27802c06cc9"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TungstenVeins.java",
+      "sha256": "ec2fb7ec9f7acb1c3a8e87a302251dd836c6835514aa86ac5c67a57cd15f30b0"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/NickelVeins.java",
+      "sha256": "1b37397ac9df14962adbfbfd7995f1494c8d650d7d33d8678f6c52ac423771a3"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ChromiumVeins.java",
+      "sha256": "6c8f9d236b3f9076e5957712943e4f323dc453a656b8a5baad73b3a7ae1fbe14"
+    }
+  ],
+  "purpose": "Unmodified ore7/catalog8 readers; preserve nickel/chromium and prior fields, reject ore8/catalog9."
+}

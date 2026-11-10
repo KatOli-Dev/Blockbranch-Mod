@@ -1,0 +1,31 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "26f7db7a2c460254bb141a70bd64f84354e64978",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "1669d8bc97d84df7c94b9d2c832f7768eb299053a1d7b4f127ff854c9a0a45d2"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "700d37fe9e924f0e680f2f470e7ca1c4c4d949afae8dec9a62c2fb6a45ef75c2"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ZincVeins.java",
+      "sha256": "eccd9c388ea9cb5918a38df648b864ff5442e2b8545de78ef303495454acea7e"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ManganeseVeins.java",
+      "sha256": "fed042742109ea1ca21fa7382b7a291015e45b49225f7ec3fcc5b27802c06cc9"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TungstenVeins.java",
+      "sha256": "ec2fb7ec9f7acb1c3a8e87a302251dd836c6835514aa86ac5c67a57cd15f30b0"
+    }
+  ],
+  "purpose": "Unmodified ore6/catalog6 readers: preserve tungsten and earlier fields; reject nickel/chromium/catalog7."
+}

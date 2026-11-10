@@ -1,0 +1,420 @@
+def directory=layout.projectDirectory.dir(providers.gradleProperty('structuresDirectory').getOrElse('build/structures-native'))
+loom.runs.register('structuresNative'){vmArg('-Dblockbranch.structureConsumedWell='+providers.gradleProperty('structuresConsumedWell').getOrElse('false'));
+ server();runDir(directory.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.structureSmoke=true');vmArg('-Dblockbranch.structureResult='+directory.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareStructuresNative'){doLast{directory.asFile.mkdirs();directory.file('result.txt').asFile.delete();directory.file('eula.txt').asFile.text='eula=true\n';directory.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'}}
+tasks.named('runStructuresNative'){dependsOn 'prepareStructuresNative';doLast{assert directory.file('result.txt').asFile.text.startsWith('PASS')}}
+def clientDir=layout.projectDirectory.dir('build/structures-view')
+loom.runs.register('structuresView'){
+ client();runDir(clientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.structureView=true');vmArg('-Dblockbranch.structureViewClose='+providers.gradleProperty('structureViewClose').getOrElse('false')); vmArg('-Dblockbranch.wellMarker='+directory.file('well.txt').asFile.absolutePath);programArgs('--username','StructureReview','--width','1024','--height','576')
+}
+tasks.register('prepareStructuresView'){doLast{clientDir.asFile.mkdirs();clientDir.file('result.txt').asFile.delete();clientDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.register('copyStructureReview', Copy){from directory.dir('structures');into clientDir.dir('saves/StructureReview')}
+tasks.named('runStructuresView'){dependsOn 'prepareStructuresView','copyStructureReview';doLast{assert clientDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('structureQualification'){
+ server();runDir(layout.projectDirectory.dir(providers.gradleProperty('structuresQualificationDirectory').getOrElse('build/structures-qualification')).asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui');vmArg('-Dblockbranch.structureQualification=true')
+}
+
+def qualificationResult=layout.projectDirectory.file(providers.gradleProperty('structuresQualificationDirectory').getOrElse('build/structures-qualification')+'/qualification-result.txt')
+tasks.named('runStructureQualification'){doFirst{qualificationResult.asFile.delete()};doLast{assert qualificationResult.asFile.text=='PASS'}}
+
+loom.runs.register('atlasQualification'){
+ server();runDir(layout.projectDirectory.dir('build/structures-atlas').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.atlasQualification=true')
+}
+def atlasResult=layout.projectDirectory.file('build/structures-atlas/atlas-result.txt')
+tasks.named('runAtlasQualification'){doFirst{atlasResult.asFile.delete()};doLast{assert atlasResult.asFile.text=='PASS'}}
+
+// Disposable copies only: control disables structures in the test mixin, never in production.
+def loadDir=layout.projectDirectory.dir(providers.gradleProperty('structureLoadDirectory').getOrElse('build/structure-load'))
+loom.runs.register('structureLoadAudit'){
+ server();runDir(loadDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.structureLoadAudit=true');vmArg('-Dblockbranch.structureLoadControl='+providers.gradleProperty('structureLoadControl').getOrElse('false'))
+}
+tasks.named('runStructureLoadAudit'){doFirst{loadDir.file('load-result.txt').asFile.delete()};doLast{assert loadDir.file('load-result.txt').asFile.text=='PASS'}}
+
+loom.runs.register('treasureProbe'){
+ server();runDir(layout.projectDirectory.dir('build/treasure-probe').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.treasureProbe=true')
+}
+def treasureProbeResult=layout.projectDirectory.file('build/treasure-probe/treasure-probe.txt')
+tasks.named('runTreasureProbe'){doFirst{treasureProbeResult.asFile.delete()};doLast{assert treasureProbeResult.asFile.text.startsWith('PASS')}}
+
+loom.runs.register('treasureQualification'){
+ server();runDir(layout.projectDirectory.dir('build/treasure-qualification').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.treasureQualification=true')
+}
+def treasureResult=layout.projectDirectory.file('build/treasure-qualification/treasure-result.txt')
+tasks.named('runTreasureQualification'){doFirst{treasureResult.asFile.delete()};doLast{assert treasureResult.asFile.text=='PASS'}}
+
+loom.runs.register('treasureReference'){
+ server();runDir(layout.projectDirectory.dir('build/treasure-qualification').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.treasureReference=true')
+}
+def treasureReferenceResult=layout.projectDirectory.file('build/treasure-qualification/treasure-reference-result.txt')
+tasks.named('runTreasureReference'){doFirst{treasureReferenceResult.asFile.delete()};doLast{assert treasureReferenceResult.asFile.text=='PASS'}}
+
+def treasureClientDir=layout.projectDirectory.dir('build/treasure-view')
+loom.runs.register('treasureView'){
+ client();runDir(treasureClientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.treasureView=true');vmArg('-Dblockbranch.treasureMarker='+layout.projectDirectory.file('build/treasure-qualification/view.txt').asFile.absolutePath);programArgs('--username','TreasureReview','--width','1024','--height','576')
+}
+tasks.register('prepareTreasureView'){doLast{treasureClientDir.asFile.mkdirs();treasureClientDir.file('result.txt').asFile.delete();treasureClientDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.register('copyTreasureReview',Copy){from layout.projectDirectory.dir('build/treasure-qualification/structures');into treasureClientDir.dir('saves/TreasureReview')}
+tasks.named('runTreasureView'){dependsOn 'prepareTreasureView','copyTreasureReview';doLast{assert treasureClientDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('treasureMapQualification'){
+ server();runDir(layout.projectDirectory.dir('build/treasure-qualification').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.treasureMapQualification=true');vmArg('-Dblockbranch.treasureWarmView='+providers.gradleProperty('treasureWarmView').getOrElse('0'))
+}
+def treasureMapResult=layout.projectDirectory.file('build/treasure-qualification/treasure-map-result.txt')
+tasks.named('runTreasureMapQualification'){doFirst{treasureMapResult.asFile.delete()};doLast{assert treasureMapResult.asFile.text=='PASS'}}
+
+// Local disposable fixtures. Preparing retains the world so a second run verifies reopen.
+def treasureNativeDir=layout.projectDirectory.dir('build/treasure-qualification')
+tasks.register('prepareTreasureNative'){doLast{
+ treasureNativeDir.asFile.mkdirs();treasureNativeDir.file('eula.txt').asFile.text='eula=true\n'
+ treasureNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'
+}}
+tasks.named('runTreasureQualification'){dependsOn 'prepareTreasureNative'}
+tasks.named('runTreasureReference'){dependsOn 'prepareTreasureNative'}
+tasks.named('runTreasureMapQualification'){dependsOn 'prepareTreasureNative'}
+
+// Loom can launch independent game tasks concurrently; these fixtures share a port.
+def structureServers=['runAtlasQualification','runStructureLoadAudit','runStructuresNative','runStructureQualification','runTreasureProbe','runTreasureQualification','runTreasureReference','runTreasureMapQualification']
+structureServers.eachWithIndex { name,index -> tasks.named(name){mustRunAfter structureServers.take(index)} }
+
+
+def previewControlDir=layout.projectDirectory.dir('build/treasure-preview-control')
+loom.runs.register('treasurePreviewControl'){
+ server();runDir(previewControlDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.treasurePreviewControl=true')
+}
+tasks.register('prepareTreasurePreviewControl'){doLast{
+ previewControlDir.asFile.mkdirs();previewControlDir.file('eula.txt').asFile.text='eula=true\n'
+ previewControlDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=control\nlevel-type=minecraft:normal\nlevel-seed=424242\nmax-tick-time=600000\n'
+}}
+tasks.named('runTreasurePreviewControl'){dependsOn 'prepareTreasurePreviewControl';mustRunAfter structureServers;doFirst{previewControlDir.file('result.txt').asFile.delete()};doLast{assert previewControlDir.file('result.txt').asFile.text=='PASS'}}
+
+// Exact continuous height compatibility against the c637d6c field snapshot.
+tasks.register('checkCoastalShapeExactness',JavaExec){
+ dependsOn 'compileIntegrationTestJava'
+ classpath=sourceSets.integrationTest.runtimeClasspath
+ mainClass='blockbranch.realistic.CoastalShapeQualification'
+}
+
+def connectedDir=layout.projectDirectory.dir(providers.gradleProperty('treasureConnectedDirectory').getOrElse('build/treasure-connected'))
+loom.runs.register('treasureConnected'){
+ client();runDir(connectedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.treasureConnected=true');vmArg('-Dblockbranch.combinedMapWitness='+providers.gradleProperty('combinedMapWitness').getOrElse('false'));vmArg('-Dblockbranch.treasureProgressiveWarmFixture='+providers.gradleProperty('treasureProgressiveWarmFixture').getOrElse('false'));vmArg('-Dblockbranch.treasureProgressiveReview='+providers.gradleProperty('treasureProgressiveReview').getOrElse('false'));vmArg('-Dblockbranch.treasureProgressive='+providers.gradleProperty('treasureProgressive').getOrElse('false'));vmArg('-Dblockbranch.treasureConnectedReopen='+providers.gradleProperty('treasureConnectedReopen').getOrElse('false'));vmArg('-Dblockbranch.treasureConnectedDir='+connectedDir.asFile.absolutePath);programArgs('--username','TreasurePlayer','--width','1024','--height','576')
+}
+tasks.register('prepareTreasureConnected'){doLast{
+ connectedDir.asFile.mkdirs();connectedDir.file('result.txt').asFile.delete();connectedDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runTreasureConnected'){dependsOn 'prepareTreasureConnected';doLast{assert connectedDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('mapMixinAudit'){server();runDir(layout.projectDirectory.dir('build/map-mixin-audit').asFile.absolutePath);vmArg('-Dmixin.debug.export=true');vmArg('-Dblockbranch.mapMixinAudit=true');programArg('--nogui')}
+
+loom.runs.register('mapPersistenceAudit'){
+ server();runDir(layout.projectDirectory.dir(providers.gradleProperty('mapAuditDirectory').getOrElse('build/map-persistence-audit')).asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.mapPersistenceAudit=true');vmArg('-Dblockbranch.mapAuditInput='+layout.projectDirectory.dir(providers.gradleProperty('mapAuditInputDirectory').getOrElse('build/treasure-progressive-qualified')).asFile.absolutePath);programArg('--nogui')
+}
+def mapPersistenceResult=layout.projectDirectory.dir(providers.gradleProperty('mapAuditDirectory').getOrElse('build/map-persistence-audit')).file('result.txt')
+tasks.named('runMapPersistenceAudit'){doLast{assert mapPersistenceResult.asFile.text.startsWith('PASS')}}
+tasks.register('checkMapPersistenceAuditResult'){doLast{assert mapPersistenceResult.asFile.text.startsWith('PASS')}}
+// Independent ruined portal fixture, retained for native save/reopen checks.
+def waygateDir=layout.projectDirectory.dir('build/waygate-qualification')
+loom.runs.register('waygateQualification'){
+ server();runDir(waygateDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.waygateQualification=true');vmArg('-Dblockbranch.waygateRegions='+providers.gradleProperty('waygateRegions').getOrElse('false'))
+}
+tasks.register('prepareWaygateQualification'){doLast{
+ waygateDir.asFile.mkdirs();waygateDir.file('eula.txt').asFile.text='eula=true\n';waygateDir.file('result.txt').asFile.delete();waygateDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'
+}}
+tasks.named('runWaygateQualification'){dependsOn 'prepareWaygateQualification';mustRunAfter 'runStructuresNative','runStructureQualification','runAtlasQualification','runStructureLoadAudit';doLast{assert waygateDir.file('result.txt').asFile.text=='PASS'}}
+def waygateClientDir=layout.projectDirectory.dir('build/waygate-view')
+loom.runs.register('waygateView'){
+ client();runDir(waygateClientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.waygateView=true');vmArg('-Dblockbranch.waygateMarker='+waygateDir.file('view-'+providers.gradleProperty('waygateVariant').getOrElse('0')+'.json').asFile.absolutePath);programArgs('--username','WaygateReview','--width','1024','--height','576')
+}
+tasks.register('prepareWaygateView'){doLast{waygateClientDir.asFile.mkdirs();waygateClientDir.file('result.txt').asFile.delete();waygateClientDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.register('copyWaygateReview',Copy){from waygateDir.dir('structures');into waygateClientDir.dir('saves/WaygateReview')}
+tasks.named('runWaygateView'){dependsOn 'prepareWaygateView','copyWaygateReview';doLast{assert waygateClientDir.file('result.txt').asFile.text.startsWith('PASS')}}
+tasks.register('checkStructureProximity',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.StructureProximityQualification'
+}
+loom.runs.register('waygateLegacy'){
+ server();runDir(layout.projectDirectory.dir('build/waygate-adopted88-native').asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.waygateLegacy=true')
+}
+def waygateLegacyResult=layout.projectDirectory.file('build/waygate-adopted88-native/waygate-legacy-result.txt')
+tasks.named('runWaygateLegacy'){mustRunAfter 'runWaygateQualification','runStructuresNative';doFirst{waygateLegacyResult.asFile.delete()};doLast{assert waygateLegacyResult.asFile.text.startsWith('PASS')}}
+loom.runs.register('waygateTravel'){
+ client();runDir(waygateClientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.waygateTravel=true');vmArg('-Dblockbranch.waygateNativeReport='+waygateDir.file('native.json').asFile.absolutePath);programArgs('--username','WaygateReview','--width','1024','--height','576')
+}
+tasks.named('runWaygateTravel'){dependsOn 'prepareWaygateView','copyWaygateReview';doFirst{waygateClientDir.file('travel-result.txt').asFile.delete()};doLast{assert waygateClientDir.file('travel-result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('mapWaygateCompat'){server();runDir(layout.projectDirectory.dir('build/map-waygate-compat').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.mapWaygateCompat=true');programArg('--nogui')}
+
+loom.runs.register('combinedMapPrepare'){server();runDir(layout.projectDirectory.dir('build/combined92-prepare').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.combinedMapPrepare=true');programArg('--nogui')}
+
+def wreckDir=layout.projectDirectory.dir(providers.gradleProperty('shipwreckDirectory').getOrElse('build/shipwreck-qualification'))
+loom.runs.register('shipwreckQualification'){
+ server();runDir(wreckDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui');vmArg('-Dblockbranch.shipwreckQualification=true');vmArg('-Dblockbranch.shipwreckSupport='+providers.gradleProperty('shipwreckSupport').getOrElse('false'));vmArg('-Dblockbranch.shipwreckOldJar='+layout.projectDirectory.file(providers.gradleProperty('shipwreckOldJar').getOrElse('build/blockbranch-shipwreck-adopted-8ddc403/blockbranch-0.0.0.jar')).asFile.absolutePath);vmArg('-Dblockbranch.shipwreckRegions='+providers.gradleProperty('shipwreckRegions').getOrElse('false'))
+}
+tasks.register('prepareShipwreckQualification'){doLast{
+ wreckDir.asFile.mkdirs();wreckDir.file('eula.txt').asFile.text='eula=true\n';wreckDir.file('result.txt').asFile.delete()
+ wreckDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'
+}}
+tasks.named('runShipwreckQualification'){dependsOn 'prepareShipwreckQualification';mustRunAfter structureServers;doLast{assert wreckDir.file('result.txt').asFile.text=='PASS'}}
+
+
+def wreckClientDir=layout.projectDirectory.dir(providers.gradleProperty('shipwreckClientDirectory').getOrElse('build/shipwreck-view'))
+loom.runs.register('shipwreckView'){
+ client();runDir(wreckClientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.shipwreckView=true');vmArg('-Dblockbranch.shipwreckAllViews='+providers.gradleProperty('shipwreckAllViews').getOrElse('false'));vmArg('-Dblockbranch.shipwreckStairView='+providers.gradleProperty('shipwreckStairView').getOrElse('false'));vmArg('-Dblockbranch.shipwreckRearView='+providers.gradleProperty('shipwreckRearView').getOrElse('false'));vmArg('-Dblockbranch.shipwreckMarker='+wreckDir.file('view.txt').asFile.absolutePath);programArgs('--username','WreckReview','--width','1024','--height','576')
+}
+tasks.register('prepareShipwreckView'){doLast{wreckClientDir.asFile.mkdirs();wreckClientDir.file('result.txt').asFile.delete();wreckClientDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.register('copyShipwreckReview',Copy){from wreckDir.dir('structures');into wreckClientDir.dir('saves/ShipwreckReview')}
+tasks.named('runShipwreckView'){dependsOn 'prepareShipwreckView','copyShipwreckReview';doLast{assert wreckClientDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Explicit ordering for the independent native fixtures sharing localhost:25619.
+['runShipwreckQualification','runWaygateQualification','runWaygateLegacy','runMapWaygateCompat','runCombinedMapPrepare'].eachWithIndex{ name,index->tasks.named(name){mustRunAfter(['runShipwreckQualification','runWaygateQualification','runWaygateLegacy','runMapWaygateCompat','runCombinedMapPrepare'].take(index))}}
+tasks.register('checkStructureSchemas',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.StructureSchemaQualification'}
+
+// Separate disposable native connection fixture, populated from the combined93 server save.
+def wreckConnectedDir=layout.projectDirectory.dir('build/shipwreck93-connected')
+loom.runs.register('shipwreckConnected'){client();runDir(wreckConnectedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.shipwreckConnected=true');vmArg('-Dblockbranch.shipwreckConnectedDir='+wreckConnectedDir.asFile.absolutePath);vmArg('-Dblockbranch.shipwreckConnectedReopen='+providers.gradleProperty('shipwreckConnectedReopen').getOrElse('false'));programArgs('--username','WreckPlayer','--width','1024','--height','576')}
+tasks.register('prepareShipwreckConnected'){doLast{wreckConnectedDir.asFile.mkdirs();wreckConnectedDir.file('result.txt').asFile.delete();wreckConnectedDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.named('runShipwreckConnected'){dependsOn 'prepareShipwreckConnected';doLast{assert wreckConnectedDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('shipwreckSaved92'){server();runDir(layout.projectDirectory.dir('build/shipwreck93-saved92').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.shipwreckSaved92=true');programArg('--nogui')}
+def saved92Result=layout.projectDirectory.file('build/shipwreck93-saved92/result.txt')
+tasks.named('runShipwreckSaved92'){doFirst{saved92Result.asFile.delete()};doLast{assert saved92Result.asFile.text.startsWith('PASS')}}
+def nativeSavedChecks=['runTreasureQualification','runWaygateQualification','runWaygateLegacy','runShipwreckSaved92']
+nativeSavedChecks.eachWithIndex{name,index->tasks.named(name){mustRunAfter(nativeSavedChecks.take(index))}}
+
+def coastalMatchedDir=layout.projectDirectory.dir(providers.gradleProperty('coastalDirectory').getOrElse('build/coastal-matched'))
+loom.runs.register('coastalMatched'){client();runDir(coastalMatchedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-XX:StartFlightRecording=filename='+coastalMatchedDir.file('run.jfr').asFile.absolutePath+',settings=profile,dumponexit=true');vmArg('-Dblockbranch.coastalMatched=true');vmArg('-Dblockbranch.coastalDrained='+providers.gradleProperty('coastalDrained').getOrElse('false'));vmArg('-Dblockbranch.coastalMatchedDir='+coastalMatchedDir.asFile.absolutePath);programArgs('--username','CoastCompare','--width','1024','--height','576')}
+tasks.named('runCoastalMatched'){doLast{assert coastalMatchedDir.file('result.txt').asFile.text=='PASS'}}
+
+def templateMode=providers.gradleProperty('templateVersionMode').getOrElse('old')
+def templateAuditDir=layout.projectDirectory.dir(providers.gradleProperty('templateAuditDirectory').getOrElse('build/template-version-'+templateMode))
+loom.runs.register('templateVersionAudit'){server();runDir(templateAuditDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.templateVersionAudit=true');vmArg('-Dblockbranch.templateMode='+templateMode);vmArg('-Dblockbranch.templateRepo='+layout.projectDirectory.asFile.absolutePath);programArg('--nogui')}
+tasks.named('runTemplateVersionAudit'){doLast{assert templateAuditDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('wetlandHutSurvey'){server();runDir(layout.projectDirectory.dir('build/wetland-hut-survey').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wetlandHutSurvey=true');programArg('--nogui')}
+
+def hutDir=layout.projectDirectory.dir(providers.gradleProperty('wetlandHutDirectory').getOrElse('build/wetland-hut-qualification'))
+loom.runs.register('wetlandHutQualification'){server();runDir(hutDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wetlandHutQualification=true');vmArg('-Dblockbranch.wetlandHutOldJar='+layout.projectDirectory.file(providers.gradleProperty('wetlandHutOldJar').getOrElse('build/blockbranch-shipwreck-support-adopted-b475ffd/blockbranch-0.0.0.jar')).asFile.absolutePath);programArg('--nogui')}
+if(providers.gradleProperty('wetlandHutInitProfile').getOrElse('false')=='true'){loom.runs.named('wetlandHutQualification'){vmArg('-XX:StartFlightRecording=filename='+hutDir.file('initialization.jfr').asFile.absolutePath+',settings=profile,dumponexit=true');vmArg('-XX:FlightRecorderOptions=stackdepth=128')}}
+tasks.register('prepareWetlandHutQualification'){doLast{hutDir.asFile.mkdirs();hutDir.file('result.txt').asFile.delete();hutDir.file('eula.txt').asFile.text='eula=true\n';hutDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'}}
+tasks.named('runWetlandHutQualification'){dependsOn 'prepareWetlandHutQualification';doLast{assert hutDir.file('result.txt').asFile.text=='PASS'}}
+
+def hutClientDir=layout.projectDirectory.dir(providers.gradleProperty('wetlandHutClientDirectory').getOrElse('build/wetland-hut-view'))
+loom.runs.register('wetlandHutView'){client();runDir(hutClientDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.wetlandHutView=true');vmArg('-Dblockbranch.wetlandHutMarker='+hutDir.file('view.txt').asFile.absolutePath);vmArg('-Dblockbranch.wetlandHutResult='+hutClientDir.file('result.txt').asFile.absolutePath);programArgs('--username','HutReview','--width','1024','--height','576')}
+tasks.register('prepareWetlandHutView'){doLast{hutClientDir.asFile.mkdirs();hutClientDir.file('result.txt').asFile.delete();hutClientDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.register('copyWetlandHutReview',Copy){from hutDir.dir('structures');into hutClientDir.dir('saves/WetlandHutReview')}
+tasks.named('runWetlandHutView'){dependsOn 'prepareWetlandHutView','copyWetlandHutReview';doLast{assert hutClientDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('wetlandHutLegacy'){server();runDir(layout.projectDirectory.dir('build/wetland-hut-legacy93').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wetlandHutLegacy=true');vmArg('-Dblockbranch.deferredPreviewDir='+layout.projectDirectory.dir('build/wetland-hut-legacy93').asFile.absolutePath);programArg('--nogui')}
+def hutLegacyResult=layout.projectDirectory.file('build/wetland-hut-legacy93/result.txt')
+tasks.named('runWetlandHutLegacy'){mustRunAfter 'runWetlandHutQualification','runWetlandHutSurvey';doFirst{hutLegacyResult.asFile.delete()};doLast{assert hutLegacyResult.asFile.text=='PASS'}}
+tasks.named('runWetlandHutQualification'){mustRunAfter 'runWetlandHutSurvey'}
+def deferredDir=layout.projectDirectory.dir(providers.gradleProperty('deferredPreviewDirectory').getOrElse('build/deferred-preview'))
+loom.runs.register('deferredPreview'){
+ client();runDir(deferredDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.deferredPreview=true');vmArg('-Dblockbranch.deferredPreviewAdoption='+providers.gradleProperty('deferredPreviewAdoption').getOrElse('false'));vmArg('-XX:StartFlightRecording=filename='+deferredDir.file(providers.gradleProperty('deferredPreviewReopen').getOrElse('false')=='true'?'reopen.jfr':'native.jfr').asFile.absolutePath+',settings=profile,dumponexit=true');vmArg('-Dblockbranch.deferredPreviewDir='+deferredDir.asFile.absolutePath);vmArg('-Dblockbranch.deferredPreviewReopen='+providers.gradleProperty('deferredPreviewReopen').getOrElse('false'));programArgs('--username','PreviewPlayer','--width','1024','--height','576')
+}
+def deferredResult=deferredDir.file(providers.gradleProperty('deferredPreviewReopen').getOrElse('false')=='true'?'reopen-result.txt':'result.txt')
+tasks.named('runDeferredPreview'){doLast{assert deferredResult.asFile.text.startsWith('PASS')}}
+
+loom.runs.register('wetlandHutPlanning'){server();runDir(layout.projectDirectory.dir('build/wetland-hut-planning').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wetlandHutPlanning=true');programArg('--nogui')}
+tasks.register('checkTerrainReliefCaches',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.TerrainReliefCacheQualification'}
+tasks.register('checkSwampTreeGeometry',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.SwampTreeGeometryQualification'}
+tasks.register('checkTreeRasterGeometry',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.TreeRasterQualification'}
+
+tasks.register('checkHutPlanningWork',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.HutPlanningWorkQualification'}
+// Frozen d61ff42 catalogs for seeds 424242, 1 and -17 are regression inputs, not run output.
+if(providers.gradleProperty('wetlandHutParallel').getOrElse('false')=='true'){loom.runs.named('wetlandHutPlanning'){vmArg('-Dblockbranch.wetlandHutParallel=true');vmArg('-Dblockbranch.wetlandHutCatalogs='+layout.projectDirectory.dir('src/integrationTest/resources/fixtures/wetland-hut').asFile.absolutePath)}}
+def hutPlanningResult=layout.projectDirectory.file('build/wetland-hut-planning/result.txt')
+tasks.named('runWetlandHutPlanning'){doFirst{hutPlanningResult.asFile.delete()};doLast{assert hutPlanningResult.asFile.text.startsWith('PASS')}}
+
+if(providers.gradleProperty('wetlandHutPartial').getOrElse('false')=='true'){loom.runs.named('wetlandHutQualification'){vmArg('-Dblockbranch.wetlandHutPartial=true');vmArg('-Dblockbranch.hutPriorJar='+layout.projectDirectory.file('build/wetland-hut-geometry-delivery/d8257d9.jar').asFile.absolutePath);vmArg('-Dblockbranch.hutFrozenCatalog='+layout.projectDirectory.file('src/integrationTest/resources/fixtures/wetland-hut/sites-424242.json').asFile.absolutePath)}}
+loom.runs.register('wetlandHutDemand'){server();runDir(layout.projectDirectory.dir('build/wetland-hut-planning').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.wetlandHutDemand=true');vmArg('-Dblockbranch.hutFrozenCatalogs='+layout.projectDirectory.dir('src/integrationTest/resources/fixtures/wetland-hut').asFile.absolutePath);programArg('--nogui')}
+def hutDemandResult=layout.projectDirectory.file('build/wetland-hut-planning/demand-result.txt')
+tasks.named('runWetlandHutDemand'){doFirst{hutDemandResult.asFile.delete()};doLast{assert hutDemandResult.asFile.text.startsWith('PASS')}}
+
+if(providers.gradleProperty('wetlandHutColdLocate').getOrElse('false')=='true'){loom.runs.named('wetlandHutQualification'){vmArg('-Dblockbranch.hutColdNativeLocate=true')}}
+
+def hutExploreDir=layout.projectDirectory.dir('build/wetland-hut-explore')
+loom.runs.register('hutExplorePrepare'){server();runDir(hutExploreDir.dir('prepare').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.hutExplorePrepare=true');programArg('--nogui')}
+tasks.named('runHutExplorePrepare'){doFirst{def d=hutExploreDir.dir('prepare');d.asFile.mkdirs();d.file('eula.txt').asFile.text='eula=true\n';d.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=-17\nmax-tick-time=600000\n'}}
+loom.runs.register('hutExplore'){client();runDir(hutExploreDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.hutExplore=true');vmArg('-Dblockbranch.hutExploreLocateOnly='+providers.gradleProperty('hutExploreLocateOnly').getOrElse('false'));vmArg('-Dblockbranch.hutExploreDir='+hutExploreDir.asFile.absolutePath);programArgs('--username','HutExplorer','--width','1024','--height','576')}
+tasks.register('copyHutExplore',Copy){from hutExploreDir.dir('prepare/structures');into hutExploreDir.dir('saves/HutExplore')}
+tasks.named('runHutExplore'){dependsOn 'copyHutExplore';doFirst{hutExploreDir.file('result.txt').asFile.delete();hutExploreDir.file('options.txt').asFile.text='renderDistance:2\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert hutExploreDir.file('result.txt').asFile.text.startsWith('PASS')}}
+loom.runs.register('snowShelterSurvey'){server();runDir(layout.projectDirectory.dir('build/snow-shelter-feasibility').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.snowShelterSurvey=true');programArg('--nogui')}
+
+def snowSurveyResult=layout.projectDirectory.file("build/snow-shelter-feasibility/snow-result.txt")
+tasks.named("runSnowShelterSurvey"){doFirst{snowSurveyResult.asFile.delete()};doLast{assert snowSurveyResult.asFile.text.startsWith("PASS")}}
+def snowNativeDir=layout.projectDirectory.dir(providers.gradleProperty('snowShelterDirectory').getOrElse('build/snow-shelter-native'))
+loom.runs.register('snowShelterQualification'){server();runDir(snowNativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.snowShelterQualification=true');vmArg('-Dblockbranch.snowPriorJar='+layout.projectDirectory.file('build/snow-baseline-94.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runSnowShelterQualification'){doFirst{snowNativeDir.asFile.mkdirs();snowNativeDir.file('result.txt').asFile.delete();snowNativeDir.file('eula.txt').asFile.text='eula=true\n';snowNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert snowNativeDir.file('result.txt').asFile.text=='PASS'}}
+def snowViewDir=layout.projectDirectory.dir(providers.gradleProperty('snowViewDirectory').getOrElse('build/snow-shelter-view-final'))
+loom.runs.register('snowShelterView'){client();runDir(snowViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.snowShelterView=true');vmArg('-Dblockbranch.snowShelterFront='+providers.gradleProperty('snowShelterFront').getOrElse('false'));vmArg('-Dblockbranch.snowShelterViewResult='+snowViewDir.file('result.txt').asFile.absolutePath);programArgs('--username','SnowReview','--width','1024','--height','576')}
+tasks.register('copySnowShelterView',Copy){from snowNativeDir.dir('structures');into snowViewDir.dir('saves/SnowShelterReview')}
+tasks.named('runSnowShelterView'){dependsOn 'copySnowShelterView';doFirst{snowViewDir.asFile.mkdirs();snowViewDir.file('result.txt').asFile.delete();snowViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert snowViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('warmRuinSurvey'){server();runDir(layout.projectDirectory.dir('build/warm-ruin-survey').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.warmRuinSurvey=true');programArg('--nogui')}
+def ruinSurveyResult=layout.projectDirectory.file('build/warm-ruin-survey/ruin-result.txt')
+tasks.named('runWarmRuinSurvey'){doFirst{ruinSurveyResult.asFile.delete()};doLast{assert ruinSurveyResult.asFile.text.startsWith('PASS')}}
+
+def ruinNativeDir=layout.projectDirectory.dir(providers.gradleProperty('warmRuinDirectory').getOrElse('build/warm-ruin-native'))
+loom.runs.register('warmRuinQualification'){server();runDir(ruinNativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.warmRuinQualification=true');vmArg('-Dblockbranch.warmPriorJar='+layout.projectDirectory.file('build/warm-baseline-95.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runWarmRuinQualification'){doFirst{ruinNativeDir.asFile.mkdirs();ruinNativeDir.file('result.txt').asFile.delete();ruinNativeDir.file('eula.txt').asFile.text='eula=true\n';ruinNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert ruinNativeDir.file('result.txt').asFile.text=='PASS'}}
+
+def ruinViewDir=layout.projectDirectory.dir('build/warm-ruin-view')
+def ruinViewReopen=providers.gradleProperty('warmRuinViewReopen').getOrElse('false')
+loom.runs.register('warmRuinView'){client();runDir(ruinViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.warmRuinView=true');vmArg('-Dblockbranch.warmRuinViewReopen='+ruinViewReopen);vmArg('-Dblockbranch.warmRuinViewDir='+ruinViewDir.asFile.absolutePath);vmArg('-Dblockbranch.warmRuinWitness='+ruinNativeDir.file('fresh.json').asFile.absolutePath);programArgs('--username','RuinReview','--width','1024','--height','576')}
+tasks.register('copyWarmRuinView',Sync){onlyIf{ruinViewReopen!='true'};from ruinNativeDir.dir('structures');into ruinViewDir.dir('saves/WarmRuinReview')}
+tasks.named('runWarmRuinView'){dependsOn 'copyWarmRuinView';doFirst{ruinViewDir.asFile.mkdirs();ruinViewDir.file('result.txt').asFile.delete();ruinViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert ruinViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('coldRuinSurvey'){server();runDir(layout.projectDirectory.dir('build/cold-ruin-survey').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.coldRuinSurvey=true');programArg('--nogui')}
+def coldSurveyResult=layout.projectDirectory.file('build/cold-ruin-survey/ruin-result.txt')
+tasks.named('runColdRuinSurvey'){doFirst{coldSurveyResult.asFile.delete()};doLast{assert coldSurveyResult.asFile.text.startsWith('PASS')}}
+
+def coldNativeDir=layout.projectDirectory.dir(providers.gradleProperty('coldRuinDirectory').getOrElse('build/cold-ruin-native'))
+loom.runs.register('coldRuinQualification'){server();runDir(coldNativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.coldRuinQualification=true');vmArg('-Dblockbranch.coldRuinReverse='+providers.gradleProperty('coldRuinReverse').getOrElse('false'));vmArg('-Dblockbranch.coldPriorJar='+layout.projectDirectory.file('build/cold-baseline-96.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runColdRuinQualification'){doFirst{coldNativeDir.asFile.mkdirs();coldNativeDir.file('result.txt').asFile.delete();coldNativeDir.file('eula.txt').asFile.text='eula=true\n';coldNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert coldNativeDir.file('result.txt').asFile.text=='PASS'}}
+
+def coldViewDir=layout.projectDirectory.dir('build/cold-ruin-view')
+def coldViewReopen=providers.gradleProperty('coldRuinViewReopen').getOrElse('false')
+loom.runs.register('coldRuinView'){client();runDir(coldViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.coldRuinView=true');vmArg('-Dblockbranch.coldRuinViewReopen='+coldViewReopen);vmArg('-Dblockbranch.coldRuinViewDir='+coldViewDir.asFile.absolutePath);vmArg('-Dblockbranch.coldRuinWitness='+coldNativeDir.file('fresh.json').asFile.absolutePath);programArgs('--username','RuinReview','--width','1024','--height','576')}
+tasks.register('copyColdRuinView',Sync){onlyIf{coldViewReopen!='true'};from coldNativeDir.dir('structures');into coldViewDir.dir('saves/ColdRuinReview')}
+tasks.named('runColdRuinView'){dependsOn 'copyColdRuinView';doFirst{coldViewDir.asFile.mkdirs();coldViewDir.file('result.txt').asFile.delete();coldViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert coldViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+loom.runs.register('deepColdRuinSurvey'){server();runDir(layout.projectDirectory.dir('build/deep-cold-ruin-survey').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.deepColdRuinSurvey=true');programArg('--nogui')}
+def deepColdSurveyResult=layout.projectDirectory.file('build/deep-cold-ruin-survey/ruin-result.txt')
+tasks.named('runDeepColdRuinSurvey'){doFirst{deepColdSurveyResult.asFile.delete()};doLast{assert deepColdSurveyResult.asFile.text.startsWith('PASS')}}
+
+def deepColdNativeDir=layout.projectDirectory.dir(providers.gradleProperty('deepColdRuinDirectory').getOrElse('build/deep-cold-ruin-native'))
+loom.runs.register('deepColdRuinQualification'){server();runDir(deepColdNativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.deepColdRuinQualification=true');vmArg('-Dblockbranch.deepColdRuinReverse='+providers.gradleProperty('deepColdRuinReverse').getOrElse('false'));vmArg('-Dblockbranch.deepColdPriorJar='+layout.projectDirectory.file('build/deep-cold-baseline-97.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runDeepColdRuinQualification'){doFirst{deepColdNativeDir.asFile.mkdirs();deepColdNativeDir.file('result.txt').asFile.delete();deepColdNativeDir.file('eula.txt').asFile.text='eula=true\n';deepColdNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert deepColdNativeDir.file('result.txt').asFile.text=='PASS'}}
+
+def deepColdViewDir=layout.projectDirectory.dir('build/deep-cold-ruin-view')
+def deepColdViewReopen=providers.gradleProperty('deepColdRuinViewReopen').getOrElse('false')
+loom.runs.register('deepColdRuinView'){client();runDir(deepColdViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.deepColdRuinView=true');vmArg('-Dblockbranch.deepColdRuinViewReopen='+deepColdViewReopen);vmArg('-Dblockbranch.deepColdRuinViewDir='+deepColdViewDir.asFile.absolutePath);vmArg('-Dblockbranch.deepColdRuinWitness='+deepColdNativeDir.file('fresh.json').asFile.absolutePath);programArgs('--username','RuinReview','--width','1024','--height','576')}
+tasks.register('copyDeepColdRuinView',Sync){onlyIf{deepColdViewReopen!='true'};from deepColdNativeDir.dir('structures');into deepColdViewDir.dir('saves/DeepColdRuinReview')}
+tasks.named('runDeepColdRuinView'){dependsOn 'copyDeepColdRuinView';doFirst{deepColdViewDir.asFile.mkdirs();deepColdViewDir.file('result.txt').asFile.delete();deepColdViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert deepColdViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+
+def ruinNegativeDir=layout.projectDirectory.dir('build/ruin-negative-y-probe')
+loom.runs.register('ruinNegativeYProbe'){server();runDir(ruinNegativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.ruinNegativeYProbe=true');programArg('--nogui')}
+tasks.register('copyRuinNegativeProbe',Sync){onlyIf{!ruinNegativeDir.dir('structures').asFile.exists()};from layout.projectDirectory.dir('build/cold-ruin-grounded/structures');into ruinNegativeDir.dir('structures')}
+tasks.named('runRuinNegativeYProbe'){dependsOn 'copyRuinNegativeProbe';doFirst{ruinNegativeDir.asFile.mkdirs();ruinNegativeDir.file('result.txt').asFile.delete();ruinNegativeDir.file('eula.txt').asFile.text='eula=true\n';ruinNegativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert ruinNegativeDir.file('result.txt').asFile.text=='PASS'}}
+
+def ruinForcedDir=layout.projectDirectory.dir('build/ruin-forced-negative')
+loom.runs.register('ruinForcedNegative'){server();runDir(ruinForcedDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.ruinForcedNegative=true');vmArg('-Dblockbranch.deepColdPriorJar='+layout.projectDirectory.file('build/deep-cold-baseline-97.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.register('copyRuinForcedNegative',Sync){onlyIf{!ruinForcedDir.dir('structures').asFile.exists()};from layout.projectDirectory.dir('build/cold-ruin-grounded/structures');into ruinForcedDir.dir('structures')}
+tasks.named('runRuinForcedNegative'){dependsOn 'copyRuinForcedNegative';doFirst{ruinForcedDir.asFile.mkdirs();ruinForcedDir.file('result.txt').asFile.delete();ruinForcedDir.file('eula.txt').asFile.text='eula=true\n';ruinForcedDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert ruinForcedDir.file('result.txt').asFile.text=='PASS'}}
+
+loom.runs.register('deepWarmRuinSurvey'){server();runDir(layout.projectDirectory.dir('build/deep-warm-ruin-survey').asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.deepWarmRuinSurvey=true');programArg('--nogui')}
+def deepWarmSurveyResult=layout.projectDirectory.file('build/deep-warm-ruin-survey/ruin-result.txt')
+tasks.named('runDeepWarmRuinSurvey'){doFirst{deepWarmSurveyResult.asFile.delete()};doLast{assert deepWarmSurveyResult.asFile.text.startsWith('PASS')}}
+
+def deepWarmNativeDir=layout.projectDirectory.dir(providers.gradleProperty('deepWarmRuinDirectory').getOrElse('build/deep-warm-ruin-native'))
+loom.runs.register('deepWarmRuinQualification'){server();runDir(deepWarmNativeDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.deepWarmRuinQualification=true');vmArg('-Dblockbranch.deepWarmRuinReverse='+providers.gradleProperty('deepWarmRuinReverse').getOrElse('false'));vmArg('-Dblockbranch.deepWarmPriorJar='+layout.projectDirectory.file('build/deep-warm-baseline-98.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runDeepWarmRuinQualification'){doFirst{deepWarmNativeDir.asFile.mkdirs();deepWarmNativeDir.file('result.txt').asFile.delete();deepWarmNativeDir.file('eula.txt').asFile.text='eula=true\n';deepWarmNativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert deepWarmNativeDir.file('result.txt').asFile.text=='PASS'}}
+
+def deepWarmViewDir=layout.projectDirectory.dir('build/deep-warm-ruin-view')
+def deepWarmViewReopen=providers.gradleProperty('deepWarmRuinViewReopen').getOrElse('false')
+loom.runs.register('deepWarmRuinView'){client();runDir(deepWarmViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.deepWarmRuinView=true');vmArg('-Dblockbranch.deepWarmRuinViewReopen='+deepWarmViewReopen);vmArg('-Dblockbranch.deepWarmRuinViewDir='+deepWarmViewDir.asFile.absolutePath);vmArg('-Dblockbranch.deepWarmRuinWitness='+deepWarmNativeDir.file('fresh.json').asFile.absolutePath);programArgs('--username','RuinReview','--width','1024','--height','576')}
+tasks.register('copyDeepWarmRuinView',Sync){onlyIf{deepWarmViewReopen!='true'};from deepWarmNativeDir.dir('structures');into deepWarmViewDir.dir('saves/DeepWarmRuinReview')}
+tasks.named('runDeepWarmRuinView'){dependsOn 'copyDeepWarmRuinView';doFirst{deepWarmViewDir.asFile.mkdirs();deepWarmViewDir.file('result.txt').asFile.delete();deepWarmViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert deepWarmViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+
+def nativeBodiesDir=layout.projectDirectory.dir(providers.gradleProperty('nativeBodiesDirectory').getOrElse('build/native-hut-igloo'))
+loom.runs.register('nativeHutIglooQualification'){server();runDir(nativeBodiesDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.nativeBodiesQualification=true');vmArg('-Dblockbranch.nativeBodiesPriorJar='+layout.projectDirectory.file('build/native-bodies-baseline-99.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runNativeHutIglooQualification'){doFirst{nativeBodiesDir.asFile.mkdirs();nativeBodiesDir.file('result.txt').asFile.delete();nativeBodiesDir.file('eula.txt').asFile.text='eula=true\n';nativeBodiesDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert nativeBodiesDir.file('result.txt').asFile.text=='PASS'}}
+
+def nativeBodiesViewDir=layout.projectDirectory.dir('build/native-hut-igloo-view')
+loom.runs.register('nativeHutIglooView'){client();runDir(nativeBodiesViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.nativeBodiesView=true');vmArg('-Dblockbranch.nativeBodiesViewDir='+nativeBodiesViewDir.asFile.absolutePath);programArgs('--username','NativeReview','--width','1024','--height','576')}
+tasks.register('copyNativeHutIglooView',Sync){from nativeBodiesDir.dir('structures');into nativeBodiesViewDir.dir('saves/NativeBodiesReview')}
+tasks.named('runNativeHutIglooView'){dependsOn 'copyNativeHutIglooView';doFirst{nativeBodiesViewDir.asFile.mkdirs();nativeBodiesViewDir.file('result.txt').asFile.delete();nativeBodiesViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert nativeBodiesViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def nativeOrdinaryDir=layout.projectDirectory.dir(providers.gradleProperty('nativeOrdinaryDirectory').getOrElse('build/native-ordinary'))
+loom.runs.register('nativeOrdinaryQualification'){server();runDir(nativeOrdinaryDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.nativeOrdinaryQualification=true');vmArg('-Dblockbranch.nativeOrdinaryStart='+providers.gradleProperty('nativeOrdinaryStart').getOrElse('0'));vmArg('-Dblockbranch.nativeOrdinaryResume='+providers.gradleProperty('nativeOrdinaryResume').getOrElse('false'));vmArg('-Dblockbranch.nativeOrdinaryPriorJar='+layout.projectDirectory.file('build/native-ordinary-baseline-100.jar').asFile.absolutePath);programArg('--nogui')}
+tasks.named('runNativeOrdinaryQualification'){doFirst{nativeOrdinaryDir.asFile.mkdirs();nativeOrdinaryDir.file('result.txt').asFile.delete();nativeOrdinaryDir.file('eula.txt').asFile.text='eula=true\n';nativeOrdinaryDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert nativeOrdinaryDir.file('result.txt').asFile.text=='PASS'}}
+
+def ordinaryViewDir=layout.projectDirectory.dir('build/native-ordinary-view')
+def ordinaryViewSourceDir=layout.projectDirectory.dir('build/native-ordinary-qualified/structures')
+loom.runs.register('nativeOrdinaryView'){client();runDir(ordinaryViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.nativeOrdinaryView=true');vmArg('-Dblockbranch.nativeOrdinaryViewStart='+providers.gradleProperty('nativeOrdinaryViewStart').getOrElse('0'));vmArg('-Dblockbranch.nativeOrdinaryViewDir='+ordinaryViewDir.asFile.absolutePath);vmArg('-Dblockbranch.nativeOrdinaryWitness='+layout.projectDirectory.file('build/native-ordinary-qualified/fresh.json').asFile.absolutePath);programArgs('--username','NativeReview','--width','1024','--height','576')}
+tasks.register('prepareNativeOrdinaryView'){doLast{def world=ordinaryViewDir.dir('saves/NativeOrdinaryReview');if(!world.file('level.dat').asFile.exists()){world.asFile.mkdirs();['level.dat','blockbranch-columns.txt','data/minecraft/world_gen_settings.dat','data/fabric/registry_entries.dat'].each{name->def target=world.file(name).asFile.toPath();java.nio.file.Files.createDirectories(target.parent);java.nio.file.Files.copy(ordinaryViewSourceDir.file(name).asFile.toPath(),target)}};ordinaryViewDir.file('result.txt').asFile.delete();ordinaryViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.named('runNativeOrdinaryView'){dependsOn 'prepareNativeOrdinaryView';doLast{assert ordinaryViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def ordinaryTravelDir=layout.projectDirectory.dir('build/native-ordinary-travel')
+loom.runs.register('nativeOrdinaryTravel'){client();runDir(ordinaryTravelDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.nativeOrdinaryTravel=true');vmArg('-Dblockbranch.nativeOrdinaryPortalReport='+layout.projectDirectory.file('build/native-ordinary-qualified/portal-saved.json').asFile.absolutePath);programArgs('--username','NativeTravel','--width','1024','--height','576')}
+tasks.register('copyNativeOrdinaryTravel',Sync){from layout.projectDirectory.dir('build/native-ordinary-qualified/structures');into ordinaryTravelDir.dir('saves/NativeOrdinaryFunctional')}
+tasks.named('runNativeOrdinaryTravel'){dependsOn 'copyNativeOrdinaryTravel';doFirst{ordinaryTravelDir.asFile.mkdirs();ordinaryTravelDir.file('travel-result.txt').asFile.delete();ordinaryTravelDir.file('options.txt').asFile.text='renderDistance:3\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'};doLast{assert ordinaryTravelDir.file('travel-result.txt').asFile.text.startsWith('PASS')}}
+
+def ordinaryAdmissionDir=layout.projectDirectory.dir(providers.gradleProperty('nativeOrdinaryAdmissionDirectory').getOrElse('build/native-ordinary-admission-new'))
+loom.runs.register('nativeOrdinaryAdmission'){server();runDir(ordinaryAdmissionDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.nativeOrdinaryAdmission=true');vmArg('-Dblockbranch.admissionFixedWork='+providers.gradleProperty('admissionFixedWork').getOrElse('false'));vmArg('-Dblockbranch.admissionPreparationChecks='+providers.gradleProperty('admissionPreparationChecks').getOrElse('false'));vmArg('-Dblockbranch.admissionWorkTrace='+providers.gradleProperty('admissionWorkTrace').getOrElse('false'));vmArg('-XX:FlightRecorderOptions=stackdepth=256');programArg('--nogui')}
+tasks.named('runNativeOrdinaryAdmission'){doFirst{ordinaryAdmissionDir.asFile.mkdirs();ordinaryAdmissionDir.file('result.txt').asFile.delete();ordinaryAdmissionDir.file('eula.txt').asFile.text='eula=true\n';ordinaryAdmissionDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert ordinaryAdmissionDir.file('result.txt').asFile.text=='PASS'}}
+
+// Reimagined layouts remain a single private schema until all five are qualified.
+def reimaginedSurveyDir=layout.projectDirectory.dir('build/reimagined-survey')
+loom.runs.register('reimaginedSurvey'){server();runDir(reimaginedSurveyDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedSurvey=true');programArg('--nogui')}
+tasks.named('runReimaginedSurvey'){doFirst{reimaginedSurveyDir.asFile.mkdirs();reimaginedSurveyDir.file('result.txt').asFile.delete();reimaginedSurveyDir.file('eula.txt').asFile.text='eula=true\n';reimaginedSurveyDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert reimaginedSurveyDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def reimaginedDir=layout.projectDirectory.dir(providers.gradleProperty('reimaginedDirectory').getOrElse('build/reimagined-first-native'))
+loom.runs.register('reimaginedQualification'){server();runDir(reimaginedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedQualification=true');vmArg('-Dblockbranch.reimaginedReverse='+providers.gradleProperty('reimaginedReverse').getOrElse('false'));vmArg('-Dblockbranch.reimaginedReference='+providers.gradleProperty('reimaginedReference').getOrElse(''));programArg('--nogui')}
+tasks.named('runReimaginedQualification'){doFirst{reimaginedDir.asFile.mkdirs();reimaginedDir.file('result.txt').asFile.delete();reimaginedDir.file('eula.txt').asFile.text='eula=true\n';reimaginedDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert reimaginedDir.file('result.txt').asFile.text=='PASS'}}
+loom.runs.register('reimaginedMonumentDiagnosis'){server();runDir(reimaginedSurveyDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedMonumentDiagnosis=true');programArg('--nogui')}
+tasks.named('runReimaginedMonumentDiagnosis'){doFirst{reimaginedSurveyDir.file('monument-diagnosis-result.txt').asFile.delete()};doLast{assert reimaginedSurveyDir.file('monument-diagnosis-result.txt').asFile.text=='PASS'}}
+
+def reimaginedViewDir=layout.projectDirectory.dir('build/reimagined-corrected-view')
+def reimaginedViewSource=layout.projectDirectory.dir('build/reimagined-first-corrected/structures')
+loom.runs.register('reimaginedView'){client();runDir(reimaginedViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedView=true');vmArg('-Dblockbranch.reimaginedViewDir='+reimaginedViewDir.asFile.absolutePath);programArgs('--username','ReimaginedReview','--width','1024','--height','576')}
+tasks.register('prepareReimaginedView'){doLast{def world=reimaginedViewDir.dir('saves/ReimaginedReview');if(!world.file('level.dat').asFile.exists()){def source=reimaginedViewSource.asFile.toPath();java.nio.file.Files.walk(source).withCloseable{paths->paths.forEach{p->def target=world.asFile.toPath().resolve(source.relativize(p));if(java.nio.file.Files.isDirectory(p))java.nio.file.Files.createDirectories(target);else java.nio.file.Files.copy(p,target)}}};reimaginedViewDir.file('result.txt').asFile.delete();reimaginedViewDir.file('options.txt').asFile.text='renderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.named('runReimaginedView'){dependsOn 'prepareReimaginedView';doLast{assert reimaginedViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def reimaginedTrapDir=layout.projectDirectory.dir('build/reimagined-trap-isolated')
+def reimaginedTrapSource=layout.projectDirectory.dir('build/reimagined-first-corrected/structures')
+loom.runs.register('reimaginedTrap'){server();runDir(reimaginedTrapDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedTrap=true');programArg('--nogui')}
+tasks.named('runReimaginedTrap'){doFirst{def world=reimaginedTrapDir.dir('structures');if(!world.file('level.dat').asFile.exists()){def source=reimaginedTrapSource.asFile.toPath();java.nio.file.Files.walk(source).withCloseable{paths->paths.forEach{p->def target=world.asFile.toPath().resolve(source.relativize(p));if(java.nio.file.Files.isDirectory(p))java.nio.file.Files.createDirectories(target);else java.nio.file.Files.copy(p,target)}}};reimaginedTrapDir.file('trap-result.txt').asFile.delete();reimaginedTrapDir.file('eula.txt').asFile.text='eula=true\n';reimaginedTrapDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert reimaginedTrapDir.file('trap-result.txt').asFile.text.startsWith('PASS')}}
+
+def reimaginedRemainingDir=layout.projectDirectory.dir(providers.gradleProperty('reimaginedRemainingDirectory').getOrElse('build/reimagined-remaining-native'))
+loom.runs.register('reimaginedRemaining'){server();runDir(reimaginedRemainingDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedRemaining=true');vmArg('-Dblockbranch.reimaginedPriorJar='+layout.projectDirectory.file('build/reimagined-baseline-101.jar').asFile.absolutePath);vmArg('-Dblockbranch.reimaginedOldGenerator='+layout.projectDirectory.file('build/native-ordinary-qualified/generator.json').asFile.absolutePath);vmArg('-Dblockbranch.reimaginedReverse='+providers.gradleProperty('reimaginedReverse').getOrElse('false'));vmArg('-Dblockbranch.reimaginedPartial='+providers.gradleProperty('reimaginedPartial').getOrElse('false'));vmArg('-Dblockbranch.reimaginedReference='+providers.gradleProperty('reimaginedReference').getOrElse(''));vmArg('-Dblockbranch.reimaginedRemainingStart='+providers.gradleProperty('reimaginedRemainingStart').getOrElse('3'));vmArg('-Dblockbranch.reimaginedRemainingEnd='+providers.gradleProperty('reimaginedRemainingEnd').getOrElse('5'));programArg('--nogui')}
+tasks.named('runReimaginedRemaining'){doFirst{def world=reimaginedRemainingDir.dir('structures');if(!world.file('level.dat').asFile.exists()){def source=reimaginedTrapSource.asFile.toPath();java.nio.file.Files.walk(source).withCloseable{paths->paths.forEach{p->def target=world.asFile.toPath().resolve(source.relativize(p));if(java.nio.file.Files.isDirectory(p))java.nio.file.Files.createDirectories(target);else java.nio.file.Files.copy(p,target)}}};reimaginedRemainingDir.file('remaining-result.txt').asFile.delete();reimaginedRemainingDir.file('eula.txt').asFile.text='eula=true\n';reimaginedRemainingDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert reimaginedRemainingDir.file('remaining-result.txt').asFile.text=='PASS'}}
+
+def reimaginedRemainingViewDir=layout.projectDirectory.dir('build/reimagined-remaining-view')
+def reimaginedRemainingViewSource=layout.projectDirectory.dir('build/reimagined-service-native/structures')
+loom.runs.register('reimaginedRemainingView'){client();runDir(reimaginedRemainingViewDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.reimaginedRemainingView=true');vmArg('-Dblockbranch.reimaginedRemainingViewDir='+reimaginedRemainingViewDir.asFile.absolutePath);programArgs('--username','ReimaginedViews','--width','1024','--height','576')}
+tasks.register('prepareReimaginedRemainingView'){doLast{def world=reimaginedRemainingViewDir.dir('saves/ReimaginedRemainingReview');if(!world.file('level.dat').asFile.exists()){def source=reimaginedRemainingViewSource.asFile.toPath();java.nio.file.Files.walk(source).withCloseable{paths->paths.forEach{p->def target=world.asFile.toPath().resolve(source.relativize(p));if(java.nio.file.Files.isDirectory(p))java.nio.file.Files.createDirectories(target);else java.nio.file.Files.copy(p,target)}}};reimaginedRemainingViewDir.file('result.txt').asFile.delete();reimaginedRemainingViewDir.file('options.txt').asFile.text='renderDistance:5\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'}}
+tasks.named('runReimaginedRemainingView'){dependsOn 'prepareReimaginedRemainingView';doLast{assert reimaginedRemainingViewDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Actual generated views; explicit fresh/reopen selection preserves prior evidence.
+def structureVisualDir=layout.projectDirectory.dir(providers.gradleProperty('structureVisualDirectory').getOrElse('build/structure-visuals/native'))
+def structureVisualReopen=providers.gradleProperty('structureVisualReopen').getOrElse('false')=='true'
+loom.runs.register('structureVisual'){
+ client();runDir(structureVisualDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.structureVisual=true');vmArg('-Dblockbranch.structureVisualDirectory='+structureVisualDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.structureVisualReopen='+structureVisualReopen)
+ vmArg('-Dblockbranch.structureVisualBaseline='+providers.gradleProperty('structureVisualBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.structureVisualPriorJar='+providers.gradleProperty('structureVisualPriorJar').getOrElse(''))
+ programArgs('--username','StructureVisual','--width','1024','--height','576')
+}
+tasks.register('prepareStructureVisual'){doLast{
+ structureVisualDir.asFile.mkdirs()
+ assert structureVisualDir.dir('saves/StructureVisualReview').asFile.exists()==structureVisualReopen:'Use a fresh directory or explicitly reopen.'
+ assert !structureVisualDir.file(structureVisualReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve previous evidence.'
+ structureVisualDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runStructureVisual'){dependsOn 'prepareStructureVisual';doLast{assert structureVisualDir.file(structureVisualReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+// Opt-in paired replacement review; isolated from normal builds.
+def jungleReplacementDir=layout.projectDirectory.dir(providers.gradleProperty('jungleReplacementDirectory').getOrElse('build/jungle-replacement/baseline172'))
+def jungleReplacementReopen=providers.gradleProperty('jungleReplacementReopen').getOrElse('false')=='true'
+loom.runs.register('jungleReplacement'){
+ client();runDir(jungleReplacementDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.jungleReplacement=true');vmArg('-Dblockbranch.jungleReplacementDirectory='+jungleReplacementDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.jungleReplacementReopen='+jungleReplacementReopen)
+ vmArg('-Dblockbranch.jungleReplacementBaseline='+providers.gradleProperty('jungleReplacementBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.jungleReplacementPriorJar='+providers.gradleProperty('jungleReplacementPriorJar').getOrElse(''))
+ vmArg('-Dblockbranch.jungleReplacementCurrent172Jar='+providers.gradleProperty('jungleReplacementCurrent172Jar').getOrElse(''))
+ vmArg('-Dblockbranch.jungleReplacementReference='+providers.gradleProperty('jungleReplacementReference').getOrElse(''))
+ vmArg('-Dblockbranch.jungleReplacementViews='+providers.gradleProperty('jungleReplacementViews').getOrElse('0,1,2,3,4,5,6,7'))
+ programArgs('--username','JungleReview','--width','1024','--height','576')
+}
+tasks.register('prepareJungleReplacement'){doLast{
+ jungleReplacementDir.asFile.mkdirs()
+ assert jungleReplacementDir.dir('saves/JungleReplacementReview').asFile.exists()==jungleReplacementReopen:'Use a fresh directory or explicitly reopen.'
+ assert !jungleReplacementDir.file(jungleReplacementReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve previous evidence.'
+ jungleReplacementDir.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runJungleReplacement'){dependsOn 'prepareJungleReplacement';doLast{assert jungleReplacementDir.file(jungleReplacementReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

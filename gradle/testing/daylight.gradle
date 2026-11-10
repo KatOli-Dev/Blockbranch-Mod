@@ -1,0 +1,38 @@
+// Reuse one isolated fixture three times to check default, reload and operator override.
+def daylightDirectory=layout.projectDirectory.dir(providers.gradleProperty('daylightDirectory').getOrElse('build/daylight-smoke'))
+loom.runs.register('daylightSmoke'){
+ server();runDir(daylightDirectory.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.daylightSmoke=true');vmArg('-Dblockbranch.daylightDirectory='+daylightDirectory.asFile.absolutePath)
+}
+tasks.named('runDaylightSmoke'){
+ doFirst{
+  daylightDirectory.asFile.mkdirs();daylightDirectory.file('result.txt').asFile.delete()
+  daylightDirectory.file('eula.txt').asFile.text='eula=true\n'
+  def properties=daylightDirectory.file('server.properties').asFile
+  if(!properties.exists())properties.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port=25619\nlevel-name=daylight\nlevel-type=minecraft:flat\nlevel-seed=424242\nview-distance=2\nsimulation-distance=2\n'
+ }
+ doLast{assert daylightDirectory.file('result.txt').asFile.text.startsWith('PASS'):'Daylight regression failed; inspect fixture logs'}
+}
+
+def syncDirectory=layout.projectDirectory.dir(providers.gradleProperty('daylightSyncDirectory').getOrElse('build/daylight-sync'))
+loom.runs.register('daylightSyncServer'){
+ server();runDir(syncDirectory.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.daylightSync=true');vmArg('-Dblockbranch.daylightDirectory='+syncDirectory.asFile.absolutePath)
+}
+loom.runs.register('daylightSyncClient'){
+ client();runDir(syncDirectory.asFile.absolutePath);vmArg('-Xmx2G')
+ vmArg('-Dblockbranch.daylightSync=true');vmArg('-Dblockbranch.daylightDirectory='+syncDirectory.asFile.absolutePath)
+ programArgs('--username','DaylightAudit','--quickPlayMultiplayer','127.0.0.1:25620','--width','1024','--height','576')
+}
+tasks.named('runDaylightSyncServer'){
+ doLast{assert syncDirectory.file('result.txt').asFile.exists()&&syncDirectory.file('result.txt').asFile.text.startsWith('PASS'):'Daylight server/client regression failed; inspect fixture logs'}
+ doFirst{
+  syncDirectory.asFile.mkdirs();syncDirectory.file('eula.txt').asFile.text='eula=true\n'
+  syncDirectory.file('request.txt').asFile.delete();syncDirectory.file('result.txt').asFile.delete();syncDirectory.file('sleep.txt').asFile.delete()
+  syncDirectory.file('server.properties').asFile.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port=25620\nlevel-name=daylight\nlevel-type=minecraft:flat\nlevel-seed=424242\nview-distance=2\nsimulation-distance=2\n'
+ }
+}
+tasks.named('runDaylightSyncClient'){
+ doFirst{syncDirectory.file('options.txt').asFile.text='onboardAccessibility:false\nrenderDistance:2\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\ntutorialStep:none\n'}
+ doLast{assert syncDirectory.file('result.txt').asFile.text.startsWith('PASS')}
+}

@@ -1,0 +1,44 @@
+// Opt-in disposable native pyramid scenes; no ordinary runtime or production archive dependency.
+def pyramidDir=layout.projectDirectory.dir(providers.gradleProperty('pyramidVisualDirectory').getOrElse('build/pyramid-visuals/native'))
+def pyramidReopen=providers.gradleProperty('pyramidVisualReopen').getOrElse('false')=='true'
+loom.runs.register('pyramidVisual'){
+ client();runDir(pyramidDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.pyramidVisual=true');vmArg('-Dblockbranch.pyramidVisualDirectory='+pyramidDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.pyramidVisualReopen='+pyramidReopen)
+ vmArg('-Dblockbranch.pyramidVisualBaseline='+providers.gradleProperty('pyramidVisualBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.pyramidVisualPriorJar='+providers.gradleProperty('pyramidVisualPriorJar').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidVisualCurrentJar='+providers.gradleProperty('pyramidVisualCurrentJar').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidVisualMansionJar='+providers.gradleProperty('pyramidVisualMansionJar').getOrElse(''))
+ programArgs('--username','PyramidVisual','--width','1024','--height','576')
+}
+tasks.register('preparePyramidVisual'){doLast{
+ pyramidDir.asFile.mkdirs()
+ assert pyramidDir.dir('saves/PyramidVisualReview').asFile.exists()==pyramidReopen:'Use a fresh directory or explicitly reopen.'
+ assert !pyramidDir.file(pyramidReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ pyramidDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runPyramidVisual'){dependsOn 'preparePyramidVisual';doLast{assert pyramidDir.file(pyramidReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+// Opt-in current-schema paired pyramid replacement review.
+def pyramidReplacementDir=layout.projectDirectory.dir(providers.gradleProperty('pyramidReplacementDirectory').getOrElse('build/pyramid-replacement/baseline212'))
+def pyramidReplacementReopen=providers.gradleProperty('pyramidReplacementReopen').getOrElse('false')=='true'
+loom.runs.register('pyramidReplacement'){
+ client();runDir(pyramidReplacementDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.pyramidReplacement=true');vmArg('-Dblockbranch.pyramidReplacementDirectory='+pyramidReplacementDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.pyramidReplacementReopen='+pyramidReplacementReopen)
+ vmArg('-Dblockbranch.pyramidReplacementTrapTest='+providers.gradleProperty('pyramidReplacementTrapTest').getOrElse('false'))
+ vmArg('-Dblockbranch.pyramidReplacementBaseline='+providers.gradleProperty('pyramidReplacementBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.pyramidReplacementPriorJar='+providers.gradleProperty('pyramidReplacementPriorJar').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidReplacementCurrent212Jar='+providers.gradleProperty('pyramidReplacementCurrent212Jar').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidReplacementCurrent213Jar='+providers.gradleProperty('pyramidReplacementCurrent213Jar').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidReplacementReference='+providers.gradleProperty('pyramidReplacementReference').getOrElse(''))
+ vmArg('-Dblockbranch.pyramidReplacementViews='+providers.gradleProperty('pyramidReplacementViews').getOrElse('0,1,2,3,4,5,6,7'))
+ programArgs('--username','PyramidReview','--width','1024','--height','576')
+}
+tasks.register('preparePyramidReplacement'){doLast{
+ pyramidReplacementDir.asFile.mkdirs()
+ assert pyramidReplacementDir.dir('saves/PyramidReplacementReview').asFile.exists()==pyramidReplacementReopen:'Use a fresh directory or explicitly reopen.'
+ assert !pyramidReplacementDir.file(pyramidReplacementReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve previous evidence.'
+ pyramidReplacementDir.file('options.txt').asFile.text='renderDistance:6\nautoJump:false\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runPyramidReplacement'){dependsOn 'preparePyramidReplacement';doLast{assert pyramidReplacementDir.file(pyramidReplacementReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

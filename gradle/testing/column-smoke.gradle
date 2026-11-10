@@ -1,0 +1,44 @@
+def columnSmokeDirectory = layout.projectDirectory.dir(providers.gradleProperty('columnSmokeDirectory').getOrElse('build/column-smoke'))
+loom.runs.register('columnSmoke') {
+    server();name('Sparse column regression');runDir(columnSmokeDirectory.asFile.absolutePath)
+    vmArg('-Xmx2G');vmArg('-Dblockbranch.columnSmoke=true')
+    vmArg('-Dblockbranch.columnSmokeResult='+columnSmokeDirectory.file('result.txt').asFile.absolutePath)
+    programArg('--nogui')
+}
+def prepareColumnSmoke = tasks.register('prepareColumnSmoke') {
+    def directory=columnSmokeDirectory.asFile
+    doLast {
+        directory.mkdirs();new File(directory,'result.txt').delete();new File(directory,'eula.txt').text='eula=true\n'
+        def properties=new File(directory,'server.properties')
+        if(!properties.exists())properties.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port=25579\nview-distance=2\nsimulation-distance=2\nlevel-name=columns\nlevel-seed=424242\nmax-tick-time=60000\n'
+    }
+}
+tasks.named('runColumnSmoke') {
+    def result=columnSmokeDirectory.file('result.txt').asFile
+    dependsOn prepareColumnSmoke
+    doLast {assert result.exists()&&result.text.trim()=='PASS':'Sparse column integration checks failed; inspect fixture logs'}
+}
+
+// Focused real-connection protocol compatibility audit; no terrain stress.
+def protocolPort=providers.gradleProperty('columnProtocolPort').getOrElse('25612')
+def protocolDir=layout.projectDirectory.dir(providers.gradleProperty('columnProtocolDirectory').getOrElse('build/column-protocol'))
+loom.runs.register('columnProtocolServer'){
+ server();runDir(protocolDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.columnProtocolStopAfterDisconnect=true');programArg('--nogui')
+}
+loom.runs.register('columnProtocolClient'){
+ client();runDir(protocolDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.columnProtocolAudit=true')
+ vmArg('-Dblockbranch.columnProtocolResult='+protocolDir.file('result.txt').asFile.absolutePath)
+ if(providers.gradleProperty('columnProtocolMissingWindow').isPresent())vmArg('-Dblockbranch.columnProtocolMissingWindow=true')
+ programArgs('--username','ProtocolAudit','--quickPlayMultiplayer','127.0.0.1:'+protocolPort,'--width','1024','--height','576')
+}
+tasks.named('runColumnProtocolClient'){
+ doFirst{protocolDir.asFile.mkdirs();protocolDir.file('result.txt').asFile.delete();protocolDir.file('options.txt').asFile.text='onboardAccessibility:false\nrenderDistance:4\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\ntutorialStep:none\n'}
+ doLast{assert protocolDir.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+tasks.named('runColumnProtocolServer'){
+ doFirst{
+  protocolDir.asFile.mkdirs();protocolDir.file('eula.txt').asFile.text='eula=true\n'
+  protocolDir.file('server.properties').asFile.text='online-mode=false\nwhite-list=false\nserver-ip=127.0.0.1\nserver-port='+protocolPort+'\nlevel-name=protocol\nlevel-type=minecraft:flat\nlevel-seed=424242\nview-distance=2\nsimulation-distance=2\n'
+ }
+}

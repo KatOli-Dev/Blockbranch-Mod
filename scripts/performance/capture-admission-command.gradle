@@ -1,0 +1,22 @@
+// Configure/compile the existing Loom run, but do not launch the native process.
+// The resulting local command file can contain paths: do not publish it.
+gradle.projectsEvaluated {
+    def run = rootProject.tasks.named('runNativeOrdinaryAdmission').get()
+    def output = rootProject.file(rootProject.providers.gradleProperty('admissionLaunchFile').get())
+    run.doFirst {
+        // Loom normally resolves these inside its exec action, after doFirst.
+        // Resolve the same providers without launching or authenticating anything.
+        def command = [run.javaLauncher.get().executablePath.asFile.absolutePath]
+        command.addAll(run.allJvmArgs.findAll { !it.startsWith('@') })
+        command.addAll(['-cp', run.classpath.asPath, run.mainClass.get()])
+        command.addAll(run.args)
+        run.argumentProviders.each { command.addAll(it.asArguments()) }
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([
+            command: command.collect { it.toString() },
+            environment: run.internalEnvironmentVars.get(),
+            workingDirectory: run.internalRunDir.get().asFile.absolutePath
+        ])) + '\n'
+        throw new org.gradle.api.tasks.StopExecutionException('Native launch deferred until Gradle exits')
+    }
+}

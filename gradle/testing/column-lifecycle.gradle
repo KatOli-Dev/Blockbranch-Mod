@@ -1,0 +1,25 @@
+// Native regression, isolated flat world; synthetic sparse profiles avoid a terrain survey.
+def lifecycleDir=layout.projectDirectory.dir(providers.gradleProperty('columnLifecycleDirectory').getOrElse('build/column-lifecycle'))
+loom.runs.register('columnLifecycle'){
+    server();source(sourceSets.integrationTest);runDir(lifecycleDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+    vmArg('-Dblockbranch.columnLifecycleSmoke=true')
+    vmArg('-Dblockbranch.columnLifecycleResult='+lifecycleDir.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareColumnLifecycle'){
+    doLast{
+        lifecycleDir.asFile.mkdirs();lifecycleDir.file('result.txt').asFile.delete();lifecycleDir.file('eula.txt').asFile.text='eula=true\n'
+        lifecycleDir.file('server.properties').asFile.text='''online-mode=false
+server-ip=127.0.0.1
+server-port=25606
+view-distance=2
+simulation-distance=2
+level-name=lifecycle
+level-type=minecraft:flat
+level-seed=424242
+'''
+    }
+}
+tasks.named('runColumnLifecycle'){
+    dependsOn tasks.named('prepareColumnLifecycle')
+    doLast{assert lifecycleDir.file('result.txt').asFile.text.startsWith('PASS')}
+}

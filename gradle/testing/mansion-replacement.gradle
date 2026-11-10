@@ -1,0 +1,22 @@
+// Opt-in disposable native mansion audit. Normal difficulty preserves original illagers.
+def scene=layout.projectDirectory.dir(providers.gradleProperty('mansionReplacementDirectory').getOrElse('build/mansion-replacement/native'))
+def reopen=providers.gradleProperty('mansionReplacementReopen').getOrElse('false')=='true'
+loom.runs.register('mansionReplacement'){
+ client();runDir(scene.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.mansionReplacement=true');vmArg('-Dblockbranch.mansionReplacementDirectory='+scene.asFile.absolutePath)
+ vmArg('-Dblockbranch.mansionReplacementReopen='+reopen)
+ for(String name:['mansionReplacementReference','mansionReplacementSavedReference','mansionReplacementRoofCommands','mansionReplacementCurrent254Jar','cryptReplacementCurrent233Jar','cryptReplacementCurrent234Jar'])vmArg('-Dblockbranch.'+name+'='+providers.gradleProperty(name).getOrElse(''))
+ vmArg('-Dblockbranch.mansionVisualBaseline=true');vmArg('-Dblockbranch.mansionVisualReopen='+reopen)
+ vmArg('-Dblockbranch.mansionReplacementViews='+providers.gradleProperty('mansionReplacementViews').getOrElse('0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15'))
+ vmArg('-Dblockbranch.mansionReplacementPoseFile='+layout.projectDirectory.file('src/integrationTest/resources/blockbranch/realistic/mansion-replacement-native-poses.json').asFile.absolutePath)
+ programArgs('--username','MansionReview','--width','1024','--height','576')
+}
+tasks.register('prepareMansionReplacement'){doLast{
+ scene.asFile.mkdirs()
+ assert scene.dir('saves/MansionAssessmentReview').asFile.exists()==reopen:'Fresh scene or explicit reopen required.'
+ assert !scene.file(reopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ scene.file('options.txt').asFile.text='renderDistance:10\nautoJump:false\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runMansionReplacement'){dependsOn 'prepareMansionReplacement';doLast{assert scene.file(reopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+tasks.register('freezeMansionRoofBlueprint',JavaExec){dependsOn 'integrationTestClasses';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.MansionBlueprintFreeze';systemProperty 'blockbranch.mansionBlueprintSource',providers.gradleProperty('mansionReplacementBlueprintSource').getOrElse('');workingDir=layout.buildDirectory.dir('mansion-replacement/blueprint-bootstrap').get().asFile;doFirst{workingDir.mkdirs()};args project.file(providers.gradleProperty('mansionReplacementReference').getOrElse('')).absolutePath,project.file(providers.gradleProperty('mansionReplacementBlueprintDirectory').getOrElse('build/mansion-replacement/blueprint')).absolutePath}
+tasks.register('checkMansionNativeOracle',JavaExec){dependsOn 'integrationTestClasses';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.MansionNativeOracleCheck';workingDir=layout.buildDirectory.dir('mansion-replacement/oracle-bootstrap').get().asFile;doFirst{workingDir.mkdirs()};args project.file(providers.gradleProperty('mansionReplacementReference').getOrElse('')).absolutePath,project.file(providers.gradleProperty('mansionReplacementRoofCommands').getOrElse('')).absolutePath}

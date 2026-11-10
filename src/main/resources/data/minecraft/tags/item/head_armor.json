@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:bronze_helmet",
+    "blockbranch:steel_helmet",
+    "blockbranch:stainless_steel_helmet",
+    "blockbranch:silver_helmet",
+    "blockbranch:platinum_alloy_helmet",
+    "blockbranch:titanium_alloy_helmet"
+  ]
+}

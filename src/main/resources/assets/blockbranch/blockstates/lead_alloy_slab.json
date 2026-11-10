@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "blockbranch:block/lead_alloy_slab"
+    },
+    "type=double": {
+      "model": "blockbranch:block/lead_alloy_block"
+    },
+    "type=top": {
+      "model": "blockbranch:block/lead_alloy_slab_top"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BBB",
+    "BBB",
+    "BBB"
+  ],
+  "key": {
+    "B": "blockbranch:platinum_ingot"
+  },
+  "result": {
+    "id": "blockbranch:platinum_block"
+  }
+}

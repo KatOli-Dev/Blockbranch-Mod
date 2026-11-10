@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "blockbranch:uranium_netherite_sword",
+    "blockbranch:uranium_netherite_axe",
+    "blockbranch:uranium_netherite_spear"
+  ]
+}

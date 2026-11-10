@@ -1,0 +1,42 @@
+{
+	"schemaVersion": 1,
+	"id": "blockbranch",
+	"version": "${version}",
+	"name": "blockbranch",
+	"description": "Expands Overworld build height using sparse vanilla chunk columns.",
+	"authors": [
+		"kat_dash_oli"
+	],
+	"contact": {
+		"homepage": "https://github.com/KatOli-Dev/Blockbranch-Mod",
+		"sources": "https://github.com/KatOli-Dev/Blockbranch-Mod"
+	},
+	"license": "MIT-0",
+	"icon": "assets/blockbranch/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"blockbranch.Blockbranch",
+			"blockbranch.realistic.RealisticRuntime"
+		],
+		"client": [
+			"blockbranch.client.BlockbranchClient",
+			"blockbranch.client.realistic.RealisticClientRuntime"
+		]
+	},
+	"mixins": [
+		"blockbranch.mixins.json",
+		{
+			"config": "blockbranch.client.mixins.json",
+			"environment": "client"
+		},
+		"blockbranch.realistic.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"accessWidener": "blockbranch.accesswidener"
+}

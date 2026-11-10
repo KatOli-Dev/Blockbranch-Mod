@@ -1,0 +1,27 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "9b808e04307993850681a925c377e576cb4c4146",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "eb30cd801f7af7868214d67bb4f2fef81e1715b8a72de315a88d4b3893525c88"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/OreLayer.java",
+      "sha256": "f3ab7b8ee8cb1d8587ae5e090d24604fdededda6b3bec123773887213705a5fc"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/TinVeins.java",
+      "sha256": "bb8c3c58b17299e5b237cf7bbe2af5b34086e24c21a1c1c0595480c8ed03b8ab"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ZincVeins.java",
+      "sha256": "eccd9c388ea9cb5918a38df648b864ff5442e2b8545de78ef303495454acea7e"
+    },
+    {
+      "path": "src/main/java/blockbranch/metallurgy/ManganeseVeins.java",
+      "sha256": "fed042742109ea1ca21fa7382b7a291015e45b49225f7ec3fcc5b27802c06cc9"
+    }
+  ],
+  "purpose": "Unmodified ore5 and catalog5 readers; protect manganese and previous ores and safe rejection of tungsten/catalog6."
+}

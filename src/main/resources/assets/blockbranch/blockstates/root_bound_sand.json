@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "": [
+      { "model": "blockbranch:block/root_bound_sand" },
+      { "model": "blockbranch:block/root_bound_sand", "y": 90 },
+      { "model": "blockbranch:block/root_bound_sand", "y": 180 },
+      { "model": "blockbranch:block/root_bound_sand", "y": 270 }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+// Opt-in disposable native mansion scenes; no ordinary runtime or production archive dependency.
+def mansionDir=layout.projectDirectory.dir(providers.gradleProperty('mansionVisualDirectory').getOrElse('build/mansion-visuals/native'))
+def mansionReopen=providers.gradleProperty('mansionVisualReopen').getOrElse('false')=='true'
+loom.runs.register('mansionVisual'){
+ client();runDir(mansionDir.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.mansionVisual=true');vmArg('-Dblockbranch.mansionVisualDirectory='+mansionDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.mansionVisualReopen='+mansionReopen)
+ vmArg('-Dblockbranch.mansionVisualBaseline='+providers.gradleProperty('mansionVisualBaseline').getOrElse('false'))
+ vmArg('-Dblockbranch.mansionVisualPriorJar='+providers.gradleProperty('mansionVisualPriorJar').getOrElse(''))
+ vmArg('-Dblockbranch.mansionVisualCurrentJar='+providers.gradleProperty('mansionVisualCurrentJar').getOrElse(''))
+ programArgs('--username','MansionVisual','--width','1024','--height','576')
+}
+tasks.register('prepareMansionVisual'){doLast{
+ mansionDir.asFile.mkdirs()
+ assert mansionDir.dir('saves/MansionVisualReview').asFile.exists()==mansionReopen:'Use a fresh directory or explicitly reopen.'
+ assert !mansionDir.file(mansionReopen?'reopen-result.txt':'result.txt').asFile.exists():'Preserve prior evidence.'
+ mansionDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runMansionVisual'){dependsOn 'prepareMansionVisual';doLast{assert mansionDir.file(mansionReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}

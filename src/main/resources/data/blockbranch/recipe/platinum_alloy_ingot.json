@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:platinum_ingot",
+    "blockbranch:silver_ingot"
+  ],
+  "result": {
+    "id": "blockbranch:platinum_alloy_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "repository": "KatOli-Dev/Blockbranch",
+  "commit": "7204e0ed8e998f541bf213b5bc97204d9fabacbd",
+  "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+  "sha256": "49e3800869ddbcb4cabb825525cda7cb2ba3dbdd554c42444264f8afcc6e8b26",
+  "purpose": "Unmodified prior bronze-tools catalog2 guard; independently verifies catalog3 armor rejection."
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_fibre": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "blockbranch:reed_fibre"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_fibre"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "blockbranch:woven_reed_mat"
+    ]
+  }
+}

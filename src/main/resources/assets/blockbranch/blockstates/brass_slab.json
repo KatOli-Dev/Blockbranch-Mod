@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "blockbranch:block/brass_slab"
+    },
+    "type=double": {
+      "model": "blockbranch:block/brass_block"
+    },
+    "type=top": {
+      "model": "blockbranch:block/brass_slab_top"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+def magnetiteReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore12-catalog17')
+def magnetiteReaderOrigin=new File(magnetiteReaderRoot,'ORIGIN.json')
+def magnetiteReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java','metallurgy/SilverVeins.java','metallurgy/PlatinumVeins.java','metallurgy/TitaniumVeins.java','metallurgy/MagnetiteVeins.java'].collect{new File(magnetiteReaderRoot,'blockbranch/'+it)}
+def magnetiteReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore12-catalog17')
+def magnetiteReaderCompile=tasks.register('compileLegacyMagnetiteCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(magnetiteReaderFiles);inputs.file(magnetiteReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(magnetiteReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(magnetiteReaderOrigin);for(def row:origin.sources){def input=new File(magnetiteReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore12-catalog17 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldMagnetiteClasses='+magnetiteReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn magnetiteReaderCompile}
+if(providers.gradleProperty('resoniteView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.resoniteView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.resoniteView=true')}
+}
+def resoniteRoot=layout.projectDirectory.dir('src/main/resources').asFile
+tasks.register('verifyResoniteResources'){
+ inputs.files(fileTree(resoniteRoot){include '**/*resonite*','**/resonite/**','**/lang/en_us.json','**/sounds.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_iron_tool.json','AUDIO_SOURCES.json','AUDIO_CREDITS.txt'})
+ doLast{
+  def read={String p->new groovy.json.JsonSlurper().parse(new File(resoniteRoot,p))};def lang=read('assets/blockbranch/lang/en_us.json')
+  for(def n:['resonite_ore','deepslate_resonite_ore','resonite_crystal','resonite_block']){assert read('assets/blockbranch/items/'+n+'.json').model;assert read('assets/blockbranch/models/item/'+n+'.json');assert lang[(n=='resonite_crystal'?'item.':'block.')+'blockbranch.'+n]}
+  for(def n:['block/resonite_ore_overlay','block/resonite_block','item/resonite_crystal']){def i=javax.imageio.ImageIO.read(new File(resoniteRoot,'assets/blockbranch/textures/'+n+'.png'));assert i.width==16&&i.height==16;if(n.endsWith('overlay')){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=i.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0}}
+  for(def row:[['resonite_ore','stone'],['deepslate_resonite_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/resonite_ore_overlay';assert read('assets/blockbranch/blockstates/'+row[0]+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+row[0]+'.json').type=='minecraft:block'}
+  for(def tag:['mineable/pickaxe','needs_iron_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&t.values.contains('blockbranch:resonite_ore')&&t.values.contains('blockbranch:deepslate_resonite_ore')}
+  assert read('assets/blockbranch/models/block/resonite_block.json').parent=='minecraft:block/cube_all';assert read('data/blockbranch/recipe/resonite_block.json').pattern==['RR','RR'];assert read('data/blockbranch/recipe/resonite_crystals.json').result.count==4
+  for(def n:['resonite_block','resonite_crystals']){def a=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert a.rewards.recipes==['blockbranch:'+n]&&a.requirements.flatten().toSet()==a.criteria.keySet()&&a.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n}
+  def event=read('assets/blockbranch/sounds.json')['resonite.chime'];assert event.sounds==['blockbranch:resonite/chime1','blockbranch:resonite/chime2','blockbranch:resonite/chime3']&&lang[event.subtitle]
+  def provenance=read('AUDIO_SOURCES.json').assets.find{it.event=='resonite.chime'};assert provenance.license=='MIT-0'&&provenance.files.size()==3
+  for(def f:provenance.files){def b=new File(resoniteRoot,f.path).bytes;assert new String(b,0,4,'US-ASCII')=='OggS';assert java.security.MessageDigest.getInstance('SHA-256').digest(b).encodeHex().toString()==f.sha256}
+  assert new File(resoniteRoot,'AUDIO_CREDITS.txt').text.contains('Resonite chime: original synthesis')
+  println 'PASS resonite: four items, three original16x textures, native host compositing/reversible recipe and original credited chime'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyResoniteResources')}
+
+if(providers.gradleProperty('resoniteView').isPresent()&&providers.gradleProperty('metallurgyViewPack').isPresent()){
+ def overrideRoot=layout.projectDirectory.dir(providers.gradleProperty('metallurgyViewDirectory').getOrElse('build/metallurgy-visual'))
+ def overrideTarget=overrideRoot.file('retexture/resourcepacks/tin-host-test/assets/blockbranch/sounds/resonite/chime1.ogg').asFile
+ def overrideSource=new File(resoniteRoot,'assets/blockbranch/sounds/resonite/chime3.ogg')
+ tasks.named('runMetallurgyViewClient'){
+  doFirst{overrideTarget.parentFile.mkdirs();overrideTarget.bytes=overrideSource.bytes}
+ }
+}

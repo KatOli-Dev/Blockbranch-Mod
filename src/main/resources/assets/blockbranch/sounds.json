@@ -1,0 +1,184 @@
+{
+  "red_deer.contact": {
+    "subtitle": "subtitles.blockbranch.red_deer.contact",
+    "sounds": [
+      {
+        "name": "blockbranch:red_deer.bellow",
+        "type": "event",
+        "pitch": 1
+      }
+    ]
+  },
+  "red_deer.bellow": {
+    "subtitle": "subtitles.blockbranch.red_deer.bellow",
+    "sounds": [
+      "blockbranch:red_deer/bellow_dobroide_104581"
+    ]
+  },
+  "red_deer.hurt": {
+    "subtitle": "subtitles.blockbranch.red_deer.hurt",
+    "sounds": [
+      {
+        "name": "blockbranch:red_deer.bellow",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "red_deer.death": {
+    "subtitle": "subtitles.blockbranch.red_deer.death",
+    "sounds": [
+      {
+        "name": "blockbranch:red_deer.bellow",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "mallard.quack": {
+    "subtitle": "subtitles.blockbranch.mallard.quack",
+    "sounds": [
+      {
+        "name": "blockbranch:mallard/quack1",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:mallard/quack2",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:mallard/quack3",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:mallard/quack4",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:mallard/quack5",
+        "weight": 1
+      }
+    ]
+  },
+  "mallard.hurt": {
+    "subtitle": "subtitles.blockbranch.mallard.hurt",
+    "sounds": [
+      {
+        "name": "blockbranch:mallard.quack",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "mallard.death": {
+    "subtitle": "subtitles.blockbranch.mallard.death",
+    "sounds": [
+      {
+        "name": "blockbranch:mallard.quack",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "eurasian_beaver.contact": {
+    "subtitle": "subtitles.blockbranch.eurasian_beaver.contact",
+    "sounds": [
+      "blockbranch:eurasian_beaver/contact"
+    ]
+  },
+  "eurasian_beaver.hurt": {
+    "subtitle": "subtitles.blockbranch.eurasian_beaver.hurt",
+    "sounds": [
+      "blockbranch:eurasian_beaver/hurt"
+    ]
+  },
+  "eurasian_beaver.death": {
+    "subtitle": "subtitles.blockbranch.eurasian_beaver.death",
+    "sounds": [
+      "blockbranch:eurasian_beaver/death"
+    ]
+  },
+  "european_perch.hurt": {
+    "subtitle": "subtitles.blockbranch.european_perch.hurt",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cod.hurt",
+        "type": "event"
+      }
+    ]
+  },
+  "european_perch.death": {
+    "subtitle": "subtitles.blockbranch.european_perch.death",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cod.death",
+        "type": "event"
+      }
+    ]
+  },
+  "european_perch.flop": {
+    "subtitle": "subtitles.blockbranch.european_perch.flop",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cod.flop",
+        "type": "event"
+      }
+    ]
+  },
+  "harbor_seal.contact": {
+    "subtitle": "subtitles.blockbranch.harbor_seal.contact",
+    "sounds": [
+      {
+        "name": "blockbranch:harbor_seal/call1",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:harbor_seal/call2",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:harbor_seal/call3",
+        "weight": 1
+      },
+      {
+        "name": "blockbranch:harbor_seal/call4",
+        "weight": 1
+      }
+    ]
+  },
+  "harbor_seal.hurt": {
+    "subtitle": "subtitles.blockbranch.harbor_seal.hurt",
+    "sounds": [
+      {
+        "name": "blockbranch:harbor_seal.contact",
+        "type": "event"
+      }
+    ]
+  },
+  "harbor_seal.death": {
+    "subtitle": "subtitles.blockbranch.harbor_seal.death",
+    "sounds": [
+      {
+        "name": "blockbranch:harbor_seal.contact",
+        "type": "event"
+      }
+    ]
+  },
+  "harbor_seal.step": {
+    "subtitle": "subtitles.blockbranch.harbor_seal.step",
+    "sounds": [
+      {
+        "name": "minecraft:entity.turtle.shamble",
+        "type": "event"
+      }
+    ]
+  },
+  "resonite.chime": {
+    "subtitle": "subtitles.blockbranch.resonite.chime",
+    "sounds": [
+      "blockbranch:resonite/chime1",
+      "blockbranch:resonite/chime2",
+      "blockbranch:resonite/chime3"
+    ]
+  }
+}

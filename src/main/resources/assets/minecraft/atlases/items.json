@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "type": "blockbranch:perch_bucket_drip"
+    },
+    {
+      "type": "blockbranch:native_pickaxes"
+    },
+    {
+      "type": "blockbranch:native_ingots"
+    },
+    {
+      "type": "blockbranch:native_tools"
+    },
+    {
+      "type": "blockbranch:native_armor"
+    }
+  ]
+}

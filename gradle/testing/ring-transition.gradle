@@ -1,0 +1,15 @@
+def ringDir=layout.projectDirectory.dir('build/ring-transition')
+loom.runs.register('ringTransition') {
+ client();runDir(ringDir.asFile.absolutePath);vmArg('-Xmx2G');vmArg('-Dblockbranch.ringTransition=true');vmArg('-Dblockbranch.ringResult='+ringDir.file('result.txt').asFile.absolutePath)
+ programArgs('--username','RingAudit','--width','1024','--height','576')
+}
+tasks.named('runRingTransition'){doFirst{ringDir.asFile.mkdirs();ringDir.file('result.txt').asFile.delete()};doLast{assert ringDir.file('result.txt').asFile.text.startsWith('PASS')}}
+def worldDir=layout.projectDirectory.dir('build/ring-world')
+loom.runs.register('ringWorld') {
+ client();runDir(worldDir.asFile.absolutePath);vmArg('-Xmx3G');if(providers.gradleProperty('uniformBiomeReuseProbe').isPresent())vmArg('-Dblockbranch.uniformBiomeReuseProbe=true');vmArg('-Dblockbranch.ringWorld=true');vmArg('-Dblockbranch.ringWorldResult='+worldDir.file('result.txt').asFile.absolutePath)
+ programArgs('--username','RingWorld','--width','1024','--height','576')
+}
+tasks.named('runRingWorld'){doFirst{
+ worldDir.asFile.mkdirs();worldDir.file('result.txt').asFile.delete()
+ worldDir.file('options.txt').asFile.text='renderDistance:8\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_music:0.0\n'
+};doLast{assert worldDir.file('result.txt').asFile.text.startsWith('PASS')}}

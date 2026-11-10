@@ -1,0 +1,42 @@
+def leadReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore8-catalog9')
+def leadReaderOrigin=new File(leadReaderRoot,'ORIGIN.json')
+def leadReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java'].collect{new File(leadReaderRoot,'blockbranch/'+it)}
+def leadReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore8-catalog9')
+def leadReaderCompile=tasks.register('compileLegacyLeadCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(leadReaderFiles);inputs.file(leadReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(leadReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(leadReaderOrigin);for(def row:origin.sources){def input=new File(leadReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore8-catalog9 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldLeadCatalogClasses='+leadReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn leadReaderCompile}
+if(providers.gradleProperty('foolsView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.foolsView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.foolsView=true')}
+}
+def foolsResources=layout.projectDirectory.dir('src/main/resources').asFile
+def foolsItems=['fools_diamond_ore','deepslate_fools_diamond_ore','fools_diamond_dust']
+// Task actions must not access the Project model; capture this collection during configuration.
+def foolsInertInputs=fileTree(new File(foolsResources,'data')){include '**/recipe/**/*.json','**/tags/item/*.json'}
+tasks.register('verifyFoolsDiamondResources'){
+ inputs.files(fileTree(foolsResources){include '**/*fools*','**/lang/en_us.json','**/tags/block/needs_iron_tool.json','**/tags/block/mineable/pickaxe.json','**/recipe/**/*.json','**/tags/item/*.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(foolsResources,path))}
+  def tell=javax.imageio.ImageIO.read(new File(foolsResources,'assets/blockbranch/textures/block/fools_diamond_tell.png'));assert tell.width==16&&tell.height==16;int solid=0,clear=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=tell.getRGB(x,y)>>>24;if(a==255)solid++;if(a==0)clear++};assert solid>=1&&solid<=6&&clear+solid==256:'A small consistent tell preserves quick-glance resemblance'
+  def dust=javax.imageio.ImageIO.read(new File(foolsResources,'assets/blockbranch/textures/item/fools_diamond_dust.png'));assert dust.width==16&&dust.height==16
+  for(def row:[['fools_diamond_ore','diamond_ore'],['deepslate_fools_diamond_ore','deepslate_diamond_ore']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/fools_diamond_tell':'Inherit the real diamond resource-pack texture; never bake native artwork';assert read('assets/blockbranch/blockstates/'+row[0]+'.json').variants[''].model=='blockbranch:block/'+row[0];def loot=read('data/blockbranch/loot_table/blocks/'+row[0]+'.json');assert loot.type=='minecraft:block'&&loot.pools.size()==1&&loot.pools[0].entries==[[type:'minecraft:item',name:'blockbranch:fools_diamond_dust']]&&loot.pools[0].rolls==1:'No Silk Touch exception, Fortune bonus or gem drop'}
+  def names=read('assets/blockbranch/lang/en_us.json');for(def n:foolsItems){def m=read('assets/blockbranch/items/'+n+'.json').model;assert m.type=='minecraft:model'&&m.model=='blockbranch:item/'+n;assert read('assets/blockbranch/models/item/'+n+'.json');assert names[(n.endsWith('_ore')?'block.':'item.')+'blockbranch.'+n]}
+  for(def tag:['mineable/pickaxe','needs_iron_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&foolsItems.take(2).every{t.values.contains('blockbranch:'+it)}}
+  for(def f:foolsInertInputs)assert !f.text.contains('blockbranch:fools_diamond_dust'):'Dust stays inert in bundled recipes and material tags'
+  println 'PASS fools diamond: three items, two original 16x sprites, native diamond-pack inheritance and dust-only loot'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyFoolsDiamondResources')}
+def foolsRoot=layout.projectDirectory.dir(providers.gradleProperty('metallurgyViewDirectory').getOrElse('build/metallurgy-visual'))
+def foolsOverride=providers.gradleProperty('metallurgyViewPack').isPresent()
+if(providers.gradleProperty('foolsView').isPresent())tasks.named('runMetallurgyViewClient'){
+ doFirst{
+  def client=foolsRoot.dir(foolsOverride?'retexture':'base');for(def n:['stone-close','deep-close'])client.file('screenshots/'+(foolsOverride?'retexture':'base')+'-'+n+'.png').asFile.delete()
+  if(foolsOverride){def pack=client.dir('resourcepacks/tin-host-test');for(def row:[['diamond_ore',0xb86b44,0xe3ab67],['deepslate_diamond_ore',0x416e55,0x78a77b]]){def target=pack.file('assets/minecraft/textures/block/'+row[0]+'.png').asFile;target.parentFile.mkdirs();def image=new java.awt.image.BufferedImage(16,16,java.awt.image.BufferedImage.TYPE_INT_ARGB);for(int y=0;y<16;y++)for(int x=0;x<16;x++)image.setRGB(x,y,(int)(0xff000000L|(((x/4+y/4)%2==0)?row[1]:row[2])));javax.imageio.ImageIO.write(image,'png',target)}}
+ }
+}

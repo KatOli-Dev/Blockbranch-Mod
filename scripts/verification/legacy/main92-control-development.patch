@@ -1,0 +1,22 @@
+diff --git a/gradle/testing/structures.gradle b/gradle/testing/structures.gradle
+index ecf8b38..ed57002 100644
+--- a/gradle/testing/structures.gradle
++++ b/gradle/testing/structures.gradle
+@@ -146,3 +146,5 @@ tasks.named('runWaygateTravel'){dependsOn 'prepareWaygateView','copyWaygateRevie
+ loom.runs.register('mapWaygateCompat'){server();runDir(layout.projectDirectory.dir('build/map-waygate-compat').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.mapWaygateCompat=true');programArg('--nogui')}
+ 
+ loom.runs.register('combinedMapPrepare'){server();runDir(layout.projectDirectory.dir('build/combined92-prepare').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.combinedMapPrepare=true');programArg('--nogui')}
++
++loom.runs.register('shipwreckDowngradeControl'){server();runDir(layout.projectDirectory.dir('build/shipwreck-main92-control').asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.shipwreckDowngradeControl=true');programArg('--nogui')}
+diff --git a/src/integrationTest/java/blockbranch/testing/BlockbranchTestMod.java b/src/integrationTest/java/blockbranch/testing/BlockbranchTestMod.java
+index 6680d5c..b376512 100644
+--- a/src/integrationTest/java/blockbranch/testing/BlockbranchTestMod.java
++++ b/src/integrationTest/java/blockbranch/testing/BlockbranchTestMod.java
+@@ -8,6 +8,7 @@ public final class BlockbranchTestMod implements ModInitializer {
+         if(Boolean.getBoolean("blockbranch.mapPersistenceAudit"))blockbranch.realistic.ProgressiveMapPersistenceAudit.register();
+         if(Boolean.getBoolean("blockbranch.mapWaygateCompat"))blockbranch.realistic.MapWaygateCompatibility.register();
+         if(Boolean.getBoolean("blockbranch.combinedMapPrepare"))blockbranch.realistic.CombinedMapWitness.prepare();
++        if(Boolean.getBoolean("blockbranch.shipwreckDowngradeControl"))blockbranch.realistic.ShipwreckDowngradeControl.register();
+         blockbranch.realistic.RealisticTestRuntime.initialize();
+         if(blockbranch.realistic.TreasureConnectedProbe.ON)blockbranch.realistic.TreasureConnectedProbe.register();
+         if(Boolean.getBoolean("blockbranch.treasurePreviewControl"))blockbranch.realistic.TreasurePreviewControl.register();

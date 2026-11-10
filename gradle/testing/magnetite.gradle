@@ -1,0 +1,34 @@
+def titaniumEquipmentReaderRoot=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-ore11-catalog16')
+def titaniumEquipmentReaderOrigin=new File(titaniumEquipmentReaderRoot,'ORIGIN.json')
+def titaniumEquipmentReaderFiles=['cubic/ColumnWorldFormat.java','realistic/OreLayer.java','metallurgy/TinVeins.java','metallurgy/ZincVeins.java','metallurgy/ManganeseVeins.java','metallurgy/TungstenVeins.java','metallurgy/NickelVeins.java','metallurgy/ChromiumVeins.java','metallurgy/LeadVeins.java','metallurgy/FoolsDiamondVeins.java','metallurgy/SilverVeins.java','metallurgy/PlatinumVeins.java','metallurgy/TitaniumVeins.java'].collect{new File(titaniumEquipmentReaderRoot,'blockbranch/'+it)}
+def titaniumEquipmentReaderClasses=layout.buildDirectory.dir('historical-metallurgy-ore11-catalog16')
+def titaniumEquipmentReaderCompile=tasks.register('compileLegacyTitaniumEquipmentCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(titaniumEquipmentReaderFiles);inputs.file(titaniumEquipmentReaderOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(titaniumEquipmentReaderClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))});options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(titaniumEquipmentReaderOrigin);for(def row:origin.sources){def input=new File(titaniumEquipmentReaderRoot,'blockbranch/'+row.path.substring('src/main/java/blockbranch/'.length()));assert java.security.MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()==row.sha256:'Frozen metallurgy-ore11-catalog16 input changed'}}
+}
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldTitaniumEquipmentClasses='+titaniumEquipmentReaderClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn titaniumEquipmentReaderCompile}
+if(providers.gradleProperty('magnetiteView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.magnetiteView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.magnetiteView=true')}
+}
+def magnetiteResources=layout.projectDirectory.dir('src/main/resources').asFile
+def magnetiteNames=['magnetite_ore','deepslate_magnetite_ore','magnetite_fragment','magnetite_boots']
+tasks.register('verifyMagnetiteResources'){
+ inputs.files(fileTree(magnetiteResources){include '**/*magnetite*','**/lang/en_us.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_iron_tool.json','**/tags/item/foot_armor.json','blockbranch.mixins.json'})
+ doLast{
+  def read={String p->new groovy.json.JsonSlurper().parse(new File(magnetiteResources,p))};def names=read('assets/blockbranch/lang/en_us.json')
+  for(def n:magnetiteNames){assert read('assets/blockbranch/items/'+n+'.json').model;assert read('assets/blockbranch/models/item/'+n+'.json');assert names[(n.endsWith('_ore')?'block.':'item.')+'blockbranch.'+n]}
+  for(def s:['block/magnetite_ore_overlay','item/magnetite_fragment','item/magnetite_boots']){def i=javax.imageio.ImageIO.read(new File(magnetiteResources,'assets/blockbranch/textures/'+s+'.png'));assert i.width==16&&i.height==16;if(s.endsWith('overlay')){int clear=0,solid=0;for(int y=0;y<16;y++)for(int x=0;x<16;x++){int a=i.getRGB(x,y)>>>24;if(a==0)clear++;if(a==255)solid++};assert clear>0&&solid>0}}
+  for(def row:[['magnetite_ore','stone'],['deepslate_magnetite_ore','deepslate']]){def m=read('assets/blockbranch/models/block/'+row[0]+'.json');assert m.parent=='blockbranch:block/composited_ore'&&m.textures.base=='minecraft:block/'+row[1]&&m.textures.overlay=='blockbranch:block/magnetite_ore_overlay';assert read('assets/blockbranch/blockstates/'+row[0]+'.json').variants;assert read('data/blockbranch/loot_table/blocks/'+row[0]+'.json').type=='minecraft:block'}
+  for(def tag:['mineable/pickaxe','needs_iron_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&t.values.contains('blockbranch:magnetite_ore')&&t.values.contains('blockbranch:deepslate_magnetite_ore')}
+  def foot=read('data/minecraft/tags/item/foot_armor.json');assert foot.replace==false&&foot.values.contains('blockbranch:magnetite_boots');def recipe=read('data/blockbranch/recipe/magnetite_boots.json');assert recipe.pattern==['I I','M M']&&recipe.key.I=='minecraft:iron_ingot'&&recipe.key.M=='blockbranch:magnetite_fragment'&&recipe.result.id=='blockbranch:magnetite_boots';def u=read('data/blockbranch/advancement/recipes/metallurgy/magnetite_boots.json');assert u.rewards.recipes==['blockbranch:magnetite_boots']&&u.requirements.flatten().toSet()==u.criteria.keySet()
+  def boot=read('assets/blockbranch/items/magnetite_boots.json').model;assert boot.type=='minecraft:select'&&boot.property=='minecraft:trim_material'&&boot.cases.size()==11;for(def c:boot.cases){def k=c.when.substring('minecraft:'.length());def m=read('assets/blockbranch/models/item/magnetite_boots_'+k+'_trim.json');assert m.textures.layer0=='blockbranch:item/magnetite_boots'&&m.textures.layer1=='minecraft:trims/items/boots_trim_'+k}
+  for(def layer:['humanoid','humanoid_baby']){assert read('assets/blockbranch/equipment/magnetite.json').layers[layer][0].texture=='blockbranch:magnetite';def i=javax.imageio.ImageIO.read(new File(magnetiteResources,'assets/blockbranch/textures/entity/equipment/'+layer+'/magnetite.png'));assert i.width==64&&i.height==(layer=='humanoid_baby'?64:32)}
+  assert read('blockbranch.mixins.json').mixins.contains('metallurgy.ItemPickupTargetAccessor')
+  println 'PASS magnetite: four items, three original 16x sprites, native host/boot/trim models and fragment/iron recipe'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyMagnetiteResources')}

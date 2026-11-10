@@ -1,0 +1,39 @@
+def silverCatalogClasses=layout.buildDirectory.dir('historical-metallurgy-v12')
+def silverCatalogSource=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v12/blockbranch/cubic/ColumnWorldFormat.java')
+def silverCatalogOrigin=file('src/integrationTest/resources/blockbranch-fixtures/metallurgy-catalog-v12/ORIGIN.json')
+def silverCatalogCompile=tasks.register('compileLegacySilverCatalog',JavaCompile){
+ dependsOn tasks.named('compileJava');source(silverCatalogSource);inputs.file(silverCatalogOrigin)
+ classpath=sourceSets.main.compileClasspath+sourceSets.main.output;destinationDirectory.set(silverCatalogClasses)
+ javaCompiler.set(javaToolchains.compilerFor{languageVersion.set(JavaLanguageVersion.of(25))})
+ options.release.set(25);options.compilerArgs.add('-proc:none')
+ doFirst{def origin=new groovy.json.JsonSlurper().parse(silverCatalogOrigin);assert java.security.MessageDigest.getInstance('SHA-256').digest(silverCatalogSource.bytes).encodeHex().toString()==origin.sha256:'Frozen catalog12 input changed'}
+}
+
+loom.runs.named('metallurgySmoke'){vmArg('-Dblockbranch.oldSilverCatalogClasses='+silverCatalogClasses.get().asFile.absolutePath)}
+tasks.named('runMetallurgySmoke'){dependsOn silverCatalogCompile}
+if(providers.gradleProperty('platinumAlloyView').isPresent()){
+ loom.runs.named('metallurgyViewServer'){vmArg('-Dblockbranch.platinumAlloyView=true')}
+ loom.runs.named('metallurgyViewClient'){vmArg('-Dblockbranch.platinumAlloyView=true')}
+}
+def platinumAlloyResources=layout.projectDirectory.dir('src/main/resources').asFile
+def platinumAlloyNames=['platinum_alloy_ingot','platinum_alloy_block','platinum_alloy_pickaxe']
+def platinumAlloyRecipes=platinumAlloyNames+['platinum_alloy_ingot_from_block']
+tasks.register('verifyPlatinumAlloyResources'){
+ inputs.files(fileTree(platinumAlloyResources){include '**/*platinum_alloy*','**/lang/en_us.json','**/tags/block/mineable/pickaxe.json','**/tags/block/needs_iron_tool.json','**/tags/item/pickaxes.json'})
+ doLast{
+  def read={String path->new groovy.json.JsonSlurper().parse(new File(platinumAlloyResources,path))}
+  def names=read('assets/blockbranch/lang/en_us.json')
+  for(def n:platinumAlloyNames){def m=read('assets/blockbranch/items/'+n+'.json').model;assert m.type=='minecraft:model'&&m.model=='blockbranch:item/'+n;def image=javax.imageio.ImageIO.read(new File(platinumAlloyResources,'assets/blockbranch/textures/'+(n.endsWith('_block')?'block/':'item/')+n+'.png'));assert image.width==16&&image.height==16;assert names[(n.endsWith('_block')?'block.':'item.')+'blockbranch.'+n]}
+  assert read('assets/blockbranch/models/item/platinum_alloy_pickaxe.json').parent=='minecraft:item/handheld'
+  assert read('assets/blockbranch/models/block/platinum_alloy_block.json').textures.all=='blockbranch:block/platinum_alloy_block'
+  assert read('assets/blockbranch/blockstates/platinum_alloy_block.json').variants[''].model=='blockbranch:block/platinum_alloy_block'
+  for(def n:platinumAlloyRecipes){assert read('data/blockbranch/recipe/'+n+'.json').result.id.startsWith('blockbranch:');def u=read('data/blockbranch/advancement/recipes/metallurgy/'+n+'.json');assert u.criteria.has_the_recipe.conditions.recipes=='blockbranch:'+n&&u.rewards.recipes==['blockbranch:'+n];assert u.requirements.flatten().toSet()==u.criteria.keySet()}
+  assert read('data/blockbranch/recipe/platinum_alloy_ingot.json').ingredients==['blockbranch:platinum_ingot']*8+['blockbranch:silver_ingot']
+  for(def tag:['mineable/pickaxe','needs_iron_tool']){def t=read('data/minecraft/tags/block/'+tag+'.json');assert t.replace==false&&t.values.contains('blockbranch:platinum_alloy_block')}
+  def tools=read('data/minecraft/tags/item/pickaxes.json');assert tools.replace==false&&tools.values.contains('blockbranch:platinum_alloy_pickaxe')
+  assert read('data/blockbranch/tags/item/platinum_alloy_repair_materials.json').values==['blockbranch:platinum_alloy_ingot']
+  assert read('data/blockbranch/loot_table/blocks/platinum_alloy_block.json').type=='minecraft:block'
+  println 'PASS platinum alloy: three original 16x sprites, native models/tags and four recipe/unlock pairs'
+ }
+}
+tasks.named('check'){dependsOn tasks.named('verifyPlatinumAlloyResources')}

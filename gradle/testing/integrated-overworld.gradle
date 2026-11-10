@@ -1,0 +1,12 @@
+// Local integration qualification; no production registry or feature mutation.
+def integratedDir=layout.projectDirectory.dir(providers.gradleProperty('integratedDirectory').getOrElse('build/integrated-definitions'))
+loom.runs.register('integratedDefinitions'){server();runDir(integratedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.integratedDefinitions=true');vmArg('-Dblockbranch.integratedCodecOnly='+providers.gradleProperty('integratedCodecOnly').getOrElse('false'));vmArg('-Dblockbranch.integratedRoot='+layout.projectDirectory.asFile.absolutePath);programArg('--nogui')}
+tasks.named('runIntegratedDefinitions'){dependsOn 'prepareIntegratedReaders';doFirst{integratedDir.asFile.mkdirs();integratedDir.file('result.txt').asFile.delete();integratedDir.file('eula.txt').asFile.text='eula=true\n';integratedDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=structures\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert integratedDir.file('result.txt').asFile.text=='PASS'}}
+
+if(providers.gradleProperty('integratedSeedAudit').getOrElse('false')=='true'){
+ loom.runs.configureEach{if(name!='client'&&name!='server')vmArg('-Dblockbranch.integratedSeedAudit=true')}
+}
+
+def nativeSeedDir=layout.projectDirectory.dir('build/native-decoration-regression')
+loom.runs.register('nativeDecorationRegression'){server();runDir(nativeSeedDir.asFile.absolutePath);vmArg('-Xmx3G');vmArg('-Dblockbranch.nativeDecorationRegression=true');programArg('--nogui')}
+tasks.named('runNativeDecorationRegression'){doFirst{nativeSeedDir.asFile.mkdirs();nativeSeedDir.file('result.txt').asFile.delete();nativeSeedDir.file('eula.txt').asFile.text='eula=true\n';nativeSeedDir.file('server.properties').asFile.text='online-mode=false\npause-when-empty-seconds=0\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=normal\nlevel-type=minecraft:normal\nlevel-seed=424242\nmax-tick-time=600000\n'};doLast{assert nativeSeedDir.file('result.txt').asFile.text=='PASS'}}
