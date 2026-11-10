@@ -21,10 +21,12 @@ public final class ScreeBiomeSource extends BiomeSource {
     private final Holder<Biome> fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean;
     private final int dripstoneDefinition,caveBiomeDefinition;
     private volatile Bound bound;
-    private boolean deepDarkEnabled,redwoodForestsEnabled;
+    private boolean deepDarkEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled;
+    ScreeBiomeSource withSurfaceOwnership(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");surfaceOwnershipEnabled=enabled;return this;}
+    java.util.function.BiPredicate<Integer,Integer> coldRocklandSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.rockland;}
     ScreeBiomeSource withRedwoodForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");redwoodForestsEnabled=enabled;return this;}
     ScreeBiomeSource withDeepDark(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");deepDarkEnabled=enabled;return this;}
-    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves){}
+    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves,java.util.function.BiPredicate<Integer,Integer> rockland){}
 
     public ScreeBiomeSource(HabitatPalette palette){this(palette,false);}
     public ScreeBiomeSource(HabitatPalette palette,boolean icebergsEnabled) {this(palette,icebergsEnabled,false);}
@@ -112,7 +114,7 @@ public final class ScreeBiomeSource extends BiomeSource {
             : ColdTundra.contains(x*4,z*4,drainage,climate) ? tundra
             : palette.additional().containsKey("savanna") && Savanna.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("savanna")
             : palette.additional().containsKey("jungle")&&Jungle.contains(seed,x*4,z*4,drainage,climate)?palette.additional("jungle")
-            : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):fallback;
+            : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):surfaceOwnershipEnabled&&ColdRockland.contains(x*4,z*4,drainage,climate)?palette.additional(ColdRockland.KEY):fallback;
         BiomeResolver surface=(x,y,z)->MapPreviewSamples.surface(x,y,z,rawSurface);
         BiomeResolver full=dripstoneDefinition==0?surface:(x,y,z)->{double province=DripstoneHabitat.province(seed,x*4,z*4);return province>.2&&DripstoneHabitat.contains(seed,x*4,y*4,z*4,drainage.sample(x*4,z*4).height(),province)?palette.additional("dripstone_caves"):surface.getNoiseBiome(x,y,z);};
         java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves=null;
@@ -131,7 +133,11 @@ public final class ScreeBiomeSource extends BiomeSource {
             var base=full;
             full=(x,y,z)->OverworldStructures.deepDark(seed,x*4,y*4,z*4,drainage)?palette.additional("deep_dark"):base.getNoiseBiome(x,y,z);
         }
-        bound=new Bound(surface,full,drainage,seed,caves);
+        // Ownership follows the existing 4 m fallback identity. Physical cold/dry
+        // eligibility clips it; competing selectors are not rerun between anchors.
+        // A physical specialist can therefore meet rockland at a quart edge.
+        java.util.function.BiPredicate<Integer,Integer> rockland=surfaceOwnershipEnabled?(x,z)->ColdRockland.eligible(x,z,drainage,climate)&&surface.getNoiseBiome(x>>2,0,z>>2)==palette.additional(ColdRockland.KEY):null;
+        bound=new Bound(surface,full,drainage,seed,caves,rockland);
     }
     public boolean bound(){return bound!=null;}
     public BiomeResolver surfaceResolver(){var b=bound;if(b==null)throw new IllegalStateException("Unbound surface source");return b.surface;}

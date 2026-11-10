@@ -21,6 +21,7 @@ public final class DrainageNetwork {
     private volatile DrainageNetwork preformation;
     private volatile ErodedBadlands eroded;
     private final boolean gravelReliefEnabled;
+    private final boolean surfaceOwnership;
     private volatile DrainageNetwork unrelieved;
     private volatile GravelDesertRelief gravelRelief;
     private final CoastalHeadlands headlands;
@@ -63,6 +64,10 @@ public final class DrainageNetwork {
         this(shape,seed,coastalLandforms,sandyCoasts,false);
     }
     DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled) {
+        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,false);
+    }
+    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership) {
+        this.surfaceOwnership=surfaceOwnership;
         this.gravelReliefEnabled=gravelReliefEnabled;
         this.sandyCoasts=sandyCoasts;this.sandyCoast=new SandyCoast(seed,shape,this);
         this.coastalLandforms=coastalLandforms;
@@ -204,7 +209,7 @@ public final class DrainageNetwork {
     /** Immutable preformation view shares the solved graph, never a modified sample cache. */
     private DrainageNetwork(DrainageNetwork owner) {this(owner,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {
-        seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=false;
+        surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=false;
         ground=owner.ground;parent=owner.parent;root=owner.root;area=owner.area;water=owner.water;ocean=owner.ocean;
         tangentX=owner.tangentX;tangentZ=owner.tangentZ;
         nodeXs=owner.nodeXs;nodeZs=owner.nodeZs;edgeSlot=owner.edgeSlot;edgeControl=owner.edgeControl;
@@ -462,6 +467,17 @@ public final class DrainageNetwork {
         double incision=shape.continuousHeight(edgeX(i,t),edgeZ(i,t))-level;
         return 1-smooth((incision-32)/64);
     }
+
+    /** Habitat definition 1 follows the same ocean-basin owner that creates sea
+     * water in sample(). The nearest mesh node may be land while its downstream
+     * root is ocean. Keep geometry, sandy-coast shaping and structural planners
+     * on oceanWater(): this opt-in changes surface ecology, not those contracts. */
+    boolean habitatOceanWater(int x,int z,Sample sample) {
+        if(!surfaceOwnership)return oceanWater(x,z,sample);
+        return sample.waterLevel()==TerrainShape.SEA_LEVEL && sample.height()+1<TerrainShape.SEA_LEVEL
+            && !sample.closed() && shape.height(x,z)<TerrainShape.SEA_LEVEL-1 && ocean[sample.basin()];
+    }
+    boolean correctedHabitatOwnership(){return surfaceOwnership;}
 
     /** Sea water over raw seabed in the edge-connected ocean mesh, not a river or lake datum. */
     boolean oceanWater(int x,int z,Sample sample) {

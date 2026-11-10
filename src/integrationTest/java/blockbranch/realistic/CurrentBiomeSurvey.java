@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() == 257, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() == 257 || preset.get("shape_version").getAsInt() == 258, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -71,7 +71,7 @@ public final class CurrentBiomeSurvey {
         report.addProperty("strideBlocks", STRIDE);
         report.addProperty("samplesPerSeed", ((MAX - MIN) / STRIDE) * ((MAX - MIN) / STRIDE));
         report.addProperty("denominators", "Disjoint land, freshwater, ocean, unresolved_water footprints; no water-column plus seabed sum");
-        report.addProperty("footprintDefinitions", "Land: no open water above ground. Ocean: open water and DrainageNetwork.oceanWater connectivity. Freshwater: open terminal-lake or routed-channel water, an inland-water proxy without modeled salinity. Other open water: unresolved_water, never assumed freshwater. Sea ice/icebergs retain marine ownership");
+        report.addProperty("footprintDefinitions", "Land: no open water above ground. Ocean: open water and DrainageNetwork.habitatOceanWater connectivity. Freshwater: open terminal-lake or routed-channel water, an inland-water proxy without modeled salinity. Other open water: unresolved_water, never assumed freshwater. Sea ice/icebergs retain marine ownership");
         report.addProperty("fallbackBinIntervals", "Lower-inclusive, upper-exclusive except temperature 19C and moisture .85 included in preceding bin. Elevation=groundY+1-64m. Bin dimensions overlap; never sum temperature plus elevation plus moisture");
         report.addProperty("reachability", "Not assessed exhaustively. Missing-in-sample means unobserved, never unreachable");
         report.addProperty("limitations", "32 km grid misses narrow/rare habitats and map edges; quart surface selector, not final generated palette. Native spot checks separate below; no ecology completeness inferred from a selected holder");
@@ -83,7 +83,7 @@ public final class CurrentBiomeSurvey {
             csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel\n");
             for (long seed : SEEDS) {
                 var drainage = seed == random.seed() ? generator.drainage(random) : new DrainageNetwork(
-                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1);
+                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1);
                 var climate = new ClimateField(seed);
                 var source = source(palette, preset, seed, drainage, climate);
                 var taggedSource = source(tagged, preset, seed, drainage, climate);
@@ -98,7 +98,7 @@ public final class CurrentBiomeSurvey {
                 for (int z = MIN + STRIDE / 2; z < MAX; z += STRIDE) {
                     for (int x = MIN + STRIDE / 2; x < MAX; x += STRIDE) {
                         var site = drainage.sample(x, z);
-                        boolean ocean = drainage.oceanWater(x, z, site);
+                        boolean ocean = drainage.habitatOceanWater(x, z, site);
                         boolean lake = drainage.terminalLakeWater(x, z, site);
                         boolean channel = drainage.channelAt(x, z).edge() >= 0;
                         String footprint = footprint(site, ocean, lake, channel);
@@ -155,6 +155,7 @@ public final class CurrentBiomeSurvey {
                 }
                 if (seed == random.seed()) {
                     require(witnesses.containsKey("fallback") && witnesses.containsKey("intentional_plains"), "Fallback/plains attribution witnesses");
+                    if(preset.has("surface_ownership_definition")){witnesses.put("basin_connected_coast",new Point(-1008000,-1776000));witnesses.put("cold_rockland_reference",new Point(-1328000,-1904000));}
                     witnesses.put("redwood_reference", new Point(-844018, -1692020));
                     entry.add("nativeWitnesses", nativeWitnesses(level, generator, drainage, source, witnesses));
                 }
@@ -172,7 +173,8 @@ public final class CurrentBiomeSurvey {
 
     private static ScreeBiomeSource source(HabitatPalette palette, JsonObject preset, long seed, DrainageNetwork d, ClimateField c) {
         var source = new ScreeBiomeSource(palette, preset.get("icebergs").getAsBoolean(), preset.get("sandy_coasts").getAsBoolean())
-            .withRedwoodForests(preset.get("redwood_forest_definition").getAsInt() == 1);
+            .withRedwoodForests(preset.get("redwood_forest_definition").getAsInt() == 1)
+            .withSurfaceOwnership(preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1);
         source.bind(seed, d, c);
         return source;
     }

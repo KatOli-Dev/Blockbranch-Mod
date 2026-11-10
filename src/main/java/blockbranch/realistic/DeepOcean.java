@@ -6,7 +6,7 @@ public final class DeepOcean {
         public int depth(){return water==DrainageNetwork.DRY?0:water-height-1;}
     }
     static Site site(DrainageNetwork d,int x,int z){
-        var s=d.sample(x,z);boolean ocean=d.oceanWater(x,z,s);
+        var s=d.sample(x,z);boolean ocean=d.habitatOceanWater(x,z,s);
         if(!ocean||s.waterLevel()-s.height()-1<=200)return new Site(s.height(),s.waterLevel(),ocean,d.terminalLakeWater(x,z,s),false,0);
         double dx=(d.sample(x+32,z).height()-d.sample(x-32,z).height())/64.0,dz=(d.sample(x,z+32).height()-d.sample(x,z-32).height())/64.0;
         return new Site(s.height(),s.waterLevel(),true,false,false,Math.hypot(dx,dz));
@@ -30,7 +30,7 @@ public final class DeepOcean {
     /** Physical surface eligibility; biome and vegetation routing keep the quart selector. */
     static boolean surfaceContains(int x,int z,DrainageNetwork d){
         var s=d.sample(x,z);
-        return s.waterLevel()==TerrainShape.SEA_LEVEL&&s.waterLevel()-s.height()-1>200&&d.oceanWater(x,z,s)&&!d.terminalLakeWater(x,z,s);
+        return s.waterLevel()==TerrainShape.SEA_LEVEL&&s.waterLevel()-s.height()-1>200&&d.habitatOceanWater(x,z,s)&&!d.terminalLakeWater(x,z,s);
     }
     private DeepOcean(){}
 }

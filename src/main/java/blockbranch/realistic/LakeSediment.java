@@ -7,9 +7,9 @@ public final class LakeSediment {
     }
     static Site site(DrainageNetwork d,int x,int z){
         var s=d.sample(x,z);boolean lake=d.terminalLakeWater(x,z,s);
-        if(!lake)return new Site(s.height(),s.waterLevel(),false,d.oceanWater(x,z,s),false,0);
+        if(!lake)return new Site(s.height(),s.waterLevel(),false,d.habitatOceanWater(x,z,s),false,0);
         double dx=(d.sample(x+16,z).height()-d.sample(x-16,z).height())/32.0,dz=(d.sample(x,z+16).height()-d.sample(x,z-16).height())/32.0;
-        return new Site(s.height(),s.waterLevel(),true,d.oceanWater(x,z,s),d.channelAt(x,z).edge()>=0,Math.hypot(dx,dz));
+        return new Site(s.height(),s.waterLevel(),true,d.habitatOceanWater(x,z,s),d.channelAt(x,z).edge()>=0,Math.hypot(dx,dz));
     }
     public static boolean eligible(Site s){return s.lake()&&!s.ocean()&&!s.channel()&&s.depth()>=1;}
     public static boolean contains(int x,int z,DrainageNetwork d){

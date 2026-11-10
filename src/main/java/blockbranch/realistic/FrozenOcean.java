@@ -4,7 +4,7 @@ import java.util.*;
 public final class FrozenOcean {
  public static int surfaceKind(long seed,int x,int z,DrainageNetwork d,ClimateField c){
   var s=d.sample(x,z);int depth=s.waterLevel()==DrainageNetwork.DRY?0:s.waterLevel()-s.height()-1;
-  if(depth<2||!d.oceanWater(x,z,s)||RiverChannel.contains(x,z,d)||RoutedRiver.contains(seed,x,z,d,c))return 0;
+  if(depth<2||!d.habitatOceanWater(x,z,s)||RiverChannel.contains(x,z,d)||RoutedRiver.contains(seed,x,z,d,c))return 0;
   if(SeaIcePolicy.potential(z,c.sample(x,z,d::sample).meanTemperatureC()).freezingMarginC()<=0)return 0;
   return depth<=200?1:2;
  }

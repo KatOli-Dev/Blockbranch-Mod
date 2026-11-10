@@ -9,7 +9,7 @@ public final class RiverChannel {
     static Site site(DrainageNetwork d,int x,int z){
         var s=d.sample(x,z);
         if(s.waterLevel()==DrainageNetwork.DRY)return new Site(s.height(),s.waterLevel(),DrainageNetwork.Channel.NONE,false,false,0);
-        boolean lake=d.terminalLakeWater(x,z,s),ocean=d.oceanWater(x,z,s);
+        boolean lake=d.terminalLakeWater(x,z,s),ocean=d.habitatOceanWater(x,z,s);
         if(lake||ocean)return new Site(s.height(),s.waterLevel(),DrainageNetwork.Channel.NONE,lake,ocean,0);
         var c=d.channelAt(x,z);if(c.edge()<0)return new Site(s.height(),s.waterLevel(),c,false,false,0);
         double dx=(d.sample(x+16,z).height()-d.sample(x-16,z).height())/32.0,dz=(d.sample(x,z+16).height()-d.sample(x,z-16).height())/32.0;

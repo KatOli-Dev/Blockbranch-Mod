@@ -8,10 +8,11 @@ public final class MangroveSwamp {
     /** Confirm shallow ocean or immediately adjoining dry coast;never inland lake or routed river. */
     public static boolean local(int x,int z,DrainageNetwork d){
         var s=d.sample(x,z);if(s.height()<TerrainShape.SEA_LEVEL-4||s.height()>TerrainShape.SEA_LEVEL+3||d.channelAt(x,z).edge()>=0||slope(x,z,d)>.12)return false;
-        if(s.waterLevel()!=DrainageNetwork.DRY)return d.oceanWater(x,z,s)&&s.waterLevel()-s.height()-1<=3;
+        if(s.waterLevel()!=DrainageNetwork.DRY)return d.habitatOceanWater(x,z,s)&&s.waterLevel()-s.height()-1<=3;
         for(var q:AROUND){int wx=x+q[0]*32,wz=z+q[1]*32;if(d.oceanWater(wx,wz,d.sample(wx,wz)))return true;}return false;
     }
-    public static int marineRays(int x,int z,DrainageNetwork d){int count=0;for(int n=0;n<8;n++){double a=n*Math.PI/4;int wx=x+(int)(Math.cos(a)*2048),wz=z+(int)(Math.sin(a)*2048);if(d.oceanWater(wx,wz,d.sample(wx,wz)))count++;}return count;}
+    // Preserve the established dry fringe; definition 1 admits submerged habitat.
+    public static int marineRays(int x,int z,DrainageNetwork d){int count=0;for(int n=0;n<8;n++){double a=n*Math.PI/4;int wx=x+(int)(Math.cos(a)*2048),wz=z+(int)(Math.sin(a)*2048);if(d.sample(x,z).waterLevel()==DrainageNetwork.DRY?d.oceanWater(wx,wz,d.sample(wx,wz)):d.habitatOceanWater(wx,wz,d.sample(wx,wz)))count++;}return count;}
     public static boolean exact(long seed,int x,int z,DrainageNetwork d,ClimateField c){return local(x,z,d)&&climateSuitable(c.sample(x,z,d::sample))&&marineRays(x,z,d)<=3;}
     public static boolean contains(long seed,int x,int z,DrainageNetwork d,ClimateField c){return exact(seed,Math.floorDiv(x,4)*4,Math.floorDiv(z,4)*4,d,c);}
     /** Continuous substrate selection: muddy low margin,clay patches,higher rooted/moss banks. */

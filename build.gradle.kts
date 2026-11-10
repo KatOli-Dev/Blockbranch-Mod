@@ -156,6 +156,8 @@ apply(from = "gradle/testing/titanium.gradle")
 
 apply(from = "gradle/testing/titanium-equipment.gradle")
 
+apply(from = "gradle/testing/surface-ownership.gradle")
+
 apply(from = "gradle/testing/magnetite.gradle")
 
 apply(from = "gradle/testing/resonite.gradle")

@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 257,
+        "shape_version": 258,
+        "surface_ownership_definition": 1,
         "biome_transition_definition": 1,
         "redwood_forest_definition": 1,
         "mansion_replacement_definition": 1,
@@ -80,6 +81,7 @@
           "old_growth_birch_forest": "minecraft:old_growth_birch_forest",
           "dark_forest": "minecraft:dark_forest",
           "redwood_forest": "blockbranch:maritime_redwood_fern_forest",
+          "cold_rockland": "blockbranch:cold_exposed_rockland",
           "cherry_grove": "minecraft:cherry_grove",
           "sparse_jungle": "minecraft:sparse_jungle",
           "bamboo_jungle": "minecraft:bamboo_jungle",

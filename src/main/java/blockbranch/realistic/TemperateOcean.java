@@ -18,7 +18,12 @@ public final class TemperateOcean {
         double patch=substrate(seed,x,z);if(s.depth()<=16&&s.slope()<=.25){if(patch>.62||kelpHeight(seed,x,z,d,c)>0)return 9;if(patch>.52)return 8;}
         return MarineShelf.cover(seed,x,z,true,s,c.sample(x,z,d::sample));
     }
-    public static int kelpHeight(long seed,int x,int z,DrainageNetwork d,ClimateField c){if(!contains(seed,x,z,d,c))return 0;var s=MarineShelf.site(d,x,z);
+    public static int kelpHeight(long seed,int x,int z,DrainageNetwork d,ClimateField c){
+        // New habitat ownership keeps kelp on its physical hard-bed domain;
+        // quart membership alone can leak across a reserved sandy-shore edge.
+        // Retain historical colonies when the saved definition is disabled.
+        if(d.correctedHabitatOwnership()?!surfaceContains(seed,x,z,d,c):!contains(seed,x,z,d,c))return 0;
+        var s=MarineShelf.site(d,x,z);
         if(!MarineShelf.eligible(s)||s.depth()<4||s.depth()>10||s.slope()>.18||kelpSubstrate(seed,x,z)<=.62)return 0;
         if(!colony(seed,x,z))return 0;long v=OakBirchWoodland.mix(seed^x*0x165667B19E3779F9L^z*0xD1B54A32D192ED03L);
         return 2+(int)Long.remainderUnsigned(OakBirchWoodland.mix(v^0x484549474854L),Math.min(6,s.depth()-1)-1);
