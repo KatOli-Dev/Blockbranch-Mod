@@ -11,15 +11,15 @@ permission to resave a world with an older build.
 
 | Contract | Current new Realistic world | Source of truth |
 | --- | --- | --- |
-| Generator `shape_version` | 257 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
+| Generator `shape_version` | 258 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
 | Base geometry | 82 plus saved gravel relief 1 | [TerrainShape](../src/main/java/blockbranch/realistic/TerrainShape.java), [GravelReliefSchema](../src/main/java/blockbranch/realistic/GravelReliefSchema.java) |
 | Terrain profile | 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
 | Column / terrain-window protocol | 70 / 71 | [ColumnPacket](../src/main/java/blockbranch/cubic/ColumnPacket.java), [TerrainWindowPacket](../src/main/java/blockbranch/cubic/TerrainWindowPacket.java) |
 | World marker | 4, metallurgy catalog 20, explicit decoration bit | [ColumnWorldFormat](../src/main/java/blockbranch/cubic/ColumnWorldFormat.java) |
 | Ore / layout definitions | 15 / 9 | [OreLayer](../src/main/java/blockbranch/realistic/OreLayer.java), generator codec |
 
-These numbers describe separate contracts: schema 257 does not mean geometry or
-profile 257. Validation checks complete feature combinations, holders and exact
+These numbers describe separate contracts: schema 258 does not mean geometry or
+profile 258. Validation checks complete feature combinations, holders and exact
 field types as well as versions. Unsupported combinations reject loading.
 
 The preset enables underground geometry, approaches, bounded entry routes,
@@ -27,7 +27,7 @@ icebergs and sandy coasts; dripstone/lit-cave growth 2, cave-biome 1 and structu
 3; discovery/waygates 1, shipwreck templates 2, huts/shelters/warm/cold/deep ruins 1;
 native huts/igloos and ordinary bodies, native Overworld coverage and layout 9.
 Wing, gallery, boreal crown, gravel relief, sanctuary/mansion replacement,
-biome-transition and redwood definitions are all 1. Consult the preset for exact
+biome-transition, redwood and surface-ownership definitions are all 1. Consult the preset for exact
 serialized names and biome holders; changing its defaults does not promote saves.
 
 ## World barriers and recovery
@@ -223,6 +223,7 @@ and the generator/wrapper codecs.
 | 255 | Complete schema 254 plus independent mansion replacement definition 1 |
 | 256 | Complete schema 255 plus independent biome transition definition 1 |
 | 257 | Complete schema 256 plus independent redwood forest definition 1 |
+| 258 | Complete schema 257 plus independent surface ownership definition 1 |
 
 Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
 224–227, 235–239 and 244–247 are unsupported. The 220–233 groups belong to the pyramid
@@ -287,9 +288,9 @@ unversioned change: rounding can differ by about 1 ulp and rare terrain cells by
 block. Saved-world fresh generation was not protected against that difference;
 a full analytic pass is not proof of bit-identical historical terrain.
 
-## Independent geometry opt-ins
+## Independent generation opt-ins
 
-Missing geometry flags retain the old geometry in unexplored chunks; none is an
+Missing generation flags retain the old behavior in unexplored chunks; none is an
 automatic migration. Existing arrays/edits remain authoritative in every case.
 
 | Saved definition 1 | Required complete foundation → schema | Meaning |
@@ -300,6 +301,7 @@ automatic migration. Existing arrays/edits remain authoritative in every case.
 | Mansion replacement | 254→255 | Native mansion architecture/roof/approaches |
 | Biome transition | 255→256 | Temperate stand-edge feathering |
 | Redwood forest | 256→257 | Maritime redwood/sequoia province |
+| Surface ownership | 257→258 | Basin-owned marine habitats and cold exposed rockland |
 
 Gravel eligibility uses immutable old terrain, excluding wet/specialist/Badlands
 cells. Regional climate/drainage/water datums remain; profiles, base-state/height,
@@ -319,6 +321,8 @@ construction rather than 80; saved boxes are checked exactly. Partial plans repl
 their saved root/crown definition regardless of current flags. Clearing removes
 logs/leaves inside a selected immutable tree footprint, including player-placed
 ones. Fallen logs and wildlife share the saved definition/domain gating.
+
+Surface ownership definition 1 requires the cold-rockland holder and complete schema 257. Absent = retained legacy selection/cover, including unexplored chunks; partial, malformed and future combinations reject. It repairs submerged marine ecology using the basin that created sea-level water, while geometry, dry backshore/fringe reservations and structural ocean ownership retain their contracts. Cold rockland only replaces final fallback below mean −6°C, with supported debris and static retained snow, not glacial ice. Existing gravel/canopy roles and protocols retain their meanings. The original schema-257 reader refuses 258 before loading the new biome; no migration or palette rewrite occurs in older saves.
 
 ## Structure piece contracts
 

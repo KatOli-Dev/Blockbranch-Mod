@@ -1,0 +1,26 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "a41e39a00d4347a5a96773cfbb60fc3a7c038c70",
+  "purpose": "Unmodified published schema-257 generator/source: legacy selector, physical-cover and downgrade witnesses. Development-only; excluded from production archives.",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "f43faf1c313463682bfbe3e661f208aaad97fed491a6ad7541fd2d417f184ad5"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/ScreeBiomeSource.java",
+      "sha256": "649297955be843d3d9e4761d36e4da4902c0fd37601692c9400a8b191bfd3200"
+    }
+  ],
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "d3220d8202bacaa7bb2b8a92695cffb70a7d54da8d65099a3d8a2ca66a3cf990",
+    "collector": "src/integrationTest/java/blockbranch/realistic/PublishedSurfaceSnapshot.java",
+    "collectorSha256": "db41866adbcae79fb68518a24709deaca58509955ba849c7a6906c9aaa6f18b9",
+    "productionTree": {
+      "src/main": "4bed905dda5a577677f0b766ffe013ef9e5b778e",
+      "src/client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+    },
+    "recording": "Separate native JVM built from git archive a41e39a; all 2015 production main/client files verified against Git blob IDs. Only this development collector and its QA registration/run config were added. Seeds 424242/1/-17; centered 32km grid; 9 physical/native windows. Original JVM saved a gold-block edit and closed the world. Output hashes are frozen inputs, never refreshed by current builds."
+  }
+}

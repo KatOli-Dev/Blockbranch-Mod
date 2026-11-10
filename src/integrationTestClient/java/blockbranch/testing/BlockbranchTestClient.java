@@ -4,6 +4,7 @@ import blockbranch.client.wildlife.*;
 public final class BlockbranchTestClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
         if(Boolean.getBoolean("blockbranch.forestGrasslandVisual"))blockbranch.client.realistic.ForestGrasslandVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.surfaceOwnershipVisual"))blockbranch.realistic.SurfaceOwnershipVisualReview.register();
         if(Boolean.getBoolean("blockbranch.redwoodVisual"))blockbranch.client.realistic.RedwoodForestVisualReview.register();
         if(Boolean.getBoolean("blockbranch.horizonVisual"))blockbranch.client.horizon.HorizonVisualReview.register();
         if(Boolean.getBoolean("blockbranch.horizonLifecycle"))blockbranch.client.horizon.HorizonLifecycleReview.register();

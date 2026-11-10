@@ -48,21 +48,22 @@ public final class RealisticGenerator extends ChunkGenerator {
         static DiscoveryData of(RealisticGenerator g){return new DiscoveryData(g.discoveryDefinition,g.discoveryDefinition>0&&g.treasure!=null&&g.treasure.canSave()?java.util.Optional.of(g.treasure):java.util.Optional.empty(),java.util.Optional.ofNullable(g.waygates),java.util.Optional.ofNullable(g.shipwrecks),java.util.Optional.ofNullable(g.wetlandHuts),java.util.Optional.ofNullable(g.snowShelters),java.util.Optional.ofNullable(g.warmRuins),java.util.Optional.ofNullable(g.coldRuins),java.util.Optional.ofNullable(g.deepColdRuins),java.util.Optional.ofNullable(g.deepWarmRuins),g.nativeHutIglooDefinition,g.nativeOrdinaryDefinition,java.util.Optional.ofNullable(g.reimaginedSites),g.overworldDefinition,g.mansionWingDefinition,g.pyramidGalleryDefinition);}
         RealisticGenerator applyTo(RealisticGenerator g){return g.withDiscoveries(definition,treasure).withWaygates(gates).withShipwrecks(ships).withWetlandHuts(huts).withSnowShelters(shelters).withWarmRuins(ruins).withColdRuins(coldRuins).withDeepColdRuins(deepColdRuins).withDeepWarmRuins(deepWarmRuins).withNativeHutIgloo(nativeBodies).withNativeOrdinary(nativeOrdinary).withReimagined(reimagined).withOverworld(overworld).withMansionWings(mansionWings).withPyramidGallery(pyramidGallery);}
     }
-    private record FeatureSettings(DiscoveryData discovery,int gravelRelief,int sanctuaryReplacement,int mansionReplacement,int biomeTransition,int redwoodForest) {
+    private record FeatureSettings(DiscoveryData discovery,int gravelRelief,int sanctuaryReplacement,int mansionReplacement,int biomeTransition,int redwoodForest,int surfaceOwnership) {
         static final MapCodec<FeatureSettings> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
             DiscoveryData.CODEC.forGetter(FeatureSettings::discovery),
             Codec.intRange(0,1).optionalFieldOf("gravel_relief_definition",0).forGetter(FeatureSettings::gravelRelief),
             Codec.intRange(0,1).optionalFieldOf("sanctuary_replacement_definition",0).forGetter(FeatureSettings::sanctuaryReplacement),
             Codec.intRange(0,1).optionalFieldOf("mansion_replacement_definition",0).forGetter(FeatureSettings::mansionReplacement),
             Codec.intRange(0,1).optionalFieldOf("biome_transition_definition",0).forGetter(FeatureSettings::biomeTransition),
-            Codec.intRange(0,1).optionalFieldOf("redwood_forest_definition",0).forGetter(FeatureSettings::redwoodForest)
+            Codec.intRange(0,1).optionalFieldOf("redwood_forest_definition",0).forGetter(FeatureSettings::redwoodForest),
+            Codec.intRange(0,1).optionalFieldOf("surface_ownership_definition",0).forGetter(FeatureSettings::surfaceOwnership)
         ).apply(i,FeatureSettings::new));
-        static FeatureSettings of(RealisticGenerator g){return new FeatureSettings(DiscoveryData.of(g),g.gravelReliefDefinition,g.sanctuaryReplacementDefinition,g.mansionReplacementDefinition,g.biomeTransitionDefinition,g.redwoodForestDefinition);}
-        RealisticGenerator applyTo(RealisticGenerator g){return discovery.applyTo(g).withGravelRelief(gravelRelief).withSanctuaryReplacement(sanctuaryReplacement).withMansionReplacement(mansionReplacement).withBiomeTransitions(biomeTransition).withRedwoodForests(redwoodForest);}
+        static FeatureSettings of(RealisticGenerator g){return new FeatureSettings(DiscoveryData.of(g),g.gravelReliefDefinition,g.sanctuaryReplacementDefinition,g.mansionReplacementDefinition,g.biomeTransitionDefinition,g.redwoodForestDefinition,g.surfaceOwnershipDefinition);}
+        RealisticGenerator applyTo(RealisticGenerator g){return discovery.applyTo(g).withGravelRelief(gravelRelief).withSanctuaryReplacement(sanctuaryReplacement).withMansionReplacement(mansionReplacement).withBiomeTransitions(biomeTransition).withRedwoodForests(redwoodForest).withSurfaceOwnership(surfaceOwnership);}
     }
     public static final MapCodec<RealisticGenerator> CODEC = RecordCodecBuilder.<RealisticGenerator>mapCodec(instance -> instance.group(
         HabitatPalette.CODEC.forGetter(generator -> generator.palette),
-        Codec.intRange(TerrainShape.SHAPE_VERSION,RedwoodForestSchema.MAX).fieldOf("shape_version").forGetter(RealisticGenerator::saveSchema),
+        Codec.intRange(TerrainShape.SHAPE_VERSION,SurfaceOwnershipSchema.MAX).fieldOf("shape_version").forGetter(RealisticGenerator::saveSchema),
         Codec.BOOL.optionalFieldOf("icebergs",false).forGetter(generator -> generator.icebergsEnabled),
         Codec.BOOL.optionalFieldOf("sandy_coasts",false).forGetter(generator -> generator.sandyCoastsEnabled),
         Codec.BOOL.optionalFieldOf("underground",false).forGetter(generator -> generator.undergroundEnabled),
@@ -76,9 +77,11 @@ public final class RealisticGenerator extends ChunkGenerator {
         StructurePlacementCache.CODEC.lenientOptionalFieldOf("structure_cache").forGetter(generator -> generator.structureDefinition==3?generator.structureCache:java.util.Optional.empty()),
         Codec.intRange(0,1).optionalFieldOf("boreal_crown_definition",0).forGetter(RealisticGenerator::borealCrownDefinition),
         FeatureSettings.CODEC.forGetter(FeatureSettings::of)
-    ).apply(instance,(palette,version,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,structures,cache,crowns,features)->features.applyTo(new RealisticGenerator(palette,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,version,structures).withStructureCache(cache).withBorealCrowns(crowns)))).validate(g->!RedwoodForestSchema.matches(g.inputSchema,g.redwoodForestDefinition)?com.mojang.serialization.DataResult.error(()->"Redwood forest schema/definition mismatch"):g.redwoodForestDefinition>0&&!g.palette.additional().containsKey(RedwoodForest.KEY)?com.mojang.serialization.DataResult.error(()->"Redwood forests require their biome holder"):!BiomeTransitionSchema.matches(RedwoodForestSchema.baseSchema(g.inputSchema,g.redwoodForestDefinition),g.biomeTransitionDefinition)?com.mojang.serialization.DataResult.error(()->"Biome transition schema/definition mismatch"):!MansionReplacementSchema.matches(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(g.inputSchema,g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Mansion replacement schema/definition mismatch"):!SanctuaryReplacementSchema.matches(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(g.inputSchema,g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Sanctuary replacement schema/definition mismatch"):!GravelReliefSchema.matches(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(g.inputSchema,g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition)?com.mojang.serialization.DataResult.error(()->"Gravel relief schema/definition mismatch"):g.pyramidGalleryDefinition>0&&g.reimaginedDefinition()==0?com.mojang.serialization.DataResult.error(()->"Pyramid galleries require reimagined layouts"):g.overworldDefinition>0&&!g.palette.additional().containsKey("deep_dark")?com.mojang.serialization.DataResult.error(()->"Overworld coverage requires deep_dark holder"):!StructureGenerationSchema.matches(PyramidGallerySchema.baseSchema(BorealCrownSchema.baseSchema(GravelReliefSchema.baseSchema(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(g.inputSchema,g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition),g.borealCrownDefinition),g.pyramidGalleryDefinition),g.discoveryDefinition,g.shipwreckDefinition(),g.waygateDefinition(),g.wetlandHutDefinition(),g.snowShelterDefinition(),g.warmRuinDefinition(),g.coldRuinDefinition(),g.deepColdRuinDefinition(),g.deepWarmRuinDefinition(),g.nativeHutIglooDefinition(),g.nativeOrdinaryDefinition(),g.reimaginedDefinition(),g.overworldDefinition,g.mansionWingDefinition)?com.mojang.serialization.DataResult.error(()->"Structure feature schema mismatch"):(g.inputSchema>=ATLAS_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==3)?com.mojang.serialization.DataResult.error(()->"Structure atlas schema/definition mismatch"):(g.inputSchema==CALIBRATED_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==2)?com.mojang.serialization.DataResult.error(()->"Calibrated structure schema/definition mismatch"):(g.inputSchema==STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==1)?com.mojang.serialization.DataResult.error(()->"Structure schema/definition mismatch"):(g.inputSchema>=CAVE_BIOME_SAVE_VERSION)!=(g.caveBiomeDefinition==1)?com.mojang.serialization.DataResult.error(()->"Cave biome schema/definition mismatch"):g.caveBiomeDefinition>0&&(g.dripstoneDefinition!=2||g.litCaveGrowthDefinition!=2||!g.palette.additional().containsKey("lush_caves")||!g.palette.additional().containsKey("sulfur_caves"))?com.mojang.serialization.DataResult.error(()->"Cave biomes require formation/moss definitions and both holders"):g.litCaveGrowthDefinition>0&&(!g.undergroundEnabled||!g.approachesEnabled)?com.mojang.serialization.DataResult.error(()->"Lit cave growth requires existing cave approaches"):g.dripstoneDefinition>0&&(!g.undergroundEnabled||!g.palette.additional().containsKey("dripstone_caves"))?com.mojang.serialization.DataResult.error(()->"Dripstone requires caves and its biome holder"):g.entryRoutesEnabled&&!g.approachesEnabled?com.mojang.serialization.DataResult.error(()->"Entry routes require approaches"):g.approachesEnabled&&!g.undergroundEnabled?com.mojang.serialization.DataResult.error(()->"Approaches require caves"):g.icebergsEnabled&&!g.palette.additional().containsKey("ice_spikes")?com.mojang.serialization.DataResult.error(()->"Iceberg habitat requires ice_spikes holder"):com.mojang.serialization.DataResult.success(g));
-    private int saveSchema(){return RedwoodForestSchema.schema(BiomeTransitionSchema.schema(MansionReplacementSchema.schema(SanctuaryReplacementSchema.schema(GravelReliefSchema.schema(BorealCrownSchema.schema(PyramidGallerySchema.schema(StructureGenerationSchema.versionFor(structureDefinition==3?ATLAS_STRUCTURE_SAVE_VERSION:structureDefinition==2?CALIBRATED_STRUCTURE_SAVE_VERSION:structureDefinition>0?STRUCTURE_SAVE_VERSION:caveBiomeDefinition>0?CAVE_BIOME_SAVE_VERSION:dripstoneDefinition==2?FORMATION_SAVE_VERSION:litCaveGrowthDefinition>0?MOSS_SAVE_VERSION:TerrainShape.SHAPE_VERSION,discoveryDefinition,shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),nativeHutIglooDefinition(),nativeOrdinaryDefinition(),reimaginedDefinition(),overworldDefinition,mansionWingDefinition),pyramidGalleryDefinition),borealCrownDefinition),gravelReliefDefinition),sanctuaryReplacementDefinition),mansionReplacementDefinition),biomeTransitionDefinition),redwoodForestDefinition);}
-    private int biomeTransitionDefinition,redwoodForestDefinition;
+    ).apply(instance,(palette,version,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,structures,cache,crowns,features)->features.applyTo(new RealisticGenerator(palette,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,version,structures).withStructureCache(cache).withBorealCrowns(crowns)))).validate(g->!SurfaceOwnershipSchema.matches(g.inputSchema,g.surfaceOwnershipDefinition)?com.mojang.serialization.DataResult.error(()->"Surface ownership schema/definition mismatch"):g.surfaceOwnershipDefinition>0&&!g.palette.additional().containsKey(ColdRockland.KEY)?com.mojang.serialization.DataResult.error(()->"Surface ownership requires cold rockland holder"):!RedwoodForestSchema.matches(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition)?com.mojang.serialization.DataResult.error(()->"Redwood forest schema/definition mismatch"):g.redwoodForestDefinition>0&&!g.palette.additional().containsKey(RedwoodForest.KEY)?com.mojang.serialization.DataResult.error(()->"Redwood forests require their biome holder"):!BiomeTransitionSchema.matches(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition)?com.mojang.serialization.DataResult.error(()->"Biome transition schema/definition mismatch"):!MansionReplacementSchema.matches(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Mansion replacement schema/definition mismatch"):!SanctuaryReplacementSchema.matches(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Sanctuary replacement schema/definition mismatch"):!GravelReliefSchema.matches(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition)?com.mojang.serialization.DataResult.error(()->"Gravel relief schema/definition mismatch"):g.pyramidGalleryDefinition>0&&g.reimaginedDefinition()==0?com.mojang.serialization.DataResult.error(()->"Pyramid galleries require reimagined layouts"):g.overworldDefinition>0&&!g.palette.additional().containsKey("deep_dark")?com.mojang.serialization.DataResult.error(()->"Overworld coverage requires deep_dark holder"):!StructureGenerationSchema.matches(PyramidGallerySchema.baseSchema(BorealCrownSchema.baseSchema(GravelReliefSchema.baseSchema(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(g.inputSchema,g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition),g.borealCrownDefinition),g.pyramidGalleryDefinition),g.discoveryDefinition,g.shipwreckDefinition(),g.waygateDefinition(),g.wetlandHutDefinition(),g.snowShelterDefinition(),g.warmRuinDefinition(),g.coldRuinDefinition(),g.deepColdRuinDefinition(),g.deepWarmRuinDefinition(),g.nativeHutIglooDefinition(),g.nativeOrdinaryDefinition(),g.reimaginedDefinition(),g.overworldDefinition,g.mansionWingDefinition)?com.mojang.serialization.DataResult.error(()->"Structure feature schema mismatch"):(g.inputSchema>=ATLAS_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==3)?com.mojang.serialization.DataResult.error(()->"Structure atlas schema/definition mismatch"):(g.inputSchema==CALIBRATED_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==2)?com.mojang.serialization.DataResult.error(()->"Calibrated structure schema/definition mismatch"):(g.inputSchema==STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==1)?com.mojang.serialization.DataResult.error(()->"Structure schema/definition mismatch"):(g.inputSchema>=CAVE_BIOME_SAVE_VERSION)!=(g.caveBiomeDefinition==1)?com.mojang.serialization.DataResult.error(()->"Cave biome schema/definition mismatch"):g.caveBiomeDefinition>0&&(g.dripstoneDefinition!=2||g.litCaveGrowthDefinition!=2||!g.palette.additional().containsKey("lush_caves")||!g.palette.additional().containsKey("sulfur_caves"))?com.mojang.serialization.DataResult.error(()->"Cave biomes require formation/moss definitions and both holders"):g.litCaveGrowthDefinition>0&&(!g.undergroundEnabled||!g.approachesEnabled)?com.mojang.serialization.DataResult.error(()->"Lit cave growth requires existing cave approaches"):g.dripstoneDefinition>0&&(!g.undergroundEnabled||!g.palette.additional().containsKey("dripstone_caves"))?com.mojang.serialization.DataResult.error(()->"Dripstone requires caves and its biome holder"):g.entryRoutesEnabled&&!g.approachesEnabled?com.mojang.serialization.DataResult.error(()->"Entry routes require approaches"):g.approachesEnabled&&!g.undergroundEnabled?com.mojang.serialization.DataResult.error(()->"Approaches require caves"):g.icebergsEnabled&&!g.palette.additional().containsKey("ice_spikes")?com.mojang.serialization.DataResult.error(()->"Iceberg habitat requires ice_spikes holder"):com.mojang.serialization.DataResult.success(g));
+    private int saveSchema(){return SurfaceOwnershipSchema.schema(RedwoodForestSchema.schema(BiomeTransitionSchema.schema(MansionReplacementSchema.schema(SanctuaryReplacementSchema.schema(GravelReliefSchema.schema(BorealCrownSchema.schema(PyramidGallerySchema.schema(StructureGenerationSchema.versionFor(structureDefinition==3?ATLAS_STRUCTURE_SAVE_VERSION:structureDefinition==2?CALIBRATED_STRUCTURE_SAVE_VERSION:structureDefinition>0?STRUCTURE_SAVE_VERSION:caveBiomeDefinition>0?CAVE_BIOME_SAVE_VERSION:dripstoneDefinition==2?FORMATION_SAVE_VERSION:litCaveGrowthDefinition>0?MOSS_SAVE_VERSION:TerrainShape.SHAPE_VERSION,discoveryDefinition,shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),nativeHutIglooDefinition(),nativeOrdinaryDefinition(),reimaginedDefinition(),overworldDefinition,mansionWingDefinition),pyramidGalleryDefinition),borealCrownDefinition),gravelReliefDefinition),sanctuaryReplacementDefinition),mansionReplacementDefinition),biomeTransitionDefinition),redwoodForestDefinition),surfaceOwnershipDefinition);}
+    private int biomeTransitionDefinition,redwoodForestDefinition,surfaceOwnershipDefinition;
+    private RealisticGenerator withSurfaceOwnership(int definition){surfaceOwnershipDefinition=definition;((ScreeBiomeSource)biomeSource).withSurfaceOwnership(definition>0);return this;}
+    public int surfaceOwnershipDefinition(){return surfaceOwnershipDefinition;}
     private RealisticGenerator withRedwoodForests(int definition){redwoodForestDefinition=definition;((ScreeBiomeSource)biomeSource).withRedwoodForests(definition>0);return this;}
     public int redwoodForestDefinition(){return redwoodForestDefinition;}
     /** Bit 0: forest/grassland transitions; bit 1: redwood forests. Shared by every tree-root selector. */
@@ -247,7 +250,7 @@ public final class RealisticGenerator extends ChunkGenerator {
             current = terrainState;
             if (current == null || current.seed() != random.seed()) {
                 var shape = new TerrainShape(random.seed());
-                var drainage=new DrainageNetwork(shape,random.seed(),true,sandyCoastsEnabled,gravelReliefDefinition==1);var climate=new ClimateField(random.seed());
+                var drainage=new DrainageNetwork(shape,random.seed(),true,sandyCoastsEnabled,gravelReliefDefinition==1,surfaceOwnershipDefinition==1);var climate=new ClimateField(random.seed());
                 current = new TerrainState(random.seed(),shape,drainage,climate,new GroundEcology.Field(drainage::sample,climate),new UndergroundStructure(random.seed()),new IcebergField(random.seed(),drainage,climate),new java.util.LinkedHashMap<>(128,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true));
                 // A resolver may outlive a subsequent bind. Give its lazy moss planner a
                 // fixed-seed view, sharing this immutable graph and its bounded caches.
@@ -257,10 +260,10 @@ public final class RealisticGenerator extends ChunkGenerator {
                     var view=new RealisticGenerator(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition);
                     // The view shares canopy caches, so it must use their saved crown and transition definitions.
                     view.borealCrownDefinition=borealCrownDefinition;
-                    view.biomeTransitionDefinition=biomeTransitionDefinition;view.redwoodForestDefinition=redwoodForestDefinition;
+                    view.biomeTransitionDefinition=biomeTransitionDefinition;view.redwoodForestDefinition=redwoodForestDefinition;view.surfaceOwnershipDefinition=surfaceOwnershipDefinition;
                     view.gravelReliefDefinition=gravelReliefDefinition;
                     view.terrainState=current;
-                    ((ScreeBiomeSource)view.biomeSource).withRedwoodForests(redwoodForestDefinition>0).bind(current.seed(),current.drainage(),current.climate());
+                    ((ScreeBiomeSource)view.biomeSource).withRedwoodForests(redwoodForestDefinition>0).withSurfaceOwnership(surfaceOwnershipDefinition>0).bind(current.seed(),current.drainage(),current.climate());
                     growth=(cx,cz)->view.litCaveLayer(cx,cz,random,null);
                 }
                 ((ScreeBiomeSource)biomeSource).bind(current.seed(),current.drainage(),current.climate(),growth);
@@ -308,11 +311,11 @@ public final class RealisticGenerator extends ChunkGenerator {
     /** Capture a fixed-seed view before starting the helper. The callback captures
      * this TerrainState and a value flag, never a generator, RandomState or Level. */
     HutPlanningTerrain hutPlanningTerrain(RandomState random) {
-        var field=terrain(random);boolean icebergs=icebergsEnabled(),whorled=borealCrownDefinition==1;int transitions=vegetationFlags();
-        return new HutPlanningTerrain(field.drainage(),field.climate(),(x,z)->canopy(field,x,z,icebergs,whorled,transitions));
+        var field=terrain(random);var rockland=((ScreeBiomeSource)biomeSource).coldRocklandSurface();boolean icebergs=icebergsEnabled(),whorled=borealCrownDefinition==1;int transitions=vegetationFlags();
+        return new HutPlanningTerrain(field.drainage(),field.climate(),(x,z)->canopy(field,x,z,icebergs,whorled,transitions,rockland));
     }
-    blockbranch.cubic.CanopyLayer canopy(int x,int z,RandomState random) {return canopy(terrain(random),x,z,icebergsEnabled(),borealCrownDefinition==1,vegetationFlags());}
-    private static blockbranch.cubic.CanopyLayer canopy(TerrainState field,int x,int z,boolean icebergs,boolean whorled,int transitions) {
+    blockbranch.cubic.CanopyLayer canopy(int x,int z,RandomState random) {return canopy(terrain(random),x,z,icebergsEnabled(),borealCrownDefinition==1,vegetationFlags(),((ScreeBiomeSource)biomeSource).coldRocklandSurface());}
+    private static blockbranch.cubic.CanopyLayer canopy(TerrainState field,int x,int z,boolean icebergs,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> rockland) {
         int cx=x>>4,cz=z>>4;long key=(cx&0xffffffffL)|((long)cz<<32);
         synchronized(field.canopies()) { var cached=field.canopies().get(key);if(cached!=null) return cached; }
         var packed=WoodlandTrees.column(field.seed(),cx,cz,field.drainage(),field.climate(),whorled,transitions);
@@ -330,6 +333,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         packed=OpenSnowCover.coldPeaksColumn(field.seed(),cx,cz,packed,field.drainage(),field.climate(),field.groundEcology());
         packed=OpenSnowCover.peaksColumn(field.seed(),cx,cz,packed,field.drainage(),field.climate(),field.groundEcology());
         packed=OpenSnowCover.beachColumn(field.seed(),cx,cz,packed,field.drainage(),field.climate(),field.groundEcology());
+        if(rockland!=null)packed=OpenSnowCover.column(field.seed(),cx,cz,packed,field.drainage(),field.groundEcology(),(wx,wz)->rockland.test(wx,wz)&&ColdRockland.retainsSnow(wx,wz,field.drainage(),field.climate(),field.groundEcology()),true);
         var created=packed.length==0 ? blockbranch.cubic.CanopyLayer.EMPTY : new blockbranch.cubic.CanopyLayer(packed);
         synchronized(field.canopies()) {
             field.canopies().put(key,created);
@@ -753,6 +757,7 @@ public final class RealisticGenerator extends ChunkGenerator {
             if(StonyShore.contains(cellX,cellZ,drainage))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("stony_shore"));
             int coldKind=ColdUplands.kind(random.seed(),cellX,cellZ,drainage,terrain(random).climate());
             if(coldKind>0)for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(ColdUplands.key(coldKind)));
+            if(coldRocklandSurface(cellX,cellZ,random))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(ColdRockland.KEY));
         }
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
             int wx = chunk.getPos().getMinBlockX() + x, wz = chunk.getPos().getMinBlockZ() + z;
@@ -761,6 +766,7 @@ public final class RealisticGenerator extends ChunkGenerator {
             // Material/ground-cover palettes use physical block eligibility. The
             // quart palette and canopy above remain the biome/vegetation contract.
             int i=z*16+x;
+            if(coldRocklandSurface(wx,wz,random)){scree[i]=(byte)ColdRockland.debrisDepth(random.seed(),wx,wz,drainage);continue;}
             if(StonyShore.surfaceContains(wx,wz,drainage)){sandyShore[i]=(byte)StonyShore.cover(random.seed(),wx,wz,drainage);continue;}
             int coldUpland=coldUplandCover(wx,wz,random);
             if(coldUpland>0){coldSteppe[i]=(byte)coldUpland;continue;}
@@ -834,7 +840,13 @@ public final class RealisticGenerator extends ChunkGenerator {
 
     private int oreRegion(Holder<Biome> biome){return oreRegions.computeIfAbsent(biome,holder->{int mask=0;for(var group:holder.value().getGenerationSettings().features())for(var placed:group){var key=placed.unwrapKey();if(key.isEmpty())continue;String path=key.get().identifier().getPath();if(path.equals("ore_emerald"))mask|=1;if(path.equals("ore_gold_extra"))mask|=2;}return mask;});}
 
+    private boolean coldRocklandSurface(int x,int z,RandomState random) {
+        if(surfaceOwnershipDefinition==0)return false;
+        terrain(random);return ((ScreeBiomeSource)biomeSource).coldRocklandSurface().test(x,z);
+    }
+
     int screeDepth(int x, int z, RandomState random) {
+        if(coldRocklandSurface(x,z,random))return ColdRockland.debrisDepth(random.seed(),x,z,drainage(random));
         if(StonyShore.surfaceContains(x,z,drainage(random)))return 0;
         if(MangroveSwamp.exact(random.seed(),x,z,drainage(random),terrain(random).climate()))return 0;
         if(Swamp.surfaceSoilContains(random.seed(),x,z,drainage(random),terrain(random).climate()))return 0;
@@ -862,6 +874,10 @@ public final class RealisticGenerator extends ChunkGenerator {
         // Preserve the swamp-soil override from profile assembly in every query path.
         if(Swamp.surfaceSoilContains(random.seed(),x,z,drainage(random),terrain(random).climate()))return 0;
         var drainage=drainage(random);
+        // The quart kelp mask may cross a physical sandy-shore edge. Definition
+        // 1 gives that block one cover owner; do not encode both sorted marine
+        // sediment and shore sand. Keep historical definitions' saved routing.
+        if(surfaceOwnershipDefinition>0&&sandyShoreCover(x,z,random)>0)return 0;
         if(TemperateOcean.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate())||TemperateOcean.kelpHeight(random.seed(),x,z,drainage,terrain(random).climate())>0)return TemperateOcean.cover(random.seed(),x,z,drainage,terrain(random).climate());
         if(LukewarmOcean.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate()))return LukewarmOcean.cover(random.seed(),x,z,drainage,terrain(random).climate());
         if(DeepOcean.surfaceContains(x,z,drainage)){
@@ -1108,6 +1124,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         var floating=floatingIce(x,z,random).state(x,y,z);if(floating!=null)return floating;
         var tree=canopy(x,z,random).state(x,y,z);if(tree!=null) return tree;
         var sample=drainage(random).sample(x,z);
+        if(coldRocklandSurface(x,z,random))return material(y,sample.height(),sample.waterLevel(),screeDepth(x,z,random));
         int coldUpland=coldUplandCover(x,z,random);
         if(coldUpland>0)return material(y,sample.height(),sample.waterLevel(),0,0,0,0,0,0,0,0,0,coldUpland,0);
         int badlands=badlandsCover(x,z,random);
@@ -1179,6 +1196,7 @@ public final class RealisticGenerator extends ChunkGenerator {
             }
             max=Math.min(max,height);
         }
+        if(coldRocklandSurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),screeDepth(x,z,random),0,0,0,0,0,0,0,0,0,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
         int coldUpland=coldUplandCover(x,z,random);
         if(coldUpland>0){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,coldUpland,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
         int badlands=badlandsCover(x,z,random);
@@ -1203,6 +1221,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         if(badlands>0){scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=0;desert=badlands;}
         int coldUpland=coldUplandCover(x,z,random);
         if(coldUpland>0){scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=desert=0;coldSteppe=coldUpland;}
+        if(coldRocklandSurface(x,z,random)){scree=screeDepth(x,z,random);reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=desert=0;}
         var floating=floatingIce(x,z,random);var entrance=approach(x,z,random);
         int region=oreDefinition==0?0:oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(x>>2,0,z>>2));
         var ores=oreDefinition==0?OreLayer.NONE:new OreLayer(random.seed(),x>>4,z>>4,oreDefinition,(region&1)!=0?65535:0,(region&2)!=0?65535:0);

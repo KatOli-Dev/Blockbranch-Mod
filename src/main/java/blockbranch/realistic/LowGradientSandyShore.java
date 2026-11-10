@@ -4,7 +4,8 @@ import java.util.function.BiFunction;
 
 /** A static beach/backshore adjoining an actual ocean crossing and gently shelving seabed. */
 public final class LowGradientSandyShore {
-    public record Site(int height,int water,boolean oceanCatchment,boolean oceanWater,boolean river,boolean sandyBackshore) {
+    public record Site(int height,int water,boolean oceanCatchment,boolean oceanWater,boolean river,boolean sandyBackshore,boolean legacyOceanWater) {
+        public Site(int height,int water,boolean catchment,boolean ocean,boolean river,boolean sandy){this(height,water,catchment,ocean,river,sandy,ocean);}
         public Site(int height,int water,boolean catchment,boolean ocean,boolean river){this(height,water,catchment,ocean,river,true);}
         public int elevation() { return height+1-TerrainShape.SEA_LEVEL; }
         public boolean dry() { return water==DrainageNetwork.DRY; }
@@ -14,7 +15,7 @@ public final class LowGradientSandyShore {
         int elevation=sample.height()+1-TerrainShape.SEA_LEVEL;
         if(elevation<-16 || elevation>4 || sample.closed() || (sample.waterLevel()!=DrainageNetwork.DRY && sample.waterLevel()!=TerrainShape.SEA_LEVEL))
             return new Site(sample.height(),sample.waterLevel(),!sample.closed(),false,false);
-        return new Site(sample.height(),sample.waterLevel(),!sample.closed(),drainage.oceanWater(x,z,sample),drainage.channelAt(x,z).edge()>=0,sample.sandyBackshore());
+        return new Site(sample.height(),sample.waterLevel(),!sample.closed(),drainage.habitatOceanWater(x,z,sample),drainage.channelAt(x,z).edge()>=0,sample.sandyBackshore(),drainage.oceanWater(x,z,sample));
     }
     public static boolean eligible(Site site) {
         return (!site.dry()||site.sandyBackshore()) && site.oceanCatchment() && !site.river() && site.elevation()>=-8 && site.elevation()<=4
@@ -49,10 +50,13 @@ public final class LowGradientSandyShore {
         for(int oz=-1;oz<=1;oz++) for(int ox=-1;ox<=1;ox++) {
             if(ox==0 && oz==0) continue;
             var neighbor=terrain.apply(x+ox*128,z+oz*128);
-            if(neighbor.oceanWater() && !neighbor.river()) {
+            // Definition 1 repairs submerged habitat ownership. Keep the dry
+            // backshore footprint and its soil-support reservations unchanged;
+            // expanding it here can strand an adjacent established steppe cell.
+            if((center.dry()?neighbor.legacyOceanWater():neighbor.oceanWater()) && !neighbor.river()) {
                 wet=true;
                 var offshore=terrain.apply(x+ox*256,z+oz*256);
-                if(offshore.oceanWater() && offshore.elevation()>=-16) shelf=true;
+                if((center.dry()?offshore.legacyOceanWater():offshore.oceanWater()) && offshore.elevation()>=-16) shelf=true;
             }
             if(neighbor.dry() && neighbor.oceanCatchment() && neighbor.elevation()>=0 && !neighbor.river()) dry=true;
         }

@@ -1380,6 +1380,12 @@ tasks.named('runCurrentBiomeSurvey') {
     doLast { assert biomeSurveyDir.file('result.txt').asFile.text.startsWith('PASS') }
 }
 
+tasks.register('checkSurfaceOwnership',JavaExec) {
+    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.SurfaceOwnershipCheck';maxHeapSize='2G'
+}
+tasks.named('check'){dependsOn 'checkSurfaceOwnership'}
+
 // Exact original-noise oracle; no timing assertion or native fixture dependency.
 tasks.register('checkTerrainPhases',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.TerrainPhaseCheck'}
 tasks.named('check'){dependsOn 'checkTerrainPhases'}

@@ -6,7 +6,7 @@ public final class MarineShelf {
         public int depth(){return water==DrainageNetwork.DRY?0:water-height-1;}
     }
     static Site site(DrainageNetwork d,int x,int z){
-        var s=d.sample(x,z);boolean ocean=d.oceanWater(x,z,s);
+        var s=d.sample(x,z);boolean ocean=d.habitatOceanWater(x,z,s);
         if(!ocean||s.waterLevel()-s.height()-1>200)return new Site(s.height(),s.waterLevel(),ocean,d.terminalLakeWater(x,z,s),false,0);
         double dx=(d.sample(x+16,z).height()-d.sample(x-16,z).height())/32.0,dz=(d.sample(x,z+16).height()-d.sample(x,z-16).height())/32.0;
         // A routed curve may geometrically overlap raw marine seabed near its outlet.
