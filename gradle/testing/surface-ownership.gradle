@@ -85,6 +85,22 @@ tasks.named('runSurfaceOwnershipQualification') {
     doLast {assert dir.file(resultName).asFile.text.startsWith('PASS')}
 }
 
+def boundaryDir=layout.projectDirectory.dir(providers.gradleProperty('surfaceBoundaryDirectory').getOrElse('build/surface-boundary-native'))
+loom.runs.register('surfaceBoundaryQualification') {
+    server();runDir(boundaryDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.surfaceBoundaryQualification=true')
+    vmArg('-Dblockbranch.surfaceBoundaryResult='+boundaryDir.file('result.txt').asFile.absolutePath)
+}
+tasks.register('prepareSurfaceBoundaryQualification'){doLast{
+    assert !boundaryDir.file('server.properties').asFile.exists():'Preserve earlier evidence; select a fresh surfaceBoundaryDirectory.'
+    boundaryDir.asFile.mkdirs();boundaryDir.file('eula.txt').asFile.text='eula=true\n'
+    boundaryDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25617\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runSurfaceBoundaryQualification') {
+    dependsOn 'prepareSurfaceBoundaryQualification'
+    doLast{assert boundaryDir.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
 def visualDir=layout.projectDirectory.dir(providers.gradleProperty('ownershipVisualDirectory').getOrElse('build/surface-ownership-visual'))
 loom.runs.register('surfaceOwnershipVisual') {
     client();runDir(visualDir.asFile.absolutePath);vmArg('-Xmx3G')

@@ -14,7 +14,7 @@ public final class ColdRockland {
         return eligible(Math.floorDiv(x, 4) * 4, Math.floorDiv(z, 4) * 4, d, c);
     }
     /** Only the selector's final unassigned domain may acquire this owner. Exposed
-     * cliffs retain stone; supported patches receive 0–2 m of existing gravel roles.
+     * cliffs retain stone; supported patches receive 0–2 m of existing loose-scree roles.
      * No persistent palette codes, new terrain heights or invented fertile soil. */
     public static int debrisDepth(long seed, int x, int z, DrainageNetwork d) {
         double slope = SlopeCorrection.slope(d, x, z);

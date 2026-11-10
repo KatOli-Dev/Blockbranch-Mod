@@ -133,6 +133,9 @@ public final class ScreeBiomeSource extends BiomeSource {
             var base=full;
             full=(x,y,z)->OverworldStructures.deepDark(seed,x*4,y*4,z*4,drainage)?palette.additional("deep_dark"):base.getNoiseBiome(x,y,z);
         }
+        // Ownership follows the existing 4 m fallback identity. Physical cold/dry
+        // eligibility clips it; competing selectors are not rerun between anchors.
+        // A physical specialist can therefore meet rockland at a quart edge.
         java.util.function.BiPredicate<Integer,Integer> rockland=surfaceOwnershipEnabled?(x,z)->ColdRockland.eligible(x,z,drainage,climate)&&surface.getNoiseBiome(x>>2,0,z>>2)==palette.additional(ColdRockland.KEY):null;
         bound=new Bound(surface,full,drainage,seed,caves,rockland);
     }

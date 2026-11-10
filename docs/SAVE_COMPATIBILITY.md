@@ -322,7 +322,7 @@ their saved root/crown definition regardless of current flags. Clearing removes
 logs/leaves inside a selected immutable tree footprint, including player-placed
 ones. Fallen logs and wildlife share the saved definition/domain gating.
 
-Surface ownership definition 1 requires the cold-rockland holder and complete schema 257. Absent = retained legacy selection/cover, including unexplored chunks; partial, malformed and future combinations reject. It repairs submerged marine ecology using the basin that created sea-level water, while geometry, dry backshore/fringe reservations and structural ocean ownership retain their contracts. Cold rockland only replaces final fallback below mean −6°C, with supported debris and static retained snow, not glacial ice. Existing gravel/canopy roles and protocols retain their meanings. The original schema-257 reader refuses 258 before loading the new biome; no migration or palette rewrite occurs in older saves.
+Surface ownership definition 1 requires the cold-rockland holder and complete schema 257. Absent = retained legacy selection/cover, including unexplored chunks; partial, malformed and future combinations reject. It repairs submerged marine ecology using the basin that created sea-level water, while geometry, dry backshore/fringe reservations and structural ocean ownership retain their contracts. Cold rockland only replaces final fallback below mean −6°C, with supported debris and static retained snow, not glacial ice. Existing loose-scree/canopy roles and protocols retain their meanings. The original schema-257 reader refuses 258 before loading the new biome; no migration or palette rewrite occurs in older saves.
 
 ## Structure piece contracts
 
