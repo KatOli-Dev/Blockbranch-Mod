@@ -1351,15 +1351,33 @@ tasks.named('test') {
     failOnNoDiscoveredTests = false
 }
 
-// Habitat-count baselines over the current terrain (no support for older terrain
-// shapes is required). A mismatch after an intentional terrain change, such as a
-// preset shape_version bump, means the counts need refreshing; keep the other
-// assertions. Explicit/manual: not part of `check`.
+// Historical staged habitat baselines evaluated over current terrain. These do
+// not execute the complete current selector and cannot measure current coverage.
+// Preserve their frozen selectors/assertions; current inventory uses runCurrentBiomeSurvey.
 ['checkBiomeCoverage','checkDeepOceanCoverage','checkHumidCoverage','checkLakeCoverage','checkMarineShelfCoverage','checkRiverChannelCoverage','checkTundraCoverage'].each { coverageName ->
     tasks.named(coverageName) {
         group='coverage verification'
-        description='Manual habitat-count coverage diagnostic over current terrain; refresh the expected counts when terrain shape changes intentionally.'
+        description='Manual historical habitat diagnostic over current terrain; not complete current biome coverage.'
     }
+}
+
+// Opt-in, fixed-grid current-selector survey with native final-biome spot checks.
+// A fresh disposable world prevents saved palettes/settings from contaminating results.
+def biomeSurveyDir=layout.projectDirectory.dir(providers.gradleProperty('biomeSurveyDirectory').getOrElse('build/biome-survey'))
+loom.runs.register('currentBiomeSurvey') {
+    server();runDir(biomeSurveyDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.currentBiomeSurvey=true')
+    vmArg('-Dblockbranch.currentBiomeSurveyDirectory='+biomeSurveyDir.asFile.absolutePath)
+}
+tasks.register('prepareCurrentBiomeSurvey') { doLast {
+    assert !biomeSurveyDir.file('server.properties').asFile.exists():'Preserve previous evidence; select a fresh biomeSurveyDirectory.'
+    biomeSurveyDir.asFile.mkdirs()
+    biomeSurveyDir.file('eula.txt').asFile.text='eula=true\n'
+    biomeSurveyDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25615\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+} }
+tasks.named('runCurrentBiomeSurvey') {
+    dependsOn 'prepareCurrentBiomeSurvey'
+    doLast { assert biomeSurveyDir.file('result.txt').asFile.text.startsWith('PASS') }
 }
 
 // Exact original-noise oracle; no timing assertion or native fixture dependency.

@@ -42,9 +42,10 @@ storage/game abstraction; the wider build range remains available.
 
 Current work includes continental landforms, deep marine basins, routed rivers
 and inland lakes, varied terrestrial habitats, rocky/sandy coasts, static
-cold-season sea ice and open-water glacial iceberg fields. **50/50** entries in
-the real-life vanilla-biome pass are implemented. This counts biome coverage in
-the current generator, not completed visual acceptance or a full gameplay survey.
+cold-season sea ice and open-water glacial iceberg fields. The earlier vanilla-name
+pass is implemented; names do not measure real-world area or ecological completeness.
+See the [coverage ledger and roadmap](docs/DEVELOPMENT.md#real-world-biome-coverage)
+for represented analogs, missing subtypes and reproducible current-selector surveys.
 Representative hardware walking performance and visual acceptance remain open;
 see [development limits](docs/DEVELOPMENT.md#storage-limits-and-historical-evidence).
 
