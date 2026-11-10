@@ -1,4 +1,5 @@
 package blockbranch.client.mixin.cubic;
+import blockbranch.client.cubic.ProceduralSectionCopies;
 import blockbranch.cubic.SparseColumn;
 import net.minecraft.client.renderer.chunk.SectionCopy;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,6 +13,11 @@ abstract class SectionCopyMixin {
     @Inject(method="<init>",at=@At("RETURN"))
     private void blockbranch$copy(LevelChunk chunk,int index,CallbackInfo ci) {
         var sparse=(SparseColumn)chunk;
-        if(sparse.blockbranch$expanded() && (sparse.blockbranch$terrain()!=null || index<0 || index>=chunk.getSections().length)) { var value=sparse.blockbranch$read(chunk.getSectionYFromSectionIndex(index)); section=value.hasOnlyAir() ? null : blockbranch.client.cubic.ProceduralSectionCopies.copy(sparse,chunk.getSectionYFromSectionIndex(index)); }
+        if(sparse.blockbranch$expanded() && (sparse.blockbranch$terrain()!=null || index<0 || index>=chunk.getSections().length)) {
+            int y=chunk.getSectionYFromSectionIndex(index);
+            // An optional render patch resolves an unedited base section on the compile worker.
+            if((Object)this instanceof ProceduralSectionCopies.DeferredBase deferred&&ProceduralSectionCopies.isBase(sparse,y)){deferred.blockbranch$deferBase(sparse.blockbranch$terrain().base(),y);section=null;return;}
+            var value=sparse.blockbranch$read(y); section=value.hasOnlyAir() ? null : ProceduralSectionCopies.copy(sparse,y);
+        }
     }
 }

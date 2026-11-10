@@ -8,14 +8,15 @@ def qaTypes = qaRoots.collectMany { root ->
 def clientTypes = fileTree('src/client/java').matching { include '**/*.java' }.files.collect {
     file('src/client/java').toPath().relativize(it.toPath()).toString().replace(File.separatorChar, '/' as char).replaceAll(/\.java$/, '')
 }
-// Enumerate completed client output during archive execution, including clean
-// configuration-cache builds. Downstream consumers require this exact partition
-// to keep client-only classes and mixins off common dependency classpaths.
+// Loom's final manifest action can overwrite a doFirst attribute with a client
+// file list captured before compilation (notably when patch sources are toggled).
+// Correct the finished archive after that action, using completed client output.
+// Keep the strict guard below independent so stale or missing declarations fail.
 def clientOutputDirs = sourceSets.client.output.classesDirs.files.toList() + [sourceSets.client.output.resourcesDir]
 tasks.named('jar', Jar) {
     dependsOn tasks.named('clientClasses')
     inputs.files(clientOutputDirs)
-    doFirst { archive ->
+    doLast { archive ->
         def paths = []
         for (root in clientOutputDirs) if (root != null && root.exists()) {
             root.eachFileRecurse(groovy.io.FileType.FILES) { path ->
@@ -23,7 +24,17 @@ tasks.named('jar', Jar) {
             }
         }
         assert !paths.empty : 'Client output is required for split-environment packaging'
-        archive.manifest.attributes(['Fabric-Loom-Client-Only-Entries':paths.unique().sort().join(';')])
+        def entries = paths.unique().sort().join(';')
+        java.nio.file.FileSystems.newFileSystem(archive.archiveFile.get().asFile.toPath()).withCloseable { zip ->
+            def path = zip.getPath('/META-INF/MANIFEST.MF')
+            def timestamp = java.nio.file.Files.getLastModifiedTime(path)
+            def manifest = new java.util.jar.Manifest(new ByteArrayInputStream(java.nio.file.Files.readAllBytes(path)))
+            manifest.mainAttributes.putValue('Fabric-Loom-Client-Only-Entries', entries)
+            def output = new ByteArrayOutputStream()
+            manifest.write(output)
+            java.nio.file.Files.write(path, output.toByteArray())
+            java.nio.file.Files.setLastModifiedTime(path, timestamp)
+        }
     }
 }
 // Fixture/camera methods must remain outside their original production owners.

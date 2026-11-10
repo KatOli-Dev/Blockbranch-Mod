@@ -37,7 +37,8 @@ public final class DrainageColdCacheCheck {
   var target=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
   var oracle=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
   var raw=DrainageNetwork.class.getDeclaredMethod("sample",int.class,int.class,boolean.class);raw.setAccessible(true);
-  var memo=(DrainageNetwork.Sample[])field("sampleCache").get(target);var keys=(long[])field("sampleKeys").get(target);
+  var memo=(Object[])field("sampleCache").get(target);var entry=Class.forName("blockbranch.realistic.DrainageNetwork$CachedSample");
+  var entryKey=entry.getDeclaredMethod("key");var entryValue=entry.getDeclaredMethod("value");entryKey.setAccessible(true);entryValue.setAccessible(true);
   var view=field("preformation");var weathering=field("eroded");var cold=new Point(387960,-804006);coldFactory(oracle,view);var expected=original(oracle,raw,cold);
   check(view.get(target)==null&&weathering.get(target)==null,"Target lazy views remain cold after separate oracle computation");
   check(Arrays.stream(memo).allMatch(Objects::isNull),"Target sample cache starts empty");
@@ -47,10 +48,10 @@ public final class DrainageColdCacheCheck {
    var tasks=new ArrayList<Future<DrainageNetwork.Sample>>();
    for(int i=0;i<4;i++)tasks.add(jobs.submit(()->{ready.countDown();check(start.await(5,TimeUnit.SECONDS),"Cold start released");var answer=target.sample(cold.x,cold.z);owners.add(view.get(target));return answer;}));
    check(ready.await(5,TimeUnit.SECONDS),"All dedicated callers are ready");
-   synchronized(memo){
-    start.countDown();blocked(threads,memo);
-    check(view.get(target)==null&&weathering.get(target)==null,"No lazy initialization before cold callers enter");
-   }
+   // The cache is lock-free, so nothing can hold callers at its entry; the latch releases
+   // all four together and the cold lazy views are still created exactly once.
+   check(view.get(target)==null&&weathering.get(target)==null,"No lazy initialization before cold callers enter");
+   start.countDown();
    for(var task:tasks)check(task.get(30,TimeUnit.SECONDS).equals(expected),"Concurrent cold result matches frozen composition");
    check(owners.size()==1&&owners.contains(view.get(target))&&weathering.get(target)!=null,"Caller completion observes one fully published lazy owner");
   }finally{start.countDown();jobs.shutdownNow();check(jobs.awaitTermination(5,TimeUnit.SECONDS),"Cold callers release");}
@@ -66,7 +67,7 @@ public final class DrainageColdCacheCheck {
   var wanted=new HashMap<Long,DrainageNetwork.Sample>();for(var p:collision)wanted.put(p.key(),original(oracle,raw,p));
   for(int pass=0;pass<3;pass++)for(var p:collision){
    var actual=target.sample(p.x,p.z);check(actual.equals(wanted.get(p.key())),"Sequential collision/reload preserves exact value");
-   synchronized(memo){check(keys[slot]==p.key()&&memo[slot].equals(wanted.get(p.key())),"Eviction replaces full key and associated value together");}
+   var held=memo[slot];check(held!=null&&(long)entryKey.invoke(held)==p.key()&&entryValue.invoke(held).equals(wanted.get(p.key())),"Eviction replaces full key and associated value together");
   }
   final int sharedSlot=slot;var points=collision;var barrier=new CyclicBarrier(3);var writers=Executors.newFixedThreadPool(3);
   try{
@@ -76,10 +77,10 @@ public final class DrainageColdCacheCheck {
      check(held.equals(wanted.get(p.key())),"Concurrent colliding lookup matches independent composition");
      barrier.await(10,TimeUnit.SECONDS);
      check(held.equals(wanted.get(p.key())),"Held immutable result survives other-key eviction");
-     synchronized(memo){var correct=wanted.get(keys[sharedSlot]);check(correct!=null&&correct.equals(memo[sharedSlot]),"Concurrent cache publication never pairs a key with another value");}
+     var seen=memo[sharedSlot];var correct=seen==null?null:wanted.get((long)entryKey.invoke(seen));check(correct!=null&&correct.equals(entryValue.invoke(seen)),"Concurrent cache publication never pairs a key with another value");
     }return null;
    }));for(var task:tasks)task.get(60,TimeUnit.SECONDS);
   }finally{writers.shutdownNow();check(writers.awaitTermination(5,TimeUnit.SECONDS),"Collision workers release");}
-  System.out.println("PASS cold view factory callers=4 returnedIdentity=1; cold sample callers=4 allEnteredPublicLookup=true; productionHashCollisions=3 sequentialEvictions=9 concurrentRounds=32 callers=3");
+  System.out.println("PASS cold view factory callers=4 returnedIdentity=1; cold sample callers=4 releasedTogether=true; productionHashCollisions=3 sequentialEvictions=9 concurrentRounds=32 callers=3");
  }
 }

@@ -31,6 +31,13 @@ public final class UndergroundLayer {
     public boolean voidAt(int x,int y,int z,int surface) {
         return enabled()&&field.voidAt((columnX<<4)+(x&15),y,(columnZ<<4)+(z&15),surface);
     }
+    /** Scratch for one section's blocks; null when disabled. Use from a single thread. */
+    public UndergroundStructure.Section section(int sectionY){
+        return enabled()?field.section(columnX<<4,sectionY<<4,columnZ<<4):null;
+    }
+    public boolean voidAt(int x,int y,int z,int surface,UndergroundStructure.Section section) {
+        return enabled()&&field.voidAt((columnX<<4)+(x&15),y,(columnZ<<4)+(z&15),surface,section);
+    }
     public boolean hasApproach(){return approach.present();}
     public boolean approachColumn(int x,int z){return approach.affectsColumn((columnX<<4)+(x&15),(columnZ<<4)+(z&15));}
     public boolean approachAt(int x,int y,int z){return approach.present()&&approach.contains((columnX<<4)+(x&15),y,(columnZ<<4)+(z&15));}

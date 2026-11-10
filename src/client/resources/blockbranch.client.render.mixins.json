@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "package": "blockbranch.client.performance.render.patch.mixin",
+  "plugin": "blockbranch.client.performance.render.RenderPatchesMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

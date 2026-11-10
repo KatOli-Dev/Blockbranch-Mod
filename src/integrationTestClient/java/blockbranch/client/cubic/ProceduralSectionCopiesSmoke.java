@@ -20,11 +20,20 @@ public final class ProceduralSectionCopiesSmoke {
         var cache=new ProceduralSectionCopies.Cache(1024*1024,2);
         var first=cache.copyBase(base,sy);
         for(int y=0;y<16;y++)for(int z=0;z<16;z++)for(int x=0;x<16;x++)check(first.get(x,y,z)==base.state(x,sy*16+y,z),"snapshot material");
+        // Whole-section generation (section ore/cave tables) against per-block state, through every ore window.
+        int generated=0;
+        for(int section=Math.max(blockbranch.realistic.TerrainShape.FLOOR,base.groundHeight(0,0)-320)>>4;section<=(base.groundHeight(0,0)+64)>>4;section++){
+            var states=base.generateStates(section);generated++;
+            for(int y=0;y<16;y++)for(int z=0;z<16;z++)for(int x=0;x<16;x++)check(states.get(x,y,z)==base.state(x,section*16+y,z),"whole-section material "+section);
+        }
+        blockbranch.Blockbranch.LOGGER.info("SECTION_COPIES_GENERATED_SECTIONS checked={}",generated);
         first.set(0,0,0,Blocks.GOLD_BLOCK.defaultBlockState());
         check(cache.copyBase(base,sy).get(0,0,0)==base.state(0,sy*16,0),"caller isolation");
         check(cache.statistics()[0]==1&&cache.statistics()[1]==1,"reuse");
         int[] emptyWater=new int[256];Arrays.fill(emptyWater,Integer.MIN_VALUE);
         var solid=new TerrainProfile(-128,128,new int[256],emptyWater,base.biomes(),level.palettedContainerFactory().blockStatesStrategy());
+        verifyConcurrency(solid);
+        verifySnapshot(level,base,pos,sy);
         var eviction=new ProceduralSectionCopies.Cache(1024*1024,2);
         eviction.copyBase(solid,-3);eviction.copyBase(solid,-4);eviction.copyBase(solid,-5);eviction.copyBase(solid,-3);
         check(eviction.statistics()[2]==2&&eviction.statistics()[1]==4,"nonempty entry eviction");
@@ -96,6 +105,63 @@ public final class ProceduralSectionCopiesSmoke {
         long[] stats=ProceduralSectionCopies.DEFAULT.statistics();check(stats[2]>0,"actual renderer populated default snapshot cache");
         check(stats[2]<=8192&&stats[3]<=64L*1024*1024,"actual default cache respects entry/accounting bounds");
         try{java.nio.file.Files.writeString(java.nio.file.Path.of(System.getProperty("blockbranch.sectionCopiesSmokeResult")),"PASS renderer cache before disconnect="+java.util.Arrays.toString(stats)+"\n",java.nio.file.StandardOpenOption.APPEND);}catch(Exception e){throw new RuntimeException(e);}
+    }
+    private static void verifySnapshot(ClientLevel level,TerrainProfile base,ChunkPos pos,int sy){
+        var chunk=new LevelChunk(level,pos);var sparse=(SparseColumn)chunk;
+        sparse.blockbranch$terrain(new ColumnTerrain(chunk,base,level.palettedContainerFactory(),null,new int[0]));
+        var before=new net.minecraft.client.renderer.chunk.SectionCopy(chunk,chunk.getSectionIndexFromSectionY(sy));
+        var at=new net.minecraft.core.BlockPos(pos.getMinBlockX(),sy*16,pos.getMinBlockZ());
+        sparse.blockbranch$write(sy).setBlockState(0,0,0,Blocks.GOLD_BLOCK.defaultBlockState());
+        var after=new net.minecraft.client.renderer.chunk.SectionCopy(chunk,chunk.getSectionIndexFromSectionY(sy));
+        check(before.getBlockState(at)==base.state(0,sy*16,0),"snapshot created before edit resolves immutable base");
+        check(after.getBlockState(at).is(Blocks.GOLD_BLOCK),"fresh snapshot includes resident edit");
+        sparse.blockbranch$replace(sy,null);
+        var overlay=new net.minecraft.client.renderer.chunk.SectionCopy(chunk,chunk.getSectionIndexFromSectionY(sy));
+        check(overlay.getBlockState(at).isAir(),"fresh snapshot includes received air overlay");
+        check(after.getBlockState(at).is(Blocks.GOLD_BLOCK),"later overlay cannot mutate existing snapshot");
+        blockbranch.Blockbranch.LOGGER.info("SECTION_COPY_SNAPSHOT PASS deferred={}",(Object)before instanceof ProceduralSectionCopies.DeferredBase);
+    }
+    private static void verifyConcurrency(TerrainProfile base){
+        var jobs=java.util.concurrent.Executors.newFixedThreadPool(4);
+        var entered=new java.util.concurrent.CountDownLatch(1);
+        var release=new java.util.concurrent.CountDownLatch(1);
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var cache=new ProceduralSectionCopies.Cache(1024*1024,4,(p,y)->{
+            if(calls.incrementAndGet()==1){entered.countDown();await(release);}
+            return p.generateStates(y);
+        });
+        try{
+            var old=jobs.submit(()->cache.copyBase(base,-3));
+            check(entered.await(10,java.util.concurrent.TimeUnit.SECONDS),"generation entered");
+            // A different key must finish while the first generator is held outside the monitor.
+            jobs.submit(()->cache.copyBase(base,-4)).get(10,java.util.concurrent.TimeUnit.SECONDS);
+            cache.clear();
+            jobs.submit(()->cache.copyBase(base,-3)).get(10,java.util.concurrent.TimeUnit.SECONDS);
+            check(cache.statistics()[1]==1&&cache.statistics()[2]==1,"new epoch owns its entry");
+            release.countDown();old.get(10,java.util.concurrent.TimeUnit.SECONDS);
+            check(cache.statistics()[1]==1&&cache.statistics()[2]==1,"stale completion cannot repopulate cache");
+            long staleEpoch=cache.epoch();cache.clear();
+            cache.copyBase(base,-3,staleEpoch);
+            check(cache.statistics()[2]==0,"deferred read begun after clear cannot populate cache");
+            calls.set(0);
+            var start=new java.util.concurrent.CountDownLatch(1);
+            var results=new ArrayList<java.util.concurrent.Future<PalettedContainer<net.minecraft.world.level.block.state.BlockState>>>();
+            for(int n=0;n<4;n++)results.add(jobs.submit(()->{await(start);return cache.copyBase(base,-3);}));
+            start.countDown();
+            var first=results.getFirst().get(10,java.util.concurrent.TimeUnit.SECONDS);
+            first.set(0,0,0,Blocks.GOLD_BLOCK.defaultBlockState());
+            for(int n=1;n<4;n++)check(!results.get(n).get(10,java.util.concurrent.TimeUnit.SECONDS).get(0,0,0).is(Blocks.GOLD_BLOCK),"concurrent caller isolation");
+            check(calls.get()==1,"same-key generation is coalesced");
+            var attempts=new java.util.concurrent.atomic.AtomicInteger();
+            var failing=new ProceduralSectionCopies.Cache(1024*1024,4,(p,y)->{if(attempts.getAndIncrement()==0)throw new IllegalStateException("injected");return p.generateStates(y);});
+            try{failing.copyBase(base,-3);throw new AssertionError("expected failure");}catch(IllegalStateException expected){}
+            check(failing.copyBase(base,-3)!=null&&attempts.get()==2,"failed generation can retry");
+            for(int z=0;z<16;z++)for(int x=0;x<16;x++)check(base.spawnSurfaceTop(x,z)==base.top(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque(),x,z,ColumnLimits.MAX_Y-1),"memoized spawn top");
+        }catch(Exception e){throw new RuntimeException(e);}
+        finally{release.countDown();jobs.shutdownNow();}
+    }
+    private static void await(java.util.concurrent.CountDownLatch latch){
+        try{check(latch.await(10,java.util.concurrent.TimeUnit.SECONDS),"latch timeout");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new RuntimeException(e);}
     }
     private static volatile Object sink;
     private static void measurePolicies(TerrainProfile base,int section,TerrainProfile plain){

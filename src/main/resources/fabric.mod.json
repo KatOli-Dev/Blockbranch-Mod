@@ -30,6 +30,10 @@
 			"config": "blockbranch.client.mixins.json",
 			"environment": "client"
 		},
+		{
+			"config": "blockbranch.client.render.mixins.json",
+			"environment": "client"
+		},
 		"blockbranch.realistic.mixins.json"
 	],
 	"depends": {

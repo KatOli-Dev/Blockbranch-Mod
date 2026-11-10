@@ -9,6 +9,11 @@ loom.runs.register('initialLoading'){
  vmArg('-Dblockbranch.initialLoadingSeed='+providers.gradleProperty('initialLoadingSeed').getOrElse('424242'))
  vmArg('-Dblockbranch.initialLoadingPreset='+providers.gradleProperty('initialLoadingPreset').getOrElse('blockbranch:realistic'))
  vmArg('-Dblockbranch.initialLoadingReopen='+providers.gradleProperty('initialLoadingReopen').getOrElse('false'))
+ if(providers.gradleProperty('sectionCopiesSmoke').isPresent()){
+  vmArg('-Dblockbranch.sectionCopiesSmoke=true')
+  vmArg('-Dblockbranch.sectionCopiesSmokeResult='+initialDir.file('copies-result.txt').asFile.absolutePath)
+ }
+ if(providers.gradleProperty('renderPatchesRuntime').isPresent())vmArg('-Dblockbranch.renderPatches='+providers.gradleProperty('renderPatchesRuntime').get())
  programArgs('--username','InitialLoading','--width','1024','--height','576')
 }
 tasks.register('prepareInitialLoading'){doLast{

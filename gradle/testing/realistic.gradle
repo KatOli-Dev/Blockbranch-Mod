@@ -20,6 +20,14 @@ tasks.register('checkRealisticDrainage', JavaExec) {
     maxHeapSize = '512m'
 }
 tasks.named('check') { dependsOn tasks.named('checkRealisticShape'), tasks.named('checkRealisticDrainage') }
+// Whole-section ore vein and cave lattice fast paths, block for block against the per-block rules.
+tasks.register('checkSectionGeneration', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'blockbranch.metallurgy.SectionGenerationCheck'
+    maxHeapSize = '512m'
+}
+tasks.named('check') { dependsOn tasks.named('checkSectionGeneration') }
 tasks.register('checkAlpineScree', JavaExec) {
     dependsOn tasks.named('testClasses')
     classpath = sourceSets.test.runtimeClasspath
