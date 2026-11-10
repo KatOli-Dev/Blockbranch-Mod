@@ -23,6 +23,11 @@ loom {
 	}
 }
 
+// Optional version-specific internals can be omitted while updating Minecraft.
+if (providers.gradleProperty("renderPatches").getOrElse("true") == "false") {
+	sourceSets.named("client") { java.exclude("blockbranch/client/performance/render/patch/**") }
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")

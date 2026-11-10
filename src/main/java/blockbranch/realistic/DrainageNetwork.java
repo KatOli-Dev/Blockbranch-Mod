@@ -33,8 +33,11 @@ public final class DrainageNetwork {
     boolean surfaceReserved(int x,int z){return surfaceReservations.reserved(x,z);}
     // Fixed per-network budget: 131072 exact samples; the preformation view
     // has an independent budget. Entries retain only immutable scalar samples.
-    private final long[] sampleKeys = new long[1 << 17];
-    private final Sample[] sampleCache = new Sample[sampleKeys.length];
+    // Lock-free: a slot holds one immutable entry, so a racy read sees null, an older
+    // entry or a newer one, never a key paired with another column's sample (final-field
+    // publication). A monitor here was contended by every generation worker.
+    private record CachedSample(long key, Sample value) {}
+    private final CachedSample[] sampleCache = new CachedSample[1 << 17];
     private final short[] ground;
     private final int[] parent, root, area, water;
     private final boolean[] ocean;
@@ -230,11 +233,9 @@ public final class DrainageNetwork {
     public Sample sample(int x,int z) {
         long key=(x&0xffffffffL)|((long)z<<32);
         int slot=(int)mix(key)&(sampleCache.length-1);
-        synchronized(sampleCache){
-            var found=sampleCache[slot];
-            if(found!=null&&sampleKeys[slot]==key)return found;
-        }
-        // Compute outside the lock; concurrent misses may safely duplicate this
+        var found=sampleCache[slot];
+        if(found!=null&&found.key==key)return found.value;
+        // Concurrent misses may safely duplicate this
         // pure calculation. Structural relief callbacks bypass this cache.
         // The preformation view shares every base-field input and disables only
         // weathering. Reuse its exact immutable base sample instead of computing
@@ -249,7 +250,7 @@ public final class DrainageNetwork {
             value=weathered&&!base.structuralComparison?base.sample(x,z):sample(x,z,!structuralComparison);
             if(weathered)value=eroded().apply(x,z,value);
         }
-        synchronized(sampleCache){sampleKeys[slot]=key;sampleCache[slot]=value;}
+        sampleCache[slot]=new CachedSample(key,value);
         return value;
     }
     /** Definition-3 structure atlas only: immutable broad mesh, no local relief/cache work. */

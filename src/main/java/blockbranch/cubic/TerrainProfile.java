@@ -1,5 +1,8 @@
 package blockbranch.cubic;
 
+import blockbranch.metallurgy.SectionVeins;
+import blockbranch.realistic.UndergroundStructure;
+
 import java.util.*;
 import blockbranch.realistic.TerrainShape;
 import blockbranch.realistic.OreLayer;
@@ -225,13 +228,29 @@ public final class TerrainProfile {
     public CanopyLayer canopy() { return canopy; }
     public PalettedContainerRO<Holder<Biome>> biomes() { return biomes; }
     public BlockState state(int x,int y,int z) {
+        return state(x,y,z,null);
+    }
+    /**
+     * Scratch for evaluating every block of one section: lazily built cave lattice tables and
+     * ore vein masks that give the same answers as the per-block path. Single-threaded.
+     */
+    private final class SectionScratch {
+        private final int sectionY;
+        private UndergroundStructure.Section caves;
+        private SectionVeins veins;
+        private boolean cavesReady,veinsReady;
+        SectionScratch(int sectionY){this.sectionY=sectionY;}
+        UndergroundStructure.Section caves(){if(!cavesReady){caves=underground.section(sectionY);cavesReady=true;}return caves;}
+        SectionVeins veins(){if(!veinsReady){veins=ores.sectionVeins(sectionY,ground);veinsReady=true;}return veins;}
+    }
+    private BlockState state(int x,int y,int z,SectionScratch scratch) {
         int i=(z&15)*16+(x&15);
         var ice=floatingIce.state(x,y,z);if(ice!=null)return ice;
         var tree=canopy.state(x,y,z);
         var value=tree!=null ? tree : material(floor,ceiling,y,ground[i],water[i],scree[i],reedbed[i],riverMargin[i],sandyShore[i],meadow[i],woodland[i],steppe[i],boreal[i],warm[i],coldSteppe[i],desert[i]);
         if(underground.approachClears(x,y,z,ground[i])&&UndergroundLayer.approachMaterial(value))value=Blocks.AIR.defaultBlockState();
-        if((value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&underground.voidAt(x,y,z,ground[i]))value=Blocks.AIR.defaultBlockState();
-        return decorations.state(x,y,z,ores.state(x,y,z,ground[i],value,underground.enabled()));
+        if((value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&(scratch==null?underground.voidAt(x,y,z,ground[i]):underground.voidAt(x,y,z,ground[i],scratch.caves())))value=Blocks.AIR.defaultBlockState();
+        return decorations.state(x,y,z,ores.state(x,y,z,ground[i],value,underground.enabled(),scratch==null||!ores.enabled()?null:scratch.veins()));
     }
     public static BlockState material(int floor,int ceiling,int y,int ground,int water,int scree) {
         return material(floor,ceiling,y,ground,water,scree,0);
@@ -402,6 +421,17 @@ public final class TerrainProfile {
             default -> Blocks.AIR.defaultBlockState();
         };
     }
+    // Natural spawn surface per column. The profile is immutable; racing initializations or
+    // entry computations may duplicate work but always store the same value. MIN_VALUE marks an unset entry (top() never returns it).
+    private volatile int[] spawnTops;
+    /** {@code top(MOTION_BLOCKING_NO_LEAVES, x, z, ColumnLimits.MAX_Y-1)}, memoized for spawn attempts. */
+    public int spawnSurfaceTop(int x,int z){
+        var tops=spawnTops;
+        if(tops==null){tops=new int[256];Arrays.fill(tops,Integer.MIN_VALUE);spawnTops=tops;}
+        int i=(z&15)*16+(x&15),value=tops[i];
+        if(value==Integer.MIN_VALUE)tops[i]=value=top(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque(),x,z,ColumnLimits.MAX_Y-1);
+        return value;
+    }
     /** Highest matching Y plus one, with an inclusive query limit (like ColumnQueries). */
     public int top(Predicate<BlockState> predicate,int x,int z,int limit) {return dripstone.top(predicate,x,z,limit,oreTop(predicate,x,z,limit),y->state(x,y,z));}
     private int oreTop(Predicate<BlockState> predicate,int x,int z,int limit) {
@@ -555,12 +585,13 @@ public final class TerrainProfile {
         var empty=copyEmptyStatesIfKnown(sectionY);
         if(empty!=null)return empty;
         int bottom=sectionY<<4;
-        var first=state(0,bottom,0);
+        var scratch=new SectionScratch(sectionY);
+        var first=state(0,bottom,0,scratch);
         var blocks=new PalettedContainer<>(first,states);
         // The palette already contains first at every position. One pass both
         // detects variation and fills it, without evaluating a prefix twice.
         for(int y=0;y<16;y++) for(int z=0;z<16;z++) for(int x=0;x<16;x++) {
-            var value=state(x,bottom+y,z);
+            var value=state(x,bottom+y,z,scratch);
             if(value!=first)blocks.set(x,y,z,value);
         }
         return blocks;
@@ -603,7 +634,8 @@ public final class TerrainProfile {
     }
     private boolean scanEmptySection(int y){
         var trivial=trivialEmptiness(y);if(trivial!=null)return trivial;
-        for(int ly=0;ly<16;ly++)for(int z=0;z<16;z++)for(int x=0;x<16;x++)if(!state(x,(y<<4)+ly,z).isAir())return false;
+        var scratch=new SectionScratch(y);
+        for(int ly=0;ly<16;ly++)for(int z=0;z<16;z++)for(int x=0;x<16;x++)if(!state(x,(y<<4)+ly,z,scratch).isAir())return false;
         return true;
     }
     /** Trusted server's exact base result; never an edited section's occupancy. Not persisted. */

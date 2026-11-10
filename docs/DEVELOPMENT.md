@@ -363,6 +363,33 @@ software GPU). `-Dblockbranch.hardwareProfile=off|low` overrides detection.
 `checkHardwareTier` covers thresholds. Give a 4 GiB device at least `-Xmx2G` for
 normal play; its default heap is roughly 1 GiB. Existing options stay untouched.
 
+### Optional chunk rendering patches
+
+`RenderPatches` contains the master switch, per-patch switches and exact Minecraft
+version guard. Other versions load no patch mixins. Use `-PrenderPatches=false`
+to omit the version-specific patch sources during an update, or launch with
+`-Dblockbranch.renderPatches=off` for the eager snapshot path. Both retain the
+existing sparse-column behavior. Dedicated servers never load this client config.
+The deferred path captures only immutable, unedited base profiles; edits and
+received overlays retain eager snapshots. Disconnect clears the bounded cache,
+and in-flight results cannot repopulate it.
+
+`checkSectionGeneration` compares section ore masks to the original per-block
+vein rules and cave densities bit for bit. It runs in `test`/`check`. The native
+copy smoke also compares generated palettes to `TerrainProfile.state`, checks
+cache concurrency, edit isolation and disconnect. Run startup fresh/reopen with
+`-PsectionCopiesSmoke`; use `-PrenderPatchesRuntime=off` to check the fallback.
+Use the software/no-audio environment from the client examples above.
+
+For walking measurements, `runIntegratedWalking` accepts
+`-PintegratedWalkingHeap=1536m`, `-PintegratedWalkingView=6` and
+`-PintegratedWalkingSimulation=5`. Prepare `walking.jfc` in its fresh
+`integratedWalkingDirectory` from the installed JDK's `lib/jfr/profile.jfc`.
+Compare phase-2 `frames.csv` with matching baseline settings. Emulation is
+relative CPU evidence; automated passes establish neither hardware FPS nor
+visual acceptance. Run all builds/native workloads serially with
+`--max-workers=1 --no-parallel`, starting offline with cached dependencies.
+
 ### Optional tools and interpretation
 
 ```sh

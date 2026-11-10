@@ -42,6 +42,15 @@ public final class OreLayer {
         return state(localX,y,localZ,ground,host,false);
     }
     public BlockState state(int localX,int y,int localZ,int ground,BlockState host,boolean caves){
+        return state(localX,y,localZ,ground,host,caves,null);
+    }
+    /** Section veins for full-section generation; see {@link #state(int,int,int,int,BlockState,boolean,blockbranch.metallurgy.SectionVeins)}. */
+    public blockbranch.metallurgy.SectionVeins sectionVeins(int sectionY,int[] ground){
+        return definition>=3?new blockbranch.metallurgy.SectionVeins(seed,cx<<4,sectionY<<4,cz<<4,ground):null;
+    }
+    /** {@code veins}, when present, must come from {@link #sectionVeins} with the ground array this call's {@code ground} was read from. */
+    public BlockState state(int localX,int y,int localZ,int ground,BlockState host,boolean caves,blockbranch.metallurgy.SectionVeins veins){
+        if(veins!=null&&!veins.covers(y))veins=null;
         // Deep uranium never widens or populates the retained shallow proposal index.
         if(definition>=14&&ground-y>=blockbranch.metallurgy.UraniumVeins.MIN_DEPTH){
             if((host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))&&blockbranch.metallurgy.UraniumVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))return(host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.UraniumContent.DEEPSLATE_ORE:blockbranch.metallurgy.UraniumContent.ORE).defaultBlockState();
@@ -50,50 +59,71 @@ public final class OreLayer {
         if(definition>=2){
             var existing=proposals(localX,y,localZ,ground,host,caves);
             if(definition>=3&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.TinVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.TIN,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.MetallurgyContent.DEEPSLATE_TIN_ORE:blockbranch.metallurgy.MetallurgyContent.TIN_ORE).defaultBlockState();
             if(definition>=4&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.ZincVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.ZINC,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.ZincBrassContent.DEEPSLATE_ZINC_ORE:blockbranch.metallurgy.ZincBrassContent.ZINC_ORE).defaultBlockState();
             if(definition>=5&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.ManganeseVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.MANGANESE,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.SteelContent.DEEPSLATE_MANGANESE_ORE:blockbranch.metallurgy.SteelContent.MANGANESE_ORE).defaultBlockState();
             if(definition>=6&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.TungstenVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.TUNGSTEN,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.TungstenContent.DEEPSLATE_TUNGSTEN_ORE:blockbranch.metallurgy.TungstenContent.TUNGSTEN_ORE).defaultBlockState();
             if(definition>=7&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.NickelVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.NICKEL,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.StainlessContent.DEEPSLATE_NICKEL_ORE:blockbranch.metallurgy.StainlessContent.NICKEL_ORE).defaultBlockState();
             if(definition>=7&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.ChromiumVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.CHROMIUM,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.StainlessContent.DEEPSLATE_CHROMIUM_ORE:blockbranch.metallurgy.StainlessContent.CHROMIUM_ORE).defaultBlockState();
             if(definition>=8&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.LeadVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.LEAD,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.LeadContent.DEEPSLATE_LEAD_ORE:blockbranch.metallurgy.LeadContent.LEAD_ORE).defaultBlockState();
             if(definition>=9&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.FoolsDiamondVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.FOOLS_DIAMOND,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.FoolsDiamondContent.DEEPSLATE_ORE:blockbranch.metallurgy.FoolsDiamondContent.ORE).defaultBlockState();
             if(definition>=10&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.SilverVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.SILVER,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.PreciousContent.DEEPSLATE_SILVER_ORE:blockbranch.metallurgy.PreciousContent.SILVER_ORE).defaultBlockState();
             if(definition>=10&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.PlatinumVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.PLATINUM,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.PreciousContent.DEEPSLATE_PLATINUM_ORE:blockbranch.metallurgy.PreciousContent.PLATINUM_ORE).defaultBlockState();
             if(definition>=11&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.TitaniumVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.TITANIUM,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.TitaniumContent.DEEPSLATE_ORE:blockbranch.metallurgy.TitaniumContent.ORE).defaultBlockState();
             if(definition>=12&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.MagnetiteVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.MAGNETITE,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.MagnetiteContent.DEEPSLATE_ORE:blockbranch.metallurgy.MagnetiteContent.ORE).defaultBlockState();
             if(definition>=13&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.ResoniteVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.RESONITE,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.ResoniteContent.DEEPSLATE_ORE:blockbranch.metallurgy.ResoniteContent.ORE).defaultBlockState();
             if(definition>=15&&existing==host&&(host.is(Blocks.STONE)||host.is(Blocks.DEEPSLATE))
-                &&blockbranch.metallurgy.BismuthVeins.contains(seed,(cx<<4)+(localX&15),y,(cz<<4)+(localZ&15),ground-y))
+                &&vein(veins,blockbranch.metallurgy.SectionVeins.BISMUTH,localX,y,localZ,ground))
                 return (host.is(Blocks.DEEPSLATE)?blockbranch.metallurgy.BismuthContent.DEEPSLATE_ORE:blockbranch.metallurgy.BismuthContent.ORE).defaultBlockState();
             return existing;
         }
         return frozenV1(localX,y,localZ,ground,host,caves);
+    }
+    private boolean vein(blockbranch.metallurgy.SectionVeins veins,int ore,int lx,int y,int lz,int ground){
+        if(veins!=null)return veins.contains(ore,lx&15,y&15,lz&15);
+        int x=(cx<<4)+(lx&15),z=(cz<<4)+(lz&15),depth=ground-y;
+        return switch(ore){
+            case blockbranch.metallurgy.SectionVeins.TIN->blockbranch.metallurgy.TinVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.ZINC->blockbranch.metallurgy.ZincVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.MANGANESE->blockbranch.metallurgy.ManganeseVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.TUNGSTEN->blockbranch.metallurgy.TungstenVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.NICKEL->blockbranch.metallurgy.NickelVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.CHROMIUM->blockbranch.metallurgy.ChromiumVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.LEAD->blockbranch.metallurgy.LeadVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.FOOLS_DIAMOND->blockbranch.metallurgy.FoolsDiamondVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.SILVER->blockbranch.metallurgy.SilverVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.PLATINUM->blockbranch.metallurgy.PlatinumVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.TITANIUM->blockbranch.metallurgy.TitaniumVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.MAGNETITE->blockbranch.metallurgy.MagnetiteVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.RESONITE->blockbranch.metallurgy.ResoniteVeins.contains(seed,x,y,z,depth);
+            case blockbranch.metallurgy.SectionVeins.BISMUTH->blockbranch.metallurgy.BismuthVeins.contains(seed,x,y,z,depth);
+            default->throw new IllegalArgumentException("Unknown vein "+ore);
+        };
     }
     private BlockState frozenV1(int localX,int y,int localZ,int ground,BlockState host,boolean caves){
         if(!enabled()||(!host.is(Blocks.STONE)&&!host.is(Blocks.DEEPSLATE)))return host;

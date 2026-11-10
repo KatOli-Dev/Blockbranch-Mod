@@ -15,7 +15,7 @@ public final class WildlifeSpawnPosition {
         var windows=VerticalRuntime.activeSectionRanges(level,x,z);
         if(windows.isEmpty())return new BlockPos(x,level.getMinY(),z);
         var opaque=Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque();
-        int naturalTop=terrain.base().top(opaque,x,z,ColumnLimits.MAX_Y-1);
+        int naturalTop=terrain.base().spawnSurfaceTop(x,z);
         var heights=new HashSet<Integer>();
         for(var window:windows) {
             int min=window.min()<<4,max=(window.max()<<4)+15;
