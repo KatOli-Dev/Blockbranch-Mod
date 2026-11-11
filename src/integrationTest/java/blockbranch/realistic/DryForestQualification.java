@@ -34,6 +34,10 @@ public final class DryForestQualification {
             try(var input=new InputStreamReader(Objects.requireNonNull(DryForestQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){
                 fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
             }
+            if(fresh.get("shape_version").getAsInt()==260){
+                require(fresh.get("cool_desert_definition").getAsInt()==1,"Known complete cool-desert wrapper");
+                fresh.remove("cool_desert_definition");fresh.addProperty("shape_version",259);fresh.getAsJsonObject("additional_biomes").remove(CoolDesert.KEY);
+            }
             fresh.remove("type");require(fresh.get("shape_version").getAsInt()==259,"Reviewed current wrapping preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact fresh codec roundtrip");

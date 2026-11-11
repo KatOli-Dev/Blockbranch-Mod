@@ -82,6 +82,8 @@ public final class BlockbranchTestMod implements ModInitializer {
         if (Boolean.getBoolean("blockbranch.currentBiomeSurvey")) blockbranch.realistic.CurrentBiomeSurvey.register();
         if (Boolean.getBoolean("blockbranch.surfaceOwnershipQualification")) blockbranch.realistic.SurfaceOwnershipQualification.register();
         if (Boolean.getBoolean("blockbranch.surfaceBoundaryQualification")) blockbranch.realistic.SurfaceBoundaryQualification.register();
+        if (Boolean.getBoolean("blockbranch.coolDesertQualification")) blockbranch.realistic.CoolDesertQualification.register();
+        if (Boolean.getBoolean("blockbranch.published259Snapshot")) blockbranch.realistic.Published259Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published258Snapshot")) blockbranch.realistic.Published258Snapshot.register();
         if (Boolean.getBoolean("blockbranch.dryForestQualification")) blockbranch.realistic.DryForestQualification.register();
         if (Boolean.getBoolean("blockbranch.terrainAudit")) blockbranch.qa.TerrainLoadingAudit.register();
