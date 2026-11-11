@@ -23,6 +23,9 @@ public final class DrainageNetwork {
     private final boolean gravelReliefEnabled;
     private final boolean surfaceOwnership;
     private final DeepBasinRelief deepBasinRelief;
+    private final boolean landIceEnabled;
+    private volatile LandIceField landIce;
+    private volatile DrainageNetwork iceReference;
     private volatile DrainageNetwork unrelieved;
     private volatile GravelDesertRelief gravelRelief;
     private final CoastalHeadlands headlands;
@@ -71,6 +74,10 @@ public final class DrainageNetwork {
         this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,false);
     }
     DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief) {
+        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,false);
+    }
+    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled) {
+        this.landIceEnabled=landIceEnabled;
         this.deepBasinRelief=deepBasinRelief?new DeepBasinRelief(shape):null;
         this.surfaceOwnership=surfaceOwnership;
         this.gravelReliefEnabled=gravelReliefEnabled;
@@ -213,14 +220,23 @@ public final class DrainageNetwork {
 
     /** Immutable preformation view shares the solved graph, never a modified sample cache. */
     private DrainageNetwork(DrainageNetwork owner) {this(owner,false);}
-    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {
+    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {this(owner,erodedLandforms,false);}
+    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference) {
+        landIceEnabled=false;
         // Legacy reference views disable this final physical adjustment; apply once,
         // after the complete original surface, retaining its climate references.
-        deepBasinRelief=null;surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=false;
+        deepBasinRelief=completeReference?owner.deepBasinRelief:null;surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=completeReference&&owner.gravelReliefEnabled;
         ground=owner.ground;parent=owner.parent;root=owner.root;area=owner.area;water=owner.water;ocean=owner.ocean;
         tangentX=owner.tangentX;tangentZ=owner.tangentZ;
         nodeXs=owner.nodeXs;nodeZs=owner.nodeZs;edgeSlot=owner.edgeSlot;edgeControl=owner.edgeControl;
     }
+    /** Complete pre-ice physical foundation; no self-cooling or terrain feedback. */
+    DrainageNetwork iceReference(){
+        if(!landIceEnabled)return this;var value=iceReference;if(value!=null)return value;
+        synchronized(this){if(iceReference==null)iceReference=new DrainageNetwork(this,erodedLandforms,true);return iceReference;}
+    }
+    private LandIceField landIce(){var value=landIce;if(value!=null)return value;synchronized(this){if(landIce==null)landIce=new LandIceField(seed,iceReference());return landIce;}}
+    public int landIceThickness(int x,int z){return landIceEnabled&&!structuralComparison?landIce().thickness(x,z):0;}
     /** Original complete surface, including erosion/coasts; eligibility never feeds back from new relief. */
     DrainageNetwork gravelReference() {
         if(!gravelReliefEnabled)return this;
@@ -263,6 +279,7 @@ public final class DrainageNetwork {
             if(weathered)value=eroded().apply(x,z,value);
         }
         if(deepBasinRelief!=null&&!structuralComparison)value=deepBasinRelief.apply(this,x,z,value);
+        if(landIceEnabled&&!structuralComparison)value=landIce().apply(x,z,value);
         sampleCache[slot]=new CachedSample(key,value);
         return value;
     }

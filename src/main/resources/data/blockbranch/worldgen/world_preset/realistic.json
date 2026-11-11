@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 262,
+        "shape_version": 263,
+        "land_ice_definition": 1,
         "deep_basin_relief_definition": 1,
         "abyssal_trace_definition": 1,
         "cool_desert_definition": 1,
@@ -50,6 +51,7 @@
         "marine_shelf_biome": "blockbranch:open_marine_shelf_coastal_sea",
         "deep_ocean_biome": "blockbranch:deep_open_ocean_basin_bed",
         "additional_biomes": {
+          "land_ice": "blockbranch:perennial_alpine_icefield",
           "lush_caves": "minecraft:lush_caves",
           "deep_dark": "minecraft:deep_dark",
           "sulfur_caves": "minecraft:sulfur_caves",

@@ -14,7 +14,7 @@ public final class ColumnRuntime {
         PayloadTypeRegistry.clientboundPlay().register(ColumnPacket.TYPE,ColumnPacket.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TerrainWindowPacket.TYPE,TerrainWindowPacket.CODEC);
         ServerPlayConnectionEvents.JOIN.register((handler,sender,server)-> {
-            if(!ServerPlayNetworking.canSend(handler.player,ColumnPacket.TYPE)||!ServerPlayNetworking.canSend(handler.player,TerrainWindowPacket.TYPE)) { handler.disconnect(Component.literal("This server requires the same Blockbranch version (column protocol 70 / window protocol 71 / terrain profile 75 / canopy catalog 184 / boreal surface catalog 16 / short reed stacks / ore definition 15 / content catalog 21).")); return; }
+            if(!ServerPlayNetworking.canSend(handler.player,ColumnPacket.TYPE)||!ServerPlayNetworking.canSend(handler.player,TerrainWindowPacket.TYPE)) { handler.disconnect(Component.literal("This server requires the same Blockbranch version (column protocol 70 / window protocol 71 / terrain profile 76 / canopy catalog 184 / boreal surface catalog 16 / short reed stacks / land ice catalog 95 / ore definition 15 / content catalog 21).")); return; }
         });
         Blockbranch.LOGGER.info("Sparse vanilla columns: Overworld Y [{}, {}), horizontal ±{}",ColumnLimits.MIN_Y,ColumnLimits.MAX_Y,ColumnLimits.HORIZONTAL_LIMIT);
     }

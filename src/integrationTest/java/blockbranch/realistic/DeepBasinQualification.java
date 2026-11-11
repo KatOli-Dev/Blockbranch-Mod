@@ -25,6 +25,10 @@ public final class DeepBasinQualification {
         try{
             var level=server.overworld();var random=level.getChunkSource().randomState();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());JsonObject fresh;
             try(var in=new InputStreamReader(Objects.requireNonNull(DeepBasinQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){fresh=JsonParser.parseReader(in).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
+            if(fresh.get("shape_version").getAsInt()==263){
+                require(fresh.get("land_ice_definition").getAsInt()==1,"Known complete land-ice wrapper");
+                fresh.remove("land_ice_definition");fresh.addProperty("shape_version",262);fresh.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);
+            }
             fresh.remove("type");require(fresh.get("shape_version").getAsInt()==262,"Complete current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact262 roundtrip");
             var old=fresh.deepCopy();old.remove("deep_basin_relief_definition");old.addProperty("shape_version",261);var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();

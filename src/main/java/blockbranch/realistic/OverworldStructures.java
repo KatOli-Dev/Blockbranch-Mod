@@ -182,7 +182,11 @@ public final class OverworldStructures {
         random.setDecorationSeed(level.getSeed()^0x47454f44454e4154L,chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ());
         if(random.nextInt(24)!=0)return;
         int x=chunk.getPos().getMinBlockX()+random.nextInt(16),z=chunk.getPos().getMinBlockZ()+random.nextInt(16);
-        int y=Math.max(TerrainShape.FLOOR+40,g.drainage(level.getLevel().getChunkSource().randomState()).sample(x,z).height()-48-random.nextInt(209));
+        var terrain=g.drainage(level.getLevel().getChunkSource().randomState());
+        // Ice is new overburden, not uplifted rock. Keep subsurface native
+        // features below the original bed rather than inside a thick ice body.
+        if(g.landIceDefinition()>0)terrain=terrain.iceReference();
+        int y=Math.max(TerrainShape.FLOOR+40,terrain.sample(x,z).height()-48-random.nextInt(209));
         level.registryAccess().lookupOrThrow(Registries.FEATURE).getOrThrow(net.minecraft.resources.ResourceKey.create(Registries.FEATURE,Identifier.withDefaultNamespace("amethyst_geode"))).value()
             .place(level,g,random,new BlockPos(x,y,z));
     }
@@ -190,6 +194,7 @@ public final class OverworldStructures {
     private static void smallStructures(WorldGenLevel level,ChunkAccess chunk,RealisticGenerator g,WorldgenRandom random){
         var features=level.registryAccess().lookupOrThrow(Registries.FEATURE);
         var terrain=g.drainage(level.getLevel().getChunkSource().randomState());
+        if(g.landIceDefinition()>0)terrain=terrain.iceReference();
         var room=features.getOrThrow(net.minecraft.resources.ResourceKey.create(Registries.FEATURE,Identifier.withDefaultNamespace("monster_room"))).value();
         random.setDecorationSeed(level.getSeed()^0x4e4154495645524fL,chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ());
         if(g.reimaginedDefinition()==0)for(int i=0;i<14;i++){
