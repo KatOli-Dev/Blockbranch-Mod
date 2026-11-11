@@ -83,6 +83,8 @@ public final class BlockbranchTestMod implements ModInitializer {
         if (Boolean.getBoolean("blockbranch.surfaceOwnershipQualification")) blockbranch.realistic.SurfaceOwnershipQualification.register();
         if (Boolean.getBoolean("blockbranch.surfaceBoundaryQualification")) blockbranch.realistic.SurfaceBoundaryQualification.register();
         if (Boolean.getBoolean("blockbranch.coolDesertQualification")) blockbranch.realistic.CoolDesertQualification.register();
+        if (Boolean.getBoolean("blockbranch.abyssalTraceQualification")) blockbranch.realistic.AbyssalTraceQualification.register();
+        if (Boolean.getBoolean("blockbranch.published260Snapshot")) blockbranch.realistic.Published260Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published259Snapshot")) blockbranch.realistic.Published259Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published258Snapshot")) blockbranch.realistic.Published258Snapshot.register();
         if (Boolean.getBoolean("blockbranch.dryForestQualification")) blockbranch.realistic.DryForestQualification.register();

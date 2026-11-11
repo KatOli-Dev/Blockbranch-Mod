@@ -13,7 +13,7 @@ public final class CanopyLayer {
     public static final int ACACIA_WOOD_CODE=169;
     /** Codes 170..172 are mangrove bark on the Y/X/Z axis for redwood boles. */
     public static final int REDWOOD_WOOD_CODE=170;
-    public static final int LAST_CODE=REDWOOD_WOOD_CODE+2;
+    public static final int LAST_CODE=blockbranch.realistic.AbyssalTraces.LAST;
     public static final int STATE_BITS=8,STATE_MASK=(1<<STATE_BITS)-1;
     public static final CanopyLayer EMPTY=new CanopyLayer(new int[0]);
     private static final BlockState[] STATES=states();
@@ -107,6 +107,7 @@ public final class CanopyLayer {
         for(int i=0;i<5;i++)states[164+i]=dead[i].defaultBlockState();
         states[ACACIA_WOOD_CODE]=Blocks.ACACIA_WOOD.defaultBlockState();
         for(int i=0;i<3;i++)states[REDWOOD_WOOD_CODE+i]=Blocks.MANGROVE_WOOD.defaultBlockState().setValue(RotatedPillarBlock.AXIS,axes[i]);
+        for(int form=0;form<3;form++)for(int facing=0;facing<4;facing++)states[blockbranch.realistic.AbyssalTraces.FIRST+form*4+facing]=blockbranch.realistic.BenthicTraceContent.TRACE.defaultBlockState().setValue(blockbranch.realistic.BenthicTraceBlock.FORM,form).setValue(blockbranch.realistic.BenthicTraceBlock.FACING,faces[facing]);
         return states;
     }
 }

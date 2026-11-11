@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 260,
+        "shape_version": 261,
+        "abyssal_trace_definition": 1,
         "cool_desert_definition": 1,
         "dry_forest_definition": 1,
         "surface_ownership_definition": 1,

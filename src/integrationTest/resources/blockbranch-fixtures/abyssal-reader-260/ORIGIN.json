@@ -1,0 +1,32 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "12e0512ec0da852ac30d6b923777813473b48c0e",
+  "method": "Complete original public schema260 production in native JVM, before production edits; development collector/registration/run setup only. Original production diff empty.",
+  "productionFiles": 2026,
+  "productionManifestSHA256": "5ba2e2cc38dfd9fcd48ccde694e8ecb255d17c5a18594b275706ee8c301547bd",
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "9dc1768ed8054144762aa2cb292d1e7bdde2148ffd8cfe81f7b450114218565c",
+    "collectorSha256": "16f87329bb20df3f65ddc9856a29ca278d9a443d11bd16c914d75cdbe1b80706"
+  },
+  "collector": "src/integrationTest/java/blockbranch/realistic/Published260Snapshot.java",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "ab56887a6d38e2890463556de3aaf0880c5a9b732e33b7d00fdc6e751026f534"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/ScreeBiomeSource.java",
+      "sha256": "7577b08ed37e3d4c9bfeed450cfba2c3099a64ee5d7845e5897d7951ebe3c16c"
+    },
+    {
+      "path": "src/main/java/blockbranch/cubic/TerrainProfile.java",
+      "sha256": "de202aa6a2fa7f6b1759218a73c1a9818b1d47ce6dc06e0c85766c2621ebd93b"
+    },
+    {
+      "path": "src/main/java/blockbranch/cubic/ColumnWorldFormat.java",
+      "sha256": "f75b627bfa5bddb808a46b03cda7888ef5ef6bfcb744eb50b06331eafabc6b4a"
+    }
+  ],
+  "limits": "Three fixed 14400-point grids, fixed physical/native witnesses and original native profile NBT hashes, actual saved gold edit. Finite original full-production oracle; never refresh from candidate output. Frozen reader still shares candidate helpers; original whole-production outputs independently cover these inputs."
+}

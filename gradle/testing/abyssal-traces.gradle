@@ -1,0 +1,117 @@
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/abyssal-reader-260')
+def readerClasses=layout.buildDirectory.dir('abyssal-reader-260')
+def runtimeReader=layout.buildDirectory.dir('abyssal-reader-runtime')
+def readerFiles=fileTree(readerClasses).matching {include '**/*.class'}
+def snapshotCollector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published260Snapshot.java')
+tasks.register('verifyAbyssalReader') {
+    inputs.dir(fixture);inputs.file(snapshotCollector)
+    doLast {
+        def origin=new JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+        assert origin.repository=='KatOli-Dev/Blockbranch-Mod' && origin.commit=='12e0512ec0da852ac30d6b923777813473b48c0e'
+        assert origin.sources*.path.toSet()==['src/main/java/blockbranch/realistic/RealisticGenerator.java','src/main/java/blockbranch/realistic/ScreeBiomeSource.java','src/main/java/blockbranch/cubic/TerrainProfile.java','src/main/java/blockbranch/cubic/ColumnWorldFormat.java'].toSet()
+        origin.sources.each { row ->
+            def bytes=fixture.file(row.path.substring('src/main/java/'.length())).asFile.bytes
+            assert MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString()==row.sha256:'Frozen surface reader changed: '+row.path
+        }
+        assert MessageDigest.getInstance('SHA-256').digest(fixture.file(origin.baseline.path).asFile.bytes).encodeHex().toString()==origin.baseline.sha256:'Frozen independent published output changed'
+        assert MessageDigest.getInstance('SHA-256').digest(snapshotCollector.asFile.bytes).encodeHex().toString()==origin.baseline.collectorSha256:'Snapshot collector changed; review its independent recording provenance'
+    }
+}
+tasks.register('compileAbyssalReader',JavaCompile) {
+    dependsOn 'classes','verifyAbyssalReader'
+    source fixture.asFile;include '**/*.java'
+    classpath=sourceSets.main.output+sourceSets.main.compileClasspath
+    destinationDirectory=readerClasses
+    javaCompiler=javaToolchains.compilerFor { languageVersion=JavaLanguageVersion.of(25) }
+    options.release=25;options.compilerArgs.add('-proc:none')
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyAbyssalReader'}
+
+// Preserve source bytes and algorithms. Rename only the two compiled class-name
+// prefixes so the original reader can use package-private production helpers in
+// the same loader/package. An isolated child loader does not have that access.
+tasks.register('relocateAbyssalReader') {
+    dependsOn 'compileAbyssalReader'
+    inputs.dir(readerClasses);outputs.dir(runtimeReader)
+    doLast {
+        readerFiles.files.each { inputFile ->
+            def buffer=new ByteArrayOutputStream()
+            inputFile.withDataInputStream { input ->
+                def output=new DataOutputStream(buffer)
+                output.writeInt(input.readInt());output.writeShort(input.readUnsignedShort());output.writeShort(input.readUnsignedShort())
+                int count=input.readUnsignedShort();output.writeShort(count)
+                for(int i=1;i<count;i++) {
+                    int tag=input.readUnsignedByte();output.writeByte(tag)
+                    if(tag==1){def value=input.readUTF();if(inputFile.path.replace('\\','/').contains('/blockbranch/cubic/TerrainProfile'))value=value.replace('blockbranch/cubic/TerrainProfile','blockbranch/cubic/Published260TerrainProfile');if(inputFile.path.replace('\\','/').contains('/blockbranch/cubic/ColumnWorldFormat'))value=value.replace('blockbranch/cubic/ColumnWorldFormat','blockbranch/cubic/Published260ColumnWorldFormat');output.writeUTF(value.replace('blockbranch/realistic/RealisticGenerator','blockbranch/realistic/Published260RealisticGenerator').replace('blockbranch/realistic/ScreeBiomeSource','blockbranch/realistic/Published260ScreeBiomeSource'))}
+                    else {
+                        int length=tag in [3,4,9,10,11,12,17,18]?4:tag in [5,6]?8:tag in [7,8,16,19,20]?2:tag==15?3:-1
+                        assert length>0:'Unexpected constant-pool tag '+tag
+                        output.write(input.readNBytes(length));if(tag in [5,6])i++
+                    }
+                }
+                output.write(input.readAllBytes());output.flush()
+            }
+            def relative=readerClasses.get().asFile.toPath().relativize(inputFile.toPath()).toString().replace('RealisticGenerator','Published260RealisticGenerator').replace('ScreeBiomeSource','Published260ScreeBiomeSource').replace('TerrainProfile','Published260TerrainProfile').replace('ColumnWorldFormat','Published260ColumnWorldFormat')
+            def target=runtimeReader.get().file(relative).asFile;target.parentFile.mkdirs();target.bytes=buffer.toByteArray()
+        }
+    }
+}
+sourceSets.integrationTest.output.dir([builtBy:'relocateAbyssalReader'],runtimeReader)
+
+def original=layout.projectDirectory.dir(providers.gradleProperty('published260Directory').getOrElse('build/published260-snapshot'))
+loom.runs.register('published260Snapshot') {
+    server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.published260Snapshot=true')
+    vmArg('-Dblockbranch.published260SnapshotResult='+original.file('result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished260Snapshot'){doLast{
+    assert !original.file('server.properties').asFile.exists():'Use a fresh directory; retain original evidence.'
+    original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+    original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished260Snapshot'){
+    dependsOn 'preparePublished260Snapshot'
+    doLast{assert original.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+
+tasks.register('checkAbyssalTraces',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AbyssalTraceCheck';maxHeapSize='2G'}
+tasks.named('check'){dependsOn 'checkAbyssalTraces'}
+tasks.register('surveyAbyssalTraceSites',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AbyssalTraceSiteSurvey';maxHeapSize='2G'}
+def dir=layout.projectDirectory.dir(providers.gradleProperty('abyssalTraceDirectory').getOrElse('build/abyssal-trace-native'))
+def reopen=providers.gradleProperty('abyssalTraceReopen').isPresent(),legacy=providers.gradleProperty('abyssalTraceLegacy').isPresent()
+def blockOnly=providers.gradleProperty('abyssalTraceBlockOnly').isPresent()
+def resultName=(blockOnly?'block-':'')+(reopen?'reopen-':'')+'result.txt'
+loom.runs.register('abyssalTraceQualification') {
+    server();runDir(dir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.abyssalTraceQualification=true');vmArg('-Dblockbranch.abyssalTraceResult='+dir.file(resultName).asFile.absolutePath)
+    vmArg('-Dblockbranch.abyssalTraceLegacy='+legacy);vmArg('-Dblockbranch.abyssalTraceReopen='+reopen)
+    vmArg('-Dblockbranch.abyssalTraceBlockOnly='+blockOnly)
+}
+tasks.register('prepareAbyssalTraceQualification'){doLast{
+    assert !dir.file(resultName).asFile.exists():'Preserve results; use a fresh directory or reopen phase.'
+    if(legacy||reopen||blockOnly)assert dir.file('survey/level.dat').asFile.exists():'Requires an actual closed world, not synthesized metadata.'
+    else assert !dir.file('server.properties').asFile.exists():'Use a fresh directory.'
+    dir.asFile.mkdirs();dir.file('eula.txt').asFile.text='eula=true\n'
+    dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25619\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runAbyssalTraceQualification'){
+    dependsOn 'prepareAbyssalTraceQualification','relocateAbyssalReader'
+    doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}
+}
+
+
+def visualDir=layout.projectDirectory.dir(providers.gradleProperty('abyssalTraceVisualDirectory').getOrElse('build/abyssal-trace-visual'))
+loom.runs.register('abyssalTraceVisual'){
+    client();runDir(visualDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.abyssalTraceVisual=true');vmArg('-Dblockbranch.abyssalTraceVisualDirectory='+visualDir.asFile.absolutePath)
+    programArgs('--username','AbyssalTraceView','--width','1024','--height','576')
+}
+tasks.register('prepareAbyssalTraceVisual'){doLast{
+    assert !visualDir.file('options.txt').asFile.exists():'Preserve captures; use a fresh abyssalTraceVisualDirectory.'
+    visualDir.asFile.mkdirs();visualDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runAbyssalTraceVisual'){dependsOn 'prepareAbyssalTraceVisual';doLast{assert visualDir.file('result.txt').asFile.text.startsWith('PASS')}}

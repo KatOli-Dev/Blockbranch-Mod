@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 260, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 261, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");

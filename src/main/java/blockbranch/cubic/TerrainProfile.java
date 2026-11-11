@@ -174,6 +174,8 @@ public final class TerrainProfile {
         for(int value:canopy.encode()) {
             int key=value>>>CanopyLayer.STATE_BITS,y=(key>>>8)+blockbranch.realistic.TerrainShape.FLOOR,i=key&255;
             int code=value&CanopyLayer.STATE_MASK;
+            boolean benthic=code>=blockbranch.realistic.AbyssalTraces.FIRST&&code<=blockbranch.realistic.AbyssalTraces.LAST;
+            if(benthic&&(y!=ground[i]+1||water[i]-ground[i]-1<3000||water[i]-ground[i]-1>6000||(riverMargin[i]!=5&&riverMargin[i]!=6)))throw new IllegalArgumentException("Benthic trace requires abyssal source water and fine-bed support");
             if(code>=46&&code<=60||code>=73&&code<=77||code>=81&&code<=88||code==90||code==91||code==149||blockbranch.realistic.WarmOcean.aquatic(code))ticking.add(y>>4);
             if((code==89||code==90)&&(water[i]<=ground[i]+1||y>=water[i]))throw new IllegalArgumentException("Kelp requires existing source water");
             // Ice is per-block material, not a quart-biome paint mask. The profile
@@ -182,7 +184,7 @@ public final class TerrainProfile {
             if(code==72&&(water[i]<=ground[i]+1||y>=water[i]))throw new IllegalArgumentException("Waterlogged root requires existing source water");
             if(code==61&&(water[i]<=ground[i]+1||y!=water[i]))throw new IllegalArgumentException("Lily pad requires existing water surface");
             if(blockbranch.realistic.WarmOcean.aquatic(code)&&(water[i]<=ground[i]+1||y>=water[i]))throw new IllegalArgumentException("Reef requires existing source water");
-            if(y<=ground[i] || y>=ceiling || water[i]>ground[i]&&y<water[i]&&code!=72&&code!=89&&code!=90&&code!=91&&!blockbranch.realistic.WarmOcean.aquatic(code) || code!=91&&y-ground[i]>CANOPY_WINDOW) throw new IllegalArgumentException("Canopy intersects terrain/water or exceeds its surface window");
+            if(y<=ground[i] || y>=ceiling || water[i]>ground[i]&&y<water[i]&&code!=72&&code!=89&&code!=90&&code!=91&&!benthic&&!blockbranch.realistic.WarmOcean.aquatic(code) || code!=91&&y-ground[i]>CANOPY_WINDOW) throw new IllegalArgumentException("Canopy intersects terrain/water or exceeds its surface window");
         }
         for(int z=0;z<16;z++)for(int x=0;x<16;x++){
             int low=floatingIce.bottom(x,z),high=floatingIce.top(x,z),i=z*16+x;
@@ -690,6 +692,7 @@ public final class TerrainProfile {
         // Short stacks retain literal stem counts: 2/3 above depth-one/two beds.
         // Older readers reject that geometry, so gate only profiles that use it.
         if(shortReeds(ground,water,reedbed)){tag.putInt("reed_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",74);}
+        if(benthicTraces(canopy.encode())){tag.putInt("benthic_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",75);}
         if(caveBiomes.enabled())tag.put("cave_biomes",caveBiomes.encode(factory));
         if(litCaves.enabled()){tag.put("lit_caves",litCaves.encode());tag.putInt("dripstone_definition",dripstone.definition());tag.putInt("ore_definition",ores.enabled()?ores.definition():0);}
         if(dripstone.definition()==2){tag.putInt("dripstone_definition",2);tag.putInt("lit_cave_definition",litCaves.enabled()?2:0);}
@@ -710,7 +713,17 @@ public final class TerrainProfile {
         return tag;
     }
     private static boolean freshBoreal(byte[] cover){for(byte value:cover)if(value>14)return true;return false;}
+    private static boolean benthicTraces(int[] blocks){for(int value:blocks)if((value&CanopyLayer.STATE_MASK)>=blockbranch.realistic.AbyssalTraces.FIRST)return true;return false;}
     public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {
+        // Appended environmental states are explicit reader barriers; profiles
+        // without them keep their exact historical versions and descriptors.
+        if(tag.getIntOr("version",-1)==75){
+            int base=tag.getInt("benthic_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing benthic foundation"));
+            if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74)throw new IllegalArgumentException("Unsupported benthic foundation");
+            if(!benthicTraces(tag.getIntArray("canopy").orElseThrow(()->new IllegalArgumentException("Missing benthic canopy"))))throw new IllegalArgumentException("Benthic wrapper requires traces");
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("benthic_base_profile_version");return decode(foundation,factory,false,false);
+        }
+        if(tag.contains("benthic_base_profile_version")||benthicTraces(tag.getIntArray("canopy").orElse(new int[0])))throw new IllegalArgumentException("Benthic states on legacy profile");
         return decode(tag,factory,false,false);
     }
     private static boolean shortReeds(int[] ground,int[] water,byte[] cover) {
