@@ -5,8 +5,10 @@ import java.util.ArrayList;
 /** Finite pure-Java falsification of the rock-bed datum for polar underground rules.
  * New continental ice is overburden, not uplifted rock: eligibility and placement that
  * are defined relative to rock (deep-dark/Ancient City, underground structures, cave
- * approaches, dripstone/sulfur/lit-cave depth) must read the ice-free bed under a sheet
- * and the unchanged published surface everywhere else, including legacy alpine caps.
+ * entry routes) read the ice-free bed under a sheet, cave approaches plan nothing on or
+ * under a sheet, and everything reads the unchanged published surface elsewhere, including
+ * legacy alpine caps. Dripstone, lush and sulfur labels deliberately stay overburden-relative
+ * (see the limitation block below).
  * Window sites are the fixed native-cost coordinates; counts below are measurements at
  * seed 424242, not Earth-area claims or tuned acceptance thresholds. */
 public final class PolarUndergroundCheck {
@@ -72,11 +74,13 @@ public final class PolarUndergroundCheck {
             require(!DeepDarkHabitat.eligibleColumn(SEED,mx,mz,polar),"The saved city start column is no longer deep-dark eligible");
             require(!DeepDarkHabitat.contains(SEED,mx,DeepDarkHabitat.proposalY(polar.bedHeight(mx,mz)),mz,polar),"The city first gate rejects that start");
         }
-        // Documented limitation, not a datum switch: dripstone (48..320 m) and sulfur (96..384 m)
-        // windows stay overburden-relative because the saved foundation decode validates them
-        // before the perennial wrapper attaches. Under a thick sheet the window therefore lies
-        // wholly in the ice, so no such label or formation is planned there (an omission, never
-        // a feature embedded in ice). Pinned so a later datum change is a deliberate versioned one.
+        // Documented limitation, not a datum switch: dripstone (48..320 m), lush and sulfur
+        // (96..384 m) labels stay overburden-relative because the saved foundation decode
+        // validates them before the perennial wrapper attaches. They use surface-relative
+        // depth with no rock test, so under sheets thinner than the window the label can still
+        // fall on ice cells. This block only pins arithmetic on the datum (for sheets of at
+        // least the dripstone depth the dripstone window lies wholly in ice); it does not call
+        // the production dripstone or sulfur code, so it is not a guard against changing it.
         int insideIce=0,thick=0;
         for(int[] site:SITES)for(int dz=-512;dz<=512;dz+=32)for(int dx=-512;dx<=512;dx+=32){
             int x=site[0]+dx,z=site[1]+dz,ice=polar.continentalIceThickness(x,z);if(ice<DripstoneHabitat.MAX_DEPTH)continue;
@@ -84,7 +88,16 @@ public final class PolarUndergroundCheck {
             if(surface-DripstoneHabitat.MAX_DEPTH>rock)insideIce++;
             require(rock-DripstoneHabitat.MIN_DEPTH>TerrainShape.FLOOR+32,"The rock-relative window stays inside the terrain envelope");
         }
-        require(thick>20&&insideIce==thick,"Overburden-relative cave windows sit wholly in the ice for every thick-sheet column (documented omission): "+insideIce+"/"+thick);
+        require(thick>20&&insideIce==thick,"Dripstone-depth arithmetic: window wholly in ice for every sheet of at least 320 m: "+insideIce+"/"+thick);
+        // Positive eligibility: a sheet over a bed above 384 m must keep the mask the ice-free bed
+        // gives it (the negative checks above could pass if everything were ineligible).
+        int highBedSheet=0,highBedEligible=0;
+        for(int z=-2000000;z<=2000000;z+=16000)for(int x=-2000000;x<=2000000;x+=16000){
+            if(polar.continentalIceThickness(x,z)==0||polar.bedHeight(x,z)<=384)continue;
+            highBedSheet++;
+            boolean e=DeepDarkHabitat.eligibleColumn(SEED,x,z,polar);if(e)highBedEligible++;
+            require(e==DeepDarkHabitat.eligibleColumn(SEED,x,z,bed),"Sheet over a high bed keeps bed eligibility at "+x+","+z);
+        }
         // Bounded evidence for the ore-index fallback: rock relief per chunk stays far below the
         // ~800 m at which OreLayer.bind stops indexing (native repro covers the mechanism itself).
         int maxRelief=0;
@@ -101,7 +114,7 @@ public final class PolarUndergroundCheck {
             for(int z=cz*CaveApproach.CELL;z<cz*CaveApproach.CELL+CaveApproach.CELL;z+=4)for(int x=cx*CaveApproach.CELL;x<cx*CaveApproach.CELL+CaveApproach.CELL;x+=4)
                 if(found.affectsColumn(x,z)){present++;require(polar.continentalIceThickness(x,z)==0,"Approach column under a sheet at "+x+","+z);}
         }
-        System.out.println("PASS polar underground datum: max sampled chunk rock relief "+maxRelief+" m, "+insideIce+"/"+thick+" thick-sheet columns keep overburden-relative cave windows wholly in ice (no labels/formations planned), "+checked+" datum points ("+sheetPoints+" under a sheet), "+sheetChunks+" sheet-bearing chunks, deep-dark masks identical to the ice-free bed ("+maskColumnsAlt+" eligible columns), "+survey+" surveyed approaches/"+present+" affected columns, none under a sheet");
+        System.out.println("PASS polar underground datum: max sampled chunk rock relief "+maxRelief+" m, "+insideIce+"/"+thick+" sheets of at least 320 m keep the dripstone window wholly in ice (arithmetic only), "+highBedSheet+" surveyed sheet columns over a bed above 384 m ("+highBedEligible+" eligible), "+checked+" datum points ("+sheetPoints+" under a sheet), "+sheetChunks+" sheet-bearing chunks, deep-dark masks identical to the ice-free bed ("+maskColumnsAlt+" eligible columns), "+survey+" surveyed approaches/"+present+" affected columns, none under a sheet");
     }
     private static void require(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private PolarUndergroundCheck(){}
