@@ -39,7 +39,7 @@ public final class CoolDesertQualification {
                 require(fresh.get("abyssal_trace_definition").getAsInt()==1,"Known complete abyssal wrapper");
                 fresh.remove("abyssal_trace_definition");fresh.addProperty("shape_version",260);
             }
-            fresh.remove("type");require(fresh.get("shape_version").getAsInt()==260,"Reviewed current preset");
+            fresh.remove("type");if(fresh.has("continental_ice_definition")){fresh.remove("continental_ice_definition");fresh.addProperty("shape_version",264);fresh.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}require(fresh.get("shape_version").getAsInt()==260,"Reviewed current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Fresh codec exact roundtrip");
             var old=fresh.deepCopy();old.remove("cool_desert_definition");old.addProperty("shape_version",259);old.getAsJsonObject("additional_biomes").remove(CoolDesert.KEY);

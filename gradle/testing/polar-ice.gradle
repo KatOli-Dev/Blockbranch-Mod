@@ -1,0 +1,108 @@
+// Explicit original-reader recording and matched finite cost probes; not benchmarks in check.
+def original=layout.projectDirectory.dir(providers.gradleProperty('published264Directory').getOrElse('build/polar-ice-evidence/published-1f9e74a'))
+loom.runs.register('published264Snapshot') {
+ server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.published264Snapshot=true');vmArg('-Dblockbranch.published264SnapshotResult='+original.file('result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished264Snapshot'){doLast{
+ assert !original.file('server.properties').asFile.exists():'Retain original evidence; use a fresh directory.'
+ original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+ original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25623\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished264Snapshot'){dependsOn 'preparePublished264Snapshot';doLast{assert original.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def cost=layout.projectDirectory.dir(providers.gradleProperty('polarCostDirectory').getOrElse('build/polar-ice-evidence/cost-original'))
+loom.runs.register('polarCost') {
+ server();runDir(cost.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.polarCost=true');vmArg('-Dblockbranch.polarCostDirectory='+cost.asFile.absolutePath)
+}
+tasks.register('preparePolarCost'){doLast{
+ assert !cost.file('server.properties').asFile.exists():'Retain measurements; choose a fresh directory.'
+ cost.asFile.mkdirs();cost.file('eula.txt').asFile.text='eula=true\n'
+ cost.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25623\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runPolarCost'){dependsOn 'preparePolarCost';doLast{assert cost.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('polarVisualDirectory').getOrElse('build/polar-ice-evidence/visual-original'))
+loom.runs.register('polarVisual') {
+ client();runDir(visual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.polarVisual=true');vmArg('-Dblockbranch.polarVisualDirectory='+visual.asFile.absolutePath)
+ vmArg('-Dblockbranch.polarVisualReopen='+providers.gradleProperty('polarVisualReopen').isPresent())
+ programArgs('--username','PolarView','--width','1024','--height','576')
+}
+tasks.register('preparePolarVisual'){doLast{
+ assert !visual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runPolarVisual'){dependsOn 'preparePolarVisual';doLast{assert visual.file(providers.gradleProperty('polarVisualReopen').isPresent()?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('checkContinentalIce',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceCheck';maxHeapSize='2G'}
+tasks.register('checkPolarUnderground',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.PolarUndergroundCheck';maxHeapSize='2G';args(providers.gradleProperty('polarUndergroundReport').isPresent() ? ['report'] : [])}
+tasks.register('checkOreRebind',JavaExec){dependsOn 'integrationTestClasses';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.OreRebindCheck';maxHeapSize='1G';workingDir=layout.buildDirectory.dir('polar-underground-evidence/ore-bootstrap').get().asFile;doFirst{workingDir.mkdirs()}}
+tasks.named('check'){dependsOn 'checkContinentalIce','checkPolarUnderground','checkOreRebind'}
+tasks.register('assessContinentalIce',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceAssessment';maxHeapSize='2G'}
+
+// The original source is useful for codec/surface comparisons, but shares
+// candidate helpers. Whole-original output hashes are the independent oracle.
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/polar-reader-264')
+def reader=layout.buildDirectory.dir('polar-reader-264'),runtime=layout.buildDirectory.dir('polar-reader-runtime')
+def readerFiles=fileTree(reader).matching{include '**/*.class'}
+def snapshotCollector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published264Snapshot.java')
+tasks.register('verifyPolarIceReader'){
+    inputs.dir(fixture);inputs.file(snapshotCollector)
+    doLast{
+        def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+        assert origin.repository=='KatOli-Dev/Blockbranch-Mod'&&origin.commit=='1f9e74a16aa29f2455cba49289e218e3b1bb04d7'
+        assert origin.sources*.path.toSet()==['src/main/java/blockbranch/realistic/RealisticGenerator.java','src/main/java/blockbranch/realistic/ScreeBiomeSource.java','src/main/java/blockbranch/cubic/TerrainProfile.java'].toSet()
+        def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+        origin.sources.each{assert hash(fixture.file(it.path.substring('src/main/java/'.length())).asFile)==it.sha256}
+        assert hash(fixture.file(origin.baseline.path).asFile)==origin.baseline.sha256
+        assert hash(snapshotCollector.asFile)==origin.baseline.collectorSha256
+    }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyPolarIceReader'}
+tasks.register('compilePolarIceReader',JavaCompile){
+    dependsOn 'classes','verifyPolarIceReader';source fixture.asFile;include '**/*.java'
+    classpath=sourceSets.main.output+sourceSets.main.compileClasspath;destinationDirectory=reader
+    javaCompiler=javaToolchains.compilerFor{languageVersion=JavaLanguageVersion.of(25)}
+    options.release=25;options.compilerArgs.add('-proc:none')
+}
+tasks.register('relocatePolarIceReader'){
+    dependsOn 'compilePolarIceReader';inputs.dir(reader);outputs.dir(runtime)
+    doLast{readerFiles.files.each{inputFile->
+        def bytes=new ByteArrayOutputStream()
+        inputFile.withDataInputStream{input->
+            def output=new DataOutputStream(bytes);output.writeInt(input.readInt());output.writeShort(input.readUnsignedShort());output.writeShort(input.readUnsignedShort())
+            int count=input.readUnsignedShort();output.writeShort(count)
+            for(int i=1;i<count;i++){
+                int tag=input.readUnsignedByte();output.writeByte(tag)
+                if(tag==1){def value=input.readUTF();if(inputFile.path.replace('\\','/').contains('/blockbranch/cubic/TerrainProfile'))value=value.replace('blockbranch/cubic/TerrainProfile','blockbranch/cubic/Published264TerrainProfile');output.writeUTF(value.replace('blockbranch/realistic/RealisticGenerator','blockbranch/realistic/Published264RealisticGenerator').replace('blockbranch/realistic/ScreeBiomeSource','blockbranch/realistic/Published264ScreeBiomeSource'))}
+                else{int length=tag in [3,4,9,10,11,12,17,18]?4:tag in [5,6]?8:tag in [7,8,16,19,20]?2:tag==15?3:-1;assert length>0;output.write(input.readNBytes(length));if(tag in [5,6])i++}
+            }
+            output.write(input.readAllBytes());output.flush()
+        }
+        def relative=reader.get().asFile.toPath().relativize(inputFile.toPath()).toString().replace('RealisticGenerator','Published264RealisticGenerator').replace('TerrainProfile','Published264TerrainProfile').replace('ScreeBiomeSource','Published264ScreeBiomeSource')
+        def target=runtime.get().file(relative).asFile;target.parentFile.mkdirs();target.bytes=bytes.toByteArray()
+    }}
+}
+sourceSets.integrationTest.output.dir([builtBy:'relocatePolarIceReader'],runtime)
+
+def dir=layout.projectDirectory.dir(providers.gradleProperty('polarDirectory').getOrElse('build/polar-ice-native'))
+def legacy=providers.gradleProperty('polarLegacy').isPresent(),reopen=providers.gradleProperty('polarReopen').isPresent()
+def planOnly=providers.gradleProperty('polarSavedPlanOnly').isPresent()
+def resultName=(providers.gradleProperty('polarInterfaceOnly').isPresent()?'interface-':planOnly?'plan-':'')+(reopen?'reopen-':'')+'result.txt'
+loom.runs.register('continentalIceQualification'){
+ server();runDir(dir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.polarApiFirstOnly='+providers.gradleProperty('polarApiFirstOnly').isPresent());vmArg('-Dblockbranch.polarApiFirst='+providers.gradleProperty('polarApiFirst').isPresent());vmArg('-Dblockbranch.polarInterfaceOnly='+providers.gradleProperty('polarInterfaceOnly').isPresent());vmArg('-Dblockbranch.polarSavedPlanOnly='+planOnly);vmArg('-Dblockbranch.polarQualification=true');vmArg('-Dblockbranch.polarResult='+dir.file(resultName).asFile.absolutePath)
+ vmArg('-Dblockbranch.polarLegacy='+legacy);vmArg('-Dblockbranch.polarReopen='+reopen)
+}
+tasks.register('prepareContinentalIceQualification'){doLast{
+ assert !dir.file(resultName).asFile.exists():'Retain evidence; choose a fresh directory or reopen phase.'
+ if(legacy||reopen)assert dir.file('survey/level.dat').asFile.exists():'Requires an actual closed world.'
+ else assert !dir.file('server.properties').asFile.exists():'Use a fresh directory.'
+ dir.asFile.mkdirs();dir.file('eula.txt').asFile.text='eula=true\n'
+ dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25623\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runContinentalIceQualification'){dependsOn 'prepareContinentalIceQualification','relocatePolarIceReader';doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}}
+
+

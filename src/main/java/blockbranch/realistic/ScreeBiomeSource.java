@@ -68,7 +68,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     void bind(long seed,DrainageNetwork drainage,ClimateField climate,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.LitCaveLayer> growth) {
         if(caveBiomeDefinition>0&&growth==null)throw new IllegalArgumentException("Cave biomes require a fixed-seed moss planner");
         var ecology=new GroundEcology.Field(drainage::sample,climate);
-        BiomeResolver rawSurface = (x, y, z) -> landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
+        BiomeResolver rawSurface = (x, y, z) -> drainage.continentalIceThickness(x*4,z*4)>0 ? palette.additional(ContinentalIceField.KEY) : drainage.permanentFreshwaterLid(x*4,z*4) ? palette.additional("frozen_river") : landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
             : LakeSediment.contains(x*4,z*4,drainage) ? lake
             : SnowySlopes.contains(x*4,z*4,drainage,climate) ? palette.additional("snowy_slopes")
             : MountainPeaks.kind(seed,x*4,z*4,drainage,climate)>0 ? palette.additional(MountainPeaks.key(MountainPeaks.kind(seed,x*4,z*4,drainage,climate)))
@@ -123,7 +123,7 @@ public final class ScreeBiomeSource extends BiomeSource {
             : palette.additional().containsKey("jungle")&&Jungle.contains(seed,x*4,z*4,drainage,climate)?palette.additional("jungle")
             : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):surfaceOwnershipEnabled&&ColdRockland.contains(x*4,z*4,drainage,climate)?palette.additional(ColdRockland.KEY):coolDesertEnabled&&CoolDesert.eligible(x*4,z*4,drainage,climate)?palette.additional(CoolDesert.KEY):fallback;
         BiomeResolver surface=(x,y,z)->MapPreviewSamples.surface(x,y,z,rawSurface);
-        BiomeResolver full=dripstoneDefinition==0?surface:(x,y,z)->{double province=DripstoneHabitat.province(seed,x*4,z*4);return province>.2&&DripstoneHabitat.contains(seed,x*4,y*4,z*4,drainage.sample(x*4,z*4).height(),province)?palette.additional("dripstone_caves"):surface.getNoiseBiome(x,y,z);};
+        BiomeResolver full=dripstoneDefinition==0?surface:(x,y,z)->{double province=DripstoneHabitat.province(seed,x*4,z*4);return province>.2&&DripstoneHabitat.contains(seed,x*4,y*4,z*4,drainage.bedHeight(x*4,z*4),province)?palette.additional("dripstone_caves"):surface.getNoiseBiome(x,y,z);};
         java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves=null;
         if(caveBiomeDefinition>0){
             var cache=new java.util.LinkedHashMap<Long,blockbranch.cubic.CaveBiomeLayer>(64,.75f,true);
@@ -134,7 +134,7 @@ public final class ScreeBiomeSource extends BiomeSource {
                 synchronized(cache){var old=cache.get(key);if(old!=null)return old;cache.put(key,result);if(cache.size()>64)cache.remove(cache.keySet().iterator().next());}return result;
             };
             var base=full;var selection=caves;
-            full=(x,y,z)->selection.apply(x>>2,z>>2).biome(x,y,z,drainage.sample(x*4,z*4).height(),base.getNoiseBiome(x,y,z));
+            full=(x,y,z)->selection.apply(x>>2,z>>2).biome(x,y,z,drainage.bedHeight(x*4,z*4),base.getNoiseBiome(x,y,z));
         }
         if(deepDarkEnabled){
             var base=full;
@@ -162,7 +162,7 @@ public final class ScreeBiomeSource extends BiomeSource {
         if (sizeX != 4 || sizeZ != 4) return b.full;
         var cached=columnResolver(current,minX,minZ);if(dripstoneDefinition==0)return cached;
         double[] provinces=new double[16];int[] heights=new int[16];
-        for(int z=0;z<4;z++)for(int x=0;x<4;x++){int i=z*4+x,wx=(minX+x)*4,wz=(minZ+z)*4;provinces[i]=DripstoneHabitat.province(b.seed,wx,wz);if(provinces[i]>.2||b.caves!=null)heights[i]=b.drainage.sample(wx,wz).height();}
+        for(int z=0;z<4;z++)for(int x=0;x<4;x++){int i=z*4+x,wx=(minX+x)*4,wz=(minZ+z)*4;provinces[i]=DripstoneHabitat.province(b.seed,wx,wz);if(provinces[i]>.2||b.caves!=null)heights[i]=b.drainage.bedHeight(wx,wz);}
         var caveLayer=b.caves==null?null:b.caves.apply(minX>>2,minZ>>2);
         if(caveLayer!=null&&((minX&3)!=0||(minZ&3)!=0))return b.full;
         final int darkMask=deepDarkEnabled?OverworldStructures.deepDarkMask(b.seed,minX>>2,minZ>>2,b.drainage):0;

@@ -29,15 +29,16 @@ public final class TerrainProfile {
     private final DripstoneLayer decorations;
     private final LitCaveLayer litCaves;
     private final CaveBiomeLayer caveBiomes;
-    private final int[] ground, water;
+    private final int[] ground, water,rockGround;
     /** Highest canopy block above local ground. 48 until redwoods; taller canopies exist only in schema-257 worlds, which earlier readers refuse. */
     public static final int CANOPY_WINDOW=128;
     private final byte[] scree, reedbed, riverMargin, sandyShore, meadow,woodland,steppe,boreal,warm,coldSteppe,desert;
     private final PalettedContainerRO<Holder<Biome>> biomes;
     private final Strategy<BlockState> states;
     private final int highest;
-    private final int highestGround,lowestGround;
+    private final int highestGround,lowestGround,highestRock,lowestRock;
     private final FloatingIceLayer floatingIce;
+    private final PerennialIceLayer perennialIce;
     private final CanopyLayer canopy;
     private final Set<Integer> boundaries;
     private final Set<Integer> randomTickSections;
@@ -100,6 +101,11 @@ public final class TerrainProfile {
     }
     private TerrainProfile(int floor,int ceiling,int[] ground,int[] water,byte[] scree,byte[] reedbed,byte[] riverMargin,byte[] sandyShore,byte[] meadow,byte[] woodland,byte[] steppe,byte[] boreal,byte[] warm,byte[] coldSteppe,byte[] desert,CanopyLayer canopy,FloatingIceLayer floatingIce,
             PalettedContainerRO<Holder<Biome>> biomes,Strategy<BlockState> states,UndergroundLayer underground,OreLayer ores) {
+        this(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,underground,ores,PerennialIceLayer.EMPTY);
+    }
+    private TerrainProfile(int floor,int ceiling,int[] ground,int[] water,byte[] scree,byte[] reedbed,byte[] riverMargin,byte[] sandyShore,byte[] meadow,byte[] woodland,byte[] steppe,byte[] boreal,byte[] warm,byte[] coldSteppe,byte[] desert,CanopyLayer canopy,FloatingIceLayer floatingIce,
+            PalettedContainerRO<Holder<Biome>> biomes,Strategy<BlockState> states,UndergroundLayer underground,OreLayer ores,PerennialIceLayer perennialIce) {
+        this.perennialIce=perennialIce;
         if(ores.enabled()&&(floor!=TerrainShape.FLOOR||ceiling!=TerrainShape.CEILING))throw new IllegalArgumentException("Ores require Realistic terrain envelope");
         if(underground.enabled()&&(floor!=TerrainShape.FLOOR||ceiling!=TerrainShape.CEILING))throw new IllegalArgumentException("Underground requires its defined terrain envelope");
         this.underground=underground;this.dripstone=DripstoneLayer.NONE;this.decorations=DripstoneLayer.NONE;this.litCaves=LitCaveLayer.NONE;this.caveBiomes=CaveBiomeLayer.NONE;
@@ -107,8 +113,10 @@ public final class TerrainProfile {
             throw new IllegalArgumentException("Invalid procedural column bounds");
         this.floatingIce=floatingIce;
         this.highestGround=Arrays.stream(ground).max().orElse(floor);this.lowestGround=Arrays.stream(ground).min().orElse(floor);
-        this.ores=ores.bind(lowestGround,highestGround);
         this.floor=floor; this.ceiling=ceiling; this.ground=ground.clone(); this.water=water.clone();
+        int[] rock=this.ground;
+        if(perennialIce.enabled())for(int z=0;z<16;z++)for(int x=0;x<16;x++)if(perennialIce.grounded(x,z)){if(rock==this.ground)rock=this.ground.clone();rock[z*16+x]=perennialIce.bottom(x,z)-1;}
+        rockGround=rock;lowestRock=rock==this.ground?lowestGround:Arrays.stream(rock).min().orElse(floor);highestRock=rock==this.ground?highestGround:Arrays.stream(rock).max().orElse(floor);this.ores=ores.bind(lowestRock,highestRock);
         if(underground.hasApproach())for(int z=0;z<16;z++)for(int x=0;x<16;x++)
             if(water[z*16+x]!=Integer.MIN_VALUE&&underground.approachColumn(x,z))throw new IllegalArgumentException("Approach crosses source water");
         this.scree=scree.clone(); this.reedbed=reedbed.clone(); this.riverMargin=riverMargin.clone();this.sandyShore=sandyShore.clone();this.meadow=meadow.clone();this.woodland=woodland.clone();this.steppe=steppe.clone();this.boreal=boreal.clone();this.warm=warm.clone();this.coldSteppe=coldSteppe.clone();this.desert=desert.clone();this.canopy=canopy;
@@ -190,6 +198,14 @@ public final class TerrainProfile {
             int low=floatingIce.bottom(x,z),high=floatingIce.top(x,z),i=z*16+x;
             if(low!=Integer.MIN_VALUE&&(low<=ground[i]||water[i]!=TerrainShape.SEA_LEVEL||high>=ceiling))throw new IllegalArgumentException("Floating ice requires marine water and seabed clearance");
         }
+        for(int z=0;z<16;z++)for(int x=0;x<16;x++){
+            int low=perennialIce.bottom(x,z),high=perennialIce.top(x,z),i=z*16+x;if(low==Integer.MIN_VALUE)continue;
+            if(low<=floor||high>=ceiling)throw new IllegalArgumentException("Perennial ice exceeds parent profile bounds");
+            if(perennialIce.grounded(x,z)){
+                if(high!=ground[i]||water[i]!=Integer.MIN_VALUE||scree[i]!=0||reedbed[i]!=0||riverMargin[i]!=0||sandyShore[i]!=0||meadow[i]!=0||woodland[i]!=0||steppe[i]!=0||boreal[i]!=0||warm[i]!=0||coldSteppe[i]!=0||desert[i]!=0||canopy.topY(x,z)!=Integer.MIN_VALUE)throw new IllegalArgumentException("Grounded perennial ice conflicts with surface cover");
+            }else if(high!=water[i]-1||low<=ground[i]||water[i]==TerrainShape.SEA_LEVEL&&floatingIce.top(x,z)!=Integer.MIN_VALUE||canopy.topY(x,z)!=Integer.MIN_VALUE)throw new IllegalArgumentException("Freshwater lid requires exposed source water and no decorations");
+        }
+        transitions.addAll(perennialIce.boundaries());
         top=Math.max(top,floatingIce.highest());transitions.addAll(floatingIce.sections());
         top=Math.max(top,canopy.highest());transitions.addAll(canopy.sections());
         highest=top; boundaries=Collections.unmodifiableSet(transitions);randomTickSections=Collections.unmodifiableSet(ticking);
@@ -199,7 +215,7 @@ public final class TerrainProfile {
     private TerrainProfile(TerrainProfile base,DripstoneLayer layer,LitCaveLayer growth,CaveBiomeLayer caveBiomes){
         this.caveBiomes=caveBiomes;
         if(layer!=base.dripstone)layer.validate(base);if(growth!=base.litCaves)growth.validate(base);litCaves=growth;floor=base.floor;ceiling=base.ceiling;underground=base.underground;ores=base.ores;dripstone=layer;decorations=layer==base.dripstone&&growth==base.litCaves?base.decorations:layer.withLitCaves(growth);
-        ground=base.ground;water=base.water;scree=base.scree;reedbed=base.reedbed;riverMargin=base.riverMargin;sandyShore=base.sandyShore;meadow=base.meadow;woodland=base.woodland;steppe=base.steppe;boreal=base.boreal;warm=base.warm;coldSteppe=base.coldSteppe;desert=base.desert;biomes=base.biomes;states=base.states;highest=base.highest;highestGround=base.highestGround;lowestGround=base.lowestGround;floatingIce=base.floatingIce;canopy=base.canopy;
+        ground=base.ground;water=base.water;rockGround=base.rockGround;scree=base.scree;reedbed=base.reedbed;riverMargin=base.riverMargin;sandyShore=base.sandyShore;meadow=base.meadow;woodland=base.woodland;steppe=base.steppe;boreal=base.boreal;warm=base.warm;coldSteppe=base.coldSteppe;desert=base.desert;biomes=base.biomes;states=base.states;highest=base.highest;highestGround=base.highestGround;lowestGround=base.lowestGround;highestRock=base.highestRock;lowestRock=base.lowestRock;floatingIce=base.floatingIce;perennialIce=base.perennialIce;canopy=base.canopy;
         var b=new TreeSet<>(base.boundaries);b.addAll(layer.sections());b.addAll(growth.sections());boundaries=Set.copyOf(b);var t=new TreeSet<>(base.randomTickSections);t.addAll(layer.ticking());randomTickSections=Set.copyOf(t);
     }
     public TerrainProfile withDripstone(DripstoneLayer layer){if(layer==dripstone)return this;var base=dripstone.enabled()?withLayers(underground,ores).withLitCaves(litCaves):this;return layer.enabled()?new TerrainProfile(base,layer):base;}
@@ -209,22 +225,33 @@ public final class TerrainProfile {
     public LitCaveLayer litCaves(){return litCaves;}
     public int ceiling(){return ceiling;}
     public DripstoneLayer dripstone(){return dripstone;}
-    public Holder<Biome> biome(int x,int absoluteQuartY,int z){return caveBiomes.biome(x,absoluteQuartY,z,groundHeight((x&3)*4,(z&3)*4),dripstone.biome(x,absoluteQuartY,z,groundHeight((x&3)*4,(z&3)*4),biomes.get(x&3,absoluteQuartY&3,z&3)));}
+    public Holder<Biome> biome(int x,int absoluteQuartY,int z){return caveBiomes.biome(x,absoluteQuartY,z,habitatGround((x&3)*4,(z&3)*4),dripstone.biome(x,absoluteQuartY,z,habitatGround((x&3)*4,(z&3)*4),biomes.get(x&3,absoluteQuartY&3,z&3)));}
     private PalettedContainerRO<Holder<Biome>> sectionBiomes(int sy){
-        if(!dripstone.mayHaveBiome(sy,lowestGround,highestGround)&&!caveBiomes.mayHaveBiome(sy,lowestGround,highestGround))return biomes;var result=biomes.recreate();boolean changed=false;
+        if(!dripstone.mayHaveBiome(sy,lowestRock,highestRock)&&!caveBiomes.mayHaveBiome(sy,lowestRock,highestRock))return biomes;var result=biomes.recreate();boolean changed=false;
         for(int y=0;y<4;y++)for(int z=0;z<4;z++)for(int x=0;x<4;x++){var value=biome(x,(sy<<2)+y,z);result.set(x,y,z,value);changed|=!value.equals(biomes.get(x,y,z));}return changed?blockbranch.realistic.UniformSnapshots.compactBiomes(result):biomes;
     }
     public OreLayer ores(){return ores;}
-    public boolean oresMayAffect(int sy){return ores.mayAffect(sy,lowestGround,highestGround);}
-    public TerrainProfile withLayers(UndergroundLayer layer,OreLayer oreLayer){return new TerrainProfile(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,layer,oreLayer);}
+    public boolean oresMayAffect(int sy){return ores.mayAffect(sy,lowestRock,highestRock);}
+    public TerrainProfile withLayers(UndergroundLayer layer,OreLayer oreLayer){return new TerrainProfile(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,layer,oreLayer,perennialIce);}
     public TerrainProfile withUnderground(UndergroundLayer layer) {
-        return new TerrainProfile(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,layer,ores);
+        return new TerrainProfile(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,layer,ores,perennialIce);
     }
+    public TerrainProfile withPerennialIce(PerennialIceLayer layer){
+        if(layer==perennialIce)return this;
+        var result=new TerrainProfile(floor,ceiling,ground,water,scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,canopy,floatingIce,biomes,states,underground,ores,layer);
+        return result.withDripstone(dripstone).withLitCaves(litCaves).withCaveBiomes(caveBiomes);
+    }
+    public PerennialIceLayer perennialIce(){return perennialIce;}
     public UndergroundLayer underground(){return underground;}
-    public boolean undergroundMayAffect(int sectionY){return underground.mayAffect(sectionY,highestGround);}
+    public boolean undergroundMayAffect(int sectionY){return underground.mayAffect(sectionY,highestRock);}
     public int highest() { return highest; }
     /** Immutable bare terrain datum, independent of surface block type and canopy. */
     public int groundHeight(int x,int z){return ground[(z&15)*16+(x&15)];}
+    private int rockHeight(int x,int z){return rockGround[(z&15)*16+(x&15)];}
+    /** Datum for dripstone and sulfur habitat windows, formations and cave labels: the rock surface, which is the
+     * ice-free bed under a grounded continental sheet (new ice is overburden) and exactly {@link #groundHeight}
+     * everywhere else, including legacy alpine caps and every profile without perennial ice. */
+    public int habitatGround(int x,int z){return rockHeight(x,z);}
     public Set<Integer> randomTickSections(){return randomTickSections;}
     public FloatingIceLayer floatingIce(){return floatingIce;}
     public CanopyLayer canopy() { return canopy; }
@@ -243,19 +270,20 @@ public final class TerrainProfile {
         private boolean cavesReady,veinsReady;
         SectionScratch(int sectionY){this.sectionY=sectionY;}
         UndergroundStructure.Section caves(){if(!cavesReady){caves=underground.section(sectionY);cavesReady=true;}return caves;}
-        SectionVeins veins(){if(!veinsReady){veins=ores.sectionVeins(sectionY,ground);veinsReady=true;}return veins;}
+        SectionVeins veins(){if(!veinsReady){veins=ores.sectionVeins(sectionY,rockGround);veinsReady=true;}return veins;}
     }
     private BlockState state(int x,int y,int z,SectionScratch scratch) {
         int i=(z&15)*16+(x&15);
+        var permanent=perennialIce.state(x,y,z);if(permanent!=null)return permanent;
         // Prescribed perennial bodies bury old openings; do not carve a new
         // approach or ore/decorative feature into their stored solid ice.
         if(blockbranch.realistic.LandIceField.encoded(coldSteppe[i])&&y<=ground[i]&&y>ground[i]-coldLayerDepth(coldSteppe[i]))return material(floor,ceiling,y,ground[i],water[i],0,0,0,0,0,0,0,0,0,coldSteppe[i],0);
         var ice=floatingIce.state(x,y,z);if(ice!=null)return ice;
         var tree=canopy.state(x,y,z);
         var value=tree!=null ? tree : material(floor,ceiling,y,ground[i],water[i],scree[i],reedbed[i],riverMargin[i],sandyShore[i],meadow[i],woodland[i],steppe[i],boreal[i],warm[i],coldSteppe[i],desert[i]);
-        if(underground.approachClears(x,y,z,ground[i])&&UndergroundLayer.approachMaterial(value))value=Blocks.AIR.defaultBlockState();
-        if((value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&(scratch==null?underground.voidAt(x,y,z,ground[i]):underground.voidAt(x,y,z,ground[i],scratch.caves())))value=Blocks.AIR.defaultBlockState();
-        return decorations.state(x,y,z,ores.state(x,y,z,ground[i],value,underground.enabled(),scratch==null||!ores.enabled()?null:scratch.veins()));
+        if(underground.approachClears(x,y,z,rockGround[i])&&UndergroundLayer.approachMaterial(value))value=Blocks.AIR.defaultBlockState();
+        if((value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&(scratch==null?underground.voidAt(x,y,z,rockGround[i]):underground.voidAt(x,y,z,rockGround[i],scratch.caves())))value=Blocks.AIR.defaultBlockState();
+        return decorations.state(x,y,z,ores.state(x,y,z,rockGround[i],value,underground.enabled(),scratch==null||!ores.enabled()?null:scratch.veins()));
     }
     public static BlockState material(int floor,int ceiling,int y,int ground,int water,int scree) {
         return material(floor,ceiling,y,ground,water,scree,0);
@@ -442,7 +470,7 @@ public final class TerrainProfile {
     public int top(Predicate<BlockState> predicate,int x,int z,int limit) {return dripstone.top(predicate,x,z,limit,oreTop(predicate,x,z,limit),y->state(x,y,z));}
     private int oreTop(Predicate<BlockState> predicate,int x,int z,int limit) {
         int result=shallowOreTop(predicate,x,z,limit);if(!ores.deepAffectsPredicate(predicate))return result;
-        int top=Math.min(limit,groundHeight(x,z)-blockbranch.metallurgy.UraniumVeins.MIN_DEPTH),bottom=Math.max(floor+1,groundHeight(x,z)-blockbranch.metallurgy.UraniumVeins.MAX_DEPTH);
+        int top=Math.min(limit,rockHeight(x,z)-blockbranch.metallurgy.UraniumVeins.MIN_DEPTH),bottom=Math.max(floor+1,rockHeight(x,z)-blockbranch.metallurgy.UraniumVeins.MAX_DEPTH);
         if(top<bottom||result>top+1)return result;
         // Skip the untouched gap; ordinary solid/fluid height predicates agree with their hosts.
         for(int y=top;y>=bottom;y--)if(predicate.test(state(x,y,z)))return y+1;
@@ -450,14 +478,14 @@ public final class TerrainProfile {
     }
     private int shallowOreTop(Predicate<BlockState> predicate,int x,int z,int limit) {
         int original=withoutOreTop(predicate,x,z,limit);if(!ores.enabled())return original;
-        int top=Math.min(limit,groundHeight(x,z)-OreLayer.MIN_DEPTH),bottom=Math.max(floor+1,groundHeight(x,z)-OreLayer.MAX_DEPTH);
+        int top=Math.min(limit,rockHeight(x,z)-OreLayer.MIN_DEPTH),bottom=Math.max(floor+1,rockHeight(x,z)-OreLayer.MAX_DEPTH);
         if(top<bottom||original>top+1||!ores.affectsPredicate(predicate))return original;
         for(int y=top;y>=bottom;y--)if(predicate.test(state(x,y,z)))return y+1;
         return withoutOreTop(predicate,x,z,bottom);
     }
     private int withoutOreTop(Predicate<BlockState> predicate,int x,int z,int limit) {
         int original=legacyTop(predicate,x,z,limit);
-        int roof=groundHeight(x,z)-blockbranch.realistic.UndergroundStructure.ROOF_THICKNESS;
+        int roof=rockHeight(x,z)-blockbranch.realistic.UndergroundStructure.ROOF_THICKNESS;
         if(!underground.enabled()||original>roof&&!underground.hasApproach())return original;
         int start=predicate.test(Blocks.AIR.defaultBlockState())?Math.min(limit,underground.hasApproach()?original-1:roof-1):original-1;
         if(start<floor)return original;
@@ -466,7 +494,13 @@ public final class TerrainProfile {
     }
     private int legacyTop(Predicate<BlockState> predicate,int x,int z,int limit) {
         int i=(z&15)*16+(x&15);
-        int overlay=Math.max(canopy.topY(x,z),floatingIce.top(x,z));
+        int low=perennialIce.bottom(x,z),high=perennialIce.top(x,z);
+        if(low!=Integer.MIN_VALUE&&perennialIce.grounded(x,z)&&limit>=low){
+            int y=Math.min(limit,high);if(y==high&&predicate.test(Blocks.SNOW_BLOCK.defaultBlockState()))return y+1;
+            if(y==high)y--;if(y>=low&&predicate.test(Blocks.PACKED_ICE.defaultBlockState()))return y+1;
+            limit=Math.min(limit,low-1);
+        }
+        int overlay=Math.max(Math.max(canopy.topY(x,z),floatingIce.top(x,z)),perennialIce.grounded(x,z)?Integer.MIN_VALUE:high);
         if(overlay!=Integer.MIN_VALUE && limit>ground[i]) {
             // Submerged overlays must not hide the source-water surface above them.
             if(water[i]>ground[i]){int fluidTop=Math.min(limit,water[i]-1);if(fluidTop>overlay&&predicate.test(Blocks.WATER.defaultBlockState()))return fluidTop+1;}
@@ -698,6 +732,7 @@ public final class TerrainProfile {
         if(shortReeds(ground,water,reedbed)){tag.putInt("reed_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",74);}
         if(benthicTraces(canopy.encode())){tag.putInt("benthic_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",75);}
         if(landIce(coldSteppe)){tag.putInt("land_ice_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",76);}
+        if(perennialIce.enabled()){tag.putInt("perennial_ice_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",77);tag.putIntArray("perennial_ice",perennialIce.encode());}
         if(caveBiomes.enabled())tag.put("cave_biomes",caveBiomes.encode(factory));
         if(litCaves.enabled()){tag.put("lit_caves",litCaves.encode());tag.putInt("dripstone_definition",dripstone.definition());tag.putInt("ore_definition",ores.enabled()?ores.definition():0);}
         if(dripstone.definition()==2){tag.putInt("dripstone_definition",2);tag.putInt("lit_cave_definition",litCaves.enabled()?2:0);}
@@ -720,41 +755,52 @@ public final class TerrainProfile {
     private static boolean freshBoreal(byte[] cover){for(byte value:cover)if(value>14)return true;return false;}
     private static boolean benthicTraces(int[] blocks){for(int value:blocks)if((value&CanopyLayer.STATE_MASK)>=blockbranch.realistic.AbyssalTraces.FIRST)return true;return false;}
     private static boolean landIce(byte[] roles){for(byte code:roles)if(blockbranch.realistic.LandIceField.encoded(code))return true;return false;}
-    public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {
+    public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {return decode(tag,factory,PerennialIceLayer.EMPTY);}
+    /** {@code ice} is the perennial-ice wrapper being unwrapped. The foundation is rebuilt with it attached from the start,
+     * so every foundation layer (dripstone, cave biomes, lit caves) is validated against the same rock datum it was
+     * planned with, never against the ice-inclusive surface. */
+    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,PerennialIceLayer ice) {
+        if(tag.getIntOr("version",-1)==77){
+            int base=tag.getInt("perennial_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing perennial-ice foundation"));
+            if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75&&base!=76)throw new IllegalArgumentException("Unsupported perennial-ice foundation");
+            var wrapped=new PerennialIceLayer(tag.getIntArray("perennial_ice").orElseThrow());if(!wrapped.enabled())throw new IllegalArgumentException("Empty perennial-ice wrapper");
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("perennial_ice_base_profile_version");foundation.remove("perennial_ice");return decode(foundation,factory,wrapped).withPerennialIce(wrapped);
+        }
+        if(tag.contains("perennial_ice_base_profile_version")||tag.contains("perennial_ice"))throw new IllegalArgumentException("Perennial ice on legacy profile");
         if(tag.getIntOr("version",-1)==76){
             int base=tag.getInt("land_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing land-ice foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75)throw new IllegalArgumentException("Unsupported land-ice foundation");
             if(!landIce(tag.getByteArray("cold_steppe").orElseThrow()))throw new IllegalArgumentException("Land-ice wrapper requires ice roles");
-            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("land_ice_base_profile_version");return decodeFoundation(foundation,factory);
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("land_ice_base_profile_version");return decodeFoundation(foundation,factory,ice);
         }
         if(tag.contains("land_ice_base_profile_version")||landIce(tag.getByteArray("cold_steppe").orElse(new byte[0])))throw new IllegalArgumentException("Land ice on legacy profile");
-        return decodeFoundation(tag,factory);
+        return decodeFoundation(tag,factory,ice);
     }
-    private static TerrainProfile decodeFoundation(CompoundTag tag,PalettedContainerFactory factory) {
+    private static TerrainProfile decodeFoundation(CompoundTag tag,PalettedContainerFactory factory,PerennialIceLayer ice) {
         // Appended environmental states are explicit reader barriers; profiles
         // without them keep their exact historical versions and descriptors.
         if(tag.getIntOr("version",-1)==75){
             int base=tag.getInt("benthic_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing benthic foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74)throw new IllegalArgumentException("Unsupported benthic foundation");
             if(!benthicTraces(tag.getIntArray("canopy").orElseThrow(()->new IllegalArgumentException("Missing benthic canopy"))))throw new IllegalArgumentException("Benthic wrapper requires traces");
-            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("benthic_base_profile_version");return decode(foundation,factory,false,false);
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("benthic_base_profile_version");return decode(foundation,factory,false,false,ice);
         }
         if(tag.contains("benthic_base_profile_version")||benthicTraces(tag.getIntArray("canopy").orElse(new int[0])))throw new IllegalArgumentException("Benthic states on legacy profile");
-        return decode(tag,factory,false,false);
+        return decode(tag,factory,false,false,ice);
     }
     private static boolean shortReeds(int[] ground,int[] water,byte[] cover) {
         if(ground.length!=256||water.length!=256||cover.length!=256)return false;
         for(int i=0;i<256;i++)if((cover[i]==2||cover[i]==3)&&water[i]-ground[i]==cover[i])return true;
         return false;
     }
-    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,boolean freshBoreal,boolean shortReeds) {
+    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,boolean freshBoreal,boolean shortReeds,PerennialIceLayer ice) {
         if(tag.getIntOr("version",-1)==74){
             if(shortReeds||freshBoreal)throw new IllegalArgumentException("Nested reed profile wrapper");
             int base=tag.getInt("reed_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing reed foundation version"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72)throw new IllegalArgumentException("Unsupported reed foundation version");
             if(!shortReeds(tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("reedbed").orElseThrow()))throw new IllegalArgumentException("Reed profile wrapper requires short emergent stems");
             var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("reed_base_profile_version");
-            return decode(foundation,factory,false,true);
+            return decode(foundation,factory,false,true,ice);
         }
         if(tag.contains("reed_base_profile_version"))throw new IllegalArgumentException("Reed foundation descriptor on legacy profile");
         if(!shortReeds&&shortReeds(tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("reedbed").orElseThrow()))throw new IllegalArgumentException("Short emergent reeds on legacy profile");
@@ -764,13 +810,13 @@ public final class TerrainProfile {
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70)throw new IllegalArgumentException("Unsupported boreal foundation version");
             if(!freshBoreal(tag.getByteArray("boreal").orElseThrow()))throw new IllegalArgumentException("Boreal profile wrapper requires appended cover");
             var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("base_profile_version");
-            return decode(foundation,factory,true,shortReeds);
+            return decode(foundation,factory,true,shortReeds,ice);
         }
         if(tag.contains("base_profile_version"))throw new IllegalArgumentException("Boreal foundation descriptor on legacy profile");
         if(!freshBoreal&&freshBoreal(tag.getByteArray("boreal").orElseThrow()))throw new IllegalArgumentException("Appended boreal cover on legacy profile");
         if(tag.getIntOr("version",-1)==70){
             var foundation=tag.copy();foundation.putInt("version",68);foundation.remove("cave_biomes");
-            var base=decode(foundation,factory,freshBoreal,shortReeds);
+            var base=decode(foundation,factory,freshBoreal,shortReeds,ice);
             return base.withCaveBiomes(CaveBiomeLayer.decode(tag.getCompound("cave_biomes").orElseThrow(),factory,base.litCaves()));
         }
         if(tag.contains("cave_biomes"))throw new IllegalArgumentException("Cave biome descriptor on legacy profile");
@@ -778,6 +824,7 @@ public final class TerrainProfile {
         var profile=new TerrainProfile(tag.getIntOr("floor",0),tag.getIntOr("ceiling",0),
             tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("scree").orElseThrow(),tag.getByteArray("reedbed").orElseThrow(),tag.getByteArray("river_margin").orElseThrow(),tag.getByteArray("sandy_shore").orElseThrow(),tag.getByteArray("meadow").orElseThrow(),tag.getByteArray("woodland").orElseThrow(),tag.getByteArray("steppe").orElseThrow(),tag.getByteArray("boreal").orElseThrow(),tag.getByteArray("warm").orElseThrow(),tag.getByteArray("cold_steppe").orElseThrow(),tag.getByteArray("desert").orElseThrow(),new CanopyLayer(tag.getIntArray("canopy").orElseThrow()),tag.getIntOr("version",-1)==57?FloatingIceLayer.EMPTY:new FloatingIceLayer(tag.getIntArray("floating_ice").orElseThrow(()->new IllegalArgumentException("Missing floating ice layer"))),
             factory.biomeContainerCodec().parse(NbtOps.INSTANCE,tag.getCompoundOrEmpty("biomes")).getOrThrow(),factory.blockStatesStrategy());
+        if(ice.enabled())profile=profile.withPerennialIce(ice);
         if(tag.getIntOr("version",-1)<66&&tag.contains("lit_caves"))throw new IllegalArgumentException("Lit cave descriptor on legacy profile");
         if(tag.getIntOr("version",-1)==64||tag.getIntOr("version",-1)==66||tag.getIntOr("version",-1)==68){
             var under=UndergroundLayer.decode(tag.getCompound("underground").orElseThrow(()->new IllegalArgumentException("Missing cave descriptor")));

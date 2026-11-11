@@ -34,7 +34,7 @@ public final class LandIceQualification {
                 require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
                 fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
             }
-            fresh.remove("type");require(fresh.get("shape_version").getAsInt()==263,"Complete current preset");
+            fresh.remove("type");if(fresh.has("continental_ice_definition")){fresh.remove("continental_ice_definition");fresh.addProperty("shape_version",264);fresh.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}require(fresh.get("shape_version").getAsInt()==263,"Complete current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact263 roundtrip");
             var old=fresh.deepCopy();old.remove("land_ice_definition");old.addProperty("shape_version",262);old.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.landIceDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent gate retains262 exactly");

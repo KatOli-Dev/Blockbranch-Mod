@@ -29,7 +29,7 @@ public final class SurfaceOwnershipQualification {
                     var input=new InputStreamReader(stream,StandardCharsets.UTF_8)) {
                     fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
                 }
-                fresh.remove("type");
+                fresh.remove("type");if(fresh.has("continental_ice_definition")){fresh.remove("continental_ice_definition");fresh.addProperty("shape_version",264);fresh.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}
                 // Keep this historical 257->258 qualification and its frozen
                 // counts intact when today's preset has an independent wrapper.
                 if(fresh.get("shape_version").getAsInt()==264){

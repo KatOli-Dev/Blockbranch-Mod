@@ -54,7 +54,7 @@ public final class DryForestQualification {
                 require(fresh.get("cool_desert_definition").getAsInt()==1,"Known complete cool-desert wrapper");
                 fresh.remove("cool_desert_definition");fresh.addProperty("shape_version",259);fresh.getAsJsonObject("additional_biomes").remove(CoolDesert.KEY);
             }
-            fresh.remove("type");require(fresh.get("shape_version").getAsInt()==259,"Reviewed current wrapping preset");
+            fresh.remove("type");if(fresh.has("continental_ice_definition")){fresh.remove("continental_ice_definition");fresh.addProperty("shape_version",264);fresh.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}require(fresh.get("shape_version").getAsInt()==259,"Reviewed current wrapping preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact fresh codec roundtrip");
             var old=fresh.deepCopy();old.remove("dry_forest_definition");old.addProperty("shape_version",258);old.getAsJsonObject("additional_biomes").remove(DryForest.KEY);

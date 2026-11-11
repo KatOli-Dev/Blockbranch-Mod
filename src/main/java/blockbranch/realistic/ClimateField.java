@@ -5,7 +5,10 @@ import java.util.function.BiFunction;
 /** Deterministic mean-climate suitability proxies; read-only with respect to terrain and water. */
 public final class ClimateField {
     private final long seed;
-    public ClimateField(long seed) { this.seed=seed; }
+    public ClimateField(long seed) { this(seed,false); }
+    private final boolean polar;
+    public ClimateField(long seed,boolean polar) { this.seed=seed;this.polar=polar; }
+    public boolean polar(){return polar;}
     long seed(){return seed;}
     public record Sample(double meanTemperatureC,double moisture) {
         public Sample {
@@ -20,6 +23,7 @@ public final class ClimateField {
         // explicit map convention, not a claim to model a planet or astronomical latitude.
         double latitude=Math.min(1,Math.abs((double)z)/2097152.0);
         double temperature=24-20*latitude+5*noise(x,z,240000,101)-0.006*elevation;
+        if(polar)temperature-=PolarClimate.cooling(latitude);
         double regional=0.50+0.30*noise(x,z,240000,211)+0.14*noise(x,z,60000,307);
         double maritime=interpolateTerrain(x,z,64000,terrain,true);
         double wetGround=interpolateTerrain(x,z,256,terrain,false);
@@ -54,6 +58,7 @@ public final class ClimateField {
         double temperatureNoise=5*noise(x,z,240000,101),temperatureDelta=5*3.75*2*radius/240000.;
         double minElevation=Math.max(0,water-TerrainShape.SEA_LEVEL),maxElevation=Math.max(0,water+3+ErodedBadlands.MAX_INCISION-TerrainShape.SEA_LEVEL);
         double low=24-20*maxLat+temperatureNoise-temperatureDelta-.006*maxElevation,high=24-20*minLat+temperatureNoise+temperatureDelta-.006*minElevation;
+        if(polar){low-=PolarClimate.cooling(maxLat);high-=PolarClimate.cooling(minLat);}
         if(high<10-1e-9||low>27+1e-9)return false;
         double regional=.50+.30*noise(x,z,240000,211)+.14*noise(x,z,60000,307);
         double delta=(.30/240000+.14/60000)*3.75*2*radius;
@@ -70,6 +75,7 @@ public final class ClimateField {
         long local=d.structureClimatePacked(x,z);if((local&1)!=0)return false;
         double elevation=Math.max(0,(int)(local>>32)+1-TerrainShape.SEA_LEVEL);
         double temperature=24-20*Math.min(1,Math.abs((double)z)/2097152.0)+5*noise(x,z,240000,101)-.006*elevation;
+        if(polar)temperature-=PolarClimate.cooling(PolarClimate.latitude(z));
         if(temperature<10||temperature>30)return false;
         double regional=.50+.30*noise(x,z,240000,211)+.14*noise(x,z,60000,307);
         double west20=(int)(d.structureClimatePacked(x-20000,z)>>32)+1-TerrainShape.SEA_LEVEL;
@@ -83,6 +89,7 @@ public final class ClimateField {
         long local=d.structureClimatePacked(x,z);
         double elevation=Math.max(0,(int)(local>>32)+1-TerrainShape.SEA_LEVEL);
         double temperature=24-20*Math.min(1,Math.abs((double)z)/2097152.0)+5*noise(x,z,240000,101)-.006*elevation;
+        if(polar)temperature-=PolarClimate.cooling(PolarClimate.latitude(z));
         double regional=.50+.30*noise(x,z,240000,211)+.14*noise(x,z,60000,307);
         double west20=(int)(d.structureClimatePacked(x-20000,z)>>32)+1-TerrainShape.SEA_LEVEL;
         double west60=(int)(d.structureClimatePacked(x-60000,z)>>32)+1-TerrainShape.SEA_LEVEL;

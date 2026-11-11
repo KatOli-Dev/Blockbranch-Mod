@@ -90,7 +90,7 @@ public final class DripstoneLayer {
     public static boolean host(BlockState s){return s.is(Blocks.STONE)||s.is(Blocks.DEEPSLATE);}
     public void validate(TerrainProfile base){
         if(!enabled())return;if(!base.underground().owns(cx,cz)||!base.ores().owns(cx,cz))throw new IllegalArgumentException("Foundation column mismatch");if(!base.underground().enabled())throw new IllegalArgumentException("Dripstone requires caves");
-        for(int i=0;i<placements.length;i+=3){int x=placements[i]&15,z=placements[i]>>4,y=placements[i+1],kind=placements[i+2],ground=base.groundHeight(x,z);
+        for(int i=0;i<placements.length;i+=3){int x=placements[i]&15,z=placements[i]>>4,y=placements[i+1],kind=placements[i+2],ground=base.habitatGround(x,z);
             if(!DripstoneHabitat.contains(seed,cx*16+x,y,cz*16+z,ground))throw new IllegalArgumentException("Dripstone outside its province/depth");
             var original=base.state(x,y,z);if(kind<2){if(!host(original))throw new IllegalArgumentException("Dripstone facing would replace nonhost/ore");}
             else{if(!original.isAir()||x<1||x>14||z<1||z>14||base.underground().hasApproach())throw new IllegalArgumentException("Pointed formation violates clearance");int step=(kind&1)==0?-1:1,root=y+step;
@@ -117,9 +117,10 @@ public final class DripstoneLayer {
         if(tag.getIntOr("definition",0)<1||tag.getIntOr("definition",0)>2)throw new IllegalArgumentException("Unsupported dripstone definition");var palette=factory.biomeContainerCodec().parse(NbtOps.INSTANCE,tag.getCompoundOrEmpty("biome")).getOrThrow();var holder=palette.get(0,0,0);if(!holder.is(net.minecraft.world.level.biome.Biomes.DRIPSTONE_CAVES))throw new IllegalArgumentException("Wrong foundation biome");
         for(int y=0;y<4;y++)for(int z=0;z<4;z++)for(int x=0;x<4;x++)if(!palette.get(x,y,z).equals(holder))throw new IllegalArgumentException("Nonuniform foundation holder");return new DripstoneLayer(tag.getLong("seed").orElseThrow(),tag.getInt("column_x").orElseThrow(),tag.getInt("column_z").orElseThrow(),holder,tag.getIntArray("placements").orElseThrow(),tag.getIntOr("definition",0));
     }
+    /** {@code groundHeight} is the habitat datum: the rock surface (ice-free bed under a continental sheet). */
     public interface Sampler {int groundHeight(int x,int z);BlockState state(int x,int y,int z);boolean protectedRoute();}
     public static DripstoneLayer plan(TerrainProfile base,long seed,int cx,int cz,Holder<Biome> biome){return plan(base,seed,cx,cz,biome,1);}
-    public static DripstoneLayer plan(TerrainProfile base,long seed,int cx,int cz,Holder<Biome> biome,int definition){return plan(new Sampler(){public int groundHeight(int x,int z){return base.groundHeight(x,z);}public BlockState state(int x,int y,int z){return base.state(x,y,z);}public boolean protectedRoute(){return base.underground().hasApproach();}},seed,cx,cz,biome,definition);}
+    public static DripstoneLayer plan(TerrainProfile base,long seed,int cx,int cz,Holder<Biome> biome,int definition){return plan(new Sampler(){public int groundHeight(int x,int z){return base.habitatGround(x,z);}public BlockState state(int x,int y,int z){return base.state(x,y,z);}public boolean protectedRoute(){return base.underground().hasApproach();}},seed,cx,cz,biome,definition);}
     public static DripstoneLayer plan(Sampler base,long seed,int cx,int cz,Holder<Biome> biome){return plan(base,seed,cx,cz,biome,1);}
     public static DripstoneLayer plan(Sampler base,long seed,int cx,int cz,Holder<Biome> biome,int definition){
         boolean possible=false;for(int z=0;z<4;z++)for(int x=0;x<4;x++)possible|=DripstoneHabitat.province(seed,cx*16+x*4,cz*16+z*4)>.2;

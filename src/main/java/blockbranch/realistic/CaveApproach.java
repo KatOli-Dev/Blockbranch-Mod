@@ -70,7 +70,7 @@ public final class CaveApproach {
         long h=hash(seed,cellX,cellZ);
         if(!survey&&(h&1)==0)return NONE;
         int mx=cellX*CELL+144+(int)((h>>>8)%96),mz=cellZ*CELL+144+(int)((h>>>16)%96);
-        var mouth=terrain.sample(mx,mz);if(mouth.waterLevel()!=DrainageNetwork.DRY)return NONE;
+        var mouth=terrain.sample(mx,mz);if(mouth.waterLevel()!=DrainageNetwork.DRY||terrain.continentalIceThickness(mx,mz)>0)return NONE;
         var field=new UndergroundStructure(seed);
         int[] dx={1,1,0,-1,-1,-1,0,1},dz={0,1,1,1,0,-1,-1,-1};
         for(int direction=0;direction<8;direction++){
@@ -93,7 +93,8 @@ public final class CaveApproach {
                 // Check every affected column plus a water buffer, not only the centreline.
                 for(int z=candidate.minZ-4;z<=candidate.maxZ+4&&safe;z++)for(int x=candidate.minX-4;x<=candidate.maxX+4;x++)if(candidate.nearPath(x,z,4.2)){
                     var sample=terrain.sample(x,z);
-                    if(sample.waterLevel()!=DrainageNetwork.DRY||terrain.channelAt(x,z).edge()>=0){safe=false;break;}
+                    // An entrance needs an exposed surface; none is planned on or under a continental sheet.
+                    if(sample.waterLevel()!=DrainageNetwork.DRY||terrain.channelAt(x,z).edge()>=0||terrain.continentalIceThickness(x,z)>0){safe=false;break;}
                     if((candidate.contains(x,sample.height(),z)||candidate.contains(x,sample.height()+1,z))&&rootBlocked.test(x,z)){safe=false;break;}
                 }
                 if(safe)return candidate;

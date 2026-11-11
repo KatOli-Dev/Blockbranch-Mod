@@ -27,6 +27,7 @@ public final class LandIceField {
     /** Bounded sensitivity controls; saved definition1 always uses the defaults. */
     LandIceField(long seed,DrainageNetwork original,double warmSpell,double supplyFloor,double maxSlope,double maxResidual){
         if(!Double.isFinite(warmSpell)||warmSpell<0||!Double.isFinite(supplyFloor)||supplyFloor<0||supplyFloor>.9||!Double.isFinite(maxSlope)||maxSlope<=0||maxSlope>1||!Double.isFinite(maxResidual)||maxResidual<=0||maxResidual>RISE)throw new IllegalArgumentException("Bounded ice-model controls required");
+        // Preserve this alpine definition's original climate, also in polar worlds.
         this.original=original;climate=new ClimateField(seed);this.warmSpell=warmSpell;this.supplyFloor=supplyFloor;this.maxSlope=maxSlope;this.maxResidual=maxResidual;
     }
     /** Thresholds and ramps are generator conventions, never an accumulation or

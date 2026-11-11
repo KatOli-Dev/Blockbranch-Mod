@@ -23,7 +23,8 @@ public final class DrainageNetwork {
     private final boolean gravelReliefEnabled;
     private final boolean surfaceOwnership;
     private final DeepBasinRelief deepBasinRelief;
-    private final boolean landIceEnabled;
+    private final boolean landIceEnabled,continentalIceEnabled;
+    private volatile ContinentalIceField continentalIce;
     private volatile LandIceField landIce;
     private volatile DrainageNetwork iceReference;
     private volatile DrainageNetwork unrelieved;
@@ -77,6 +78,10 @@ public final class DrainageNetwork {
         this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,false);
     }
     DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled) {
+        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,landIceEnabled,false);
+    }
+    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled,boolean continentalIceEnabled) {
+        this.continentalIceEnabled=continentalIceEnabled;
         this.landIceEnabled=landIceEnabled;
         this.deepBasinRelief=deepBasinRelief?new DeepBasinRelief(shape):null;
         this.surfaceOwnership=surfaceOwnership;
@@ -222,7 +227,7 @@ public final class DrainageNetwork {
     private DrainageNetwork(DrainageNetwork owner) {this(owner,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {this(owner,erodedLandforms,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference) {
-        landIceEnabled=false;
+        landIceEnabled=false;continentalIceEnabled=false;
         // Legacy reference views disable this final physical adjustment; apply once,
         // after the complete original surface, retaining its climate references.
         deepBasinRelief=completeReference?owner.deepBasinRelief:null;surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=completeReference&&owner.gravelReliefEnabled;
@@ -236,7 +241,19 @@ public final class DrainageNetwork {
         synchronized(this){if(iceReference==null)iceReference=new DrainageNetwork(this,erodedLandforms,true);return iceReference;}
     }
     private LandIceField landIce(){var value=landIce;if(value!=null)return value;synchronized(this){if(landIce==null)landIce=new LandIceField(seed,iceReference());return landIce;}}
-    public int landIceThickness(int x,int z){return landIceEnabled&&!structuralComparison?landIce().thickness(x,z):0;}
+    public int landIceThickness(int x,int z){return landIceEnabled&&!structuralComparison&&continentalIceThickness(x,z)==0?landIce().thickness(x,z):0;}
+    private ContinentalIceField continentalIce(){var f=continentalIce;if(f!=null)return f;synchronized(this){if(continentalIce==null)continentalIce=new ContinentalIceField(seed,iceReference());return continentalIce;}}
+    public int continentalIceThickness(int x,int z){return continentalIceEnabled&&!structuralComparison&&PolarClimate.latitude(z)>PolarClimate.START?continentalIce().thickness(x,z):0;}
+    public boolean permanentFreshwaterLid(int x,int z){return continentalIceEnabled&&!structuralComparison&&PolarClimate.latitude(z)>PolarClimate.START&&continentalIce().freshwaterLid(x,z);}
+    public boolean polarClimateEnabled(){return continentalIceEnabled;}
+    /** Datum for rock-relative underground rules (deep dark, underground structures, cave
+     * entry routes, dripstone and sulfur habitat windows via {@code TerrainProfile.habitatGround};
+     * cave approaches instead exclude sheet columns). A grounded continental sheet is new
+     * overburden, not uplifted rock, so under it this is the complete original sample,
+     * including any buried water; everywhere else it is exactly {@link #sample}. Legacy
+     * alpine caps stay part of the published surface. Never differs without a sheet. */
+    Sample bedSample(int x,int z){return continentalIceThickness(x,z)>0?iceReference().sample(x,z):sample(x,z);}
+    public int bedHeight(int x,int z){var s=sample(x,z);int ice=continentalIceThickness(x,z);return ice>0?s.height()-ice:s.height();}
     /** Original complete surface, including erosion/coasts; eligibility never feeds back from new relief. */
     DrainageNetwork gravelReference() {
         if(!gravelReliefEnabled)return this;
@@ -279,7 +296,8 @@ public final class DrainageNetwork {
             if(weathered)value=eroded().apply(x,z,value);
         }
         if(deepBasinRelief!=null&&!structuralComparison)value=deepBasinRelief.apply(this,x,z,value);
-        if(landIceEnabled&&!structuralComparison)value=landIce().apply(x,z,value);
+        if(continentalIceThickness(x,z)>0)value=continentalIce().apply(x,z,value);
+        else if(landIceEnabled&&!structuralComparison)value=landIce().apply(x,z,value);
         sampleCache[slot]=new CachedSample(key,value);
         return value;
     }

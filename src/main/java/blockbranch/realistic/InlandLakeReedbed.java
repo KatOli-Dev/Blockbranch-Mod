@@ -9,7 +9,7 @@ public final class InlandLakeReedbed {
     }
     static Site site(DrainageNetwork drainage,int x,int z) {
         var sample=drainage.sample(x,z);
-        return new Site(sample.height(),sample.waterLevel(),drainage.terminalLakeWater(x,z,sample));
+        return new Site(sample.height(),sample.waterLevel(),drainage.terminalLakeWater(x,z,sample)&&!drainage.permanentFreshwaterLid(x,z));
     }
     public static boolean shallow(Site site) {
         return site.lake() && site.water()>TerrainShape.SEA_LEVEL && site.water()<=TerrainShape.SEA_LEVEL+600

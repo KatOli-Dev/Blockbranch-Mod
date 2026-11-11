@@ -33,7 +33,7 @@ public final class DeepBasinQualification {
                 require(fresh.get("land_ice_definition").getAsInt()==1,"Known complete land-ice wrapper");
                 fresh.remove("land_ice_definition");fresh.addProperty("shape_version",262);fresh.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);
             }
-            fresh.remove("type");require(fresh.get("shape_version").getAsInt()==262,"Complete current preset");
+            fresh.remove("type");if(fresh.has("continental_ice_definition")){fresh.remove("continental_ice_definition");fresh.addProperty("shape_version",264);fresh.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}require(fresh.get("shape_version").getAsInt()==262,"Complete current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact262 roundtrip");
             var old=fresh.deepCopy();old.remove("deep_basin_relief_definition");old.addProperty("shape_version",261);var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.deepBasinReliefDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent gate retains261 exactly");
