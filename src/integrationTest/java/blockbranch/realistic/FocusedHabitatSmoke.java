@@ -22,14 +22,17 @@ public final class FocusedHabitatSmoke {
         WarmSmoke.verify(level,generator,WarmSmoke.fixture(generator,random),reload);
         HumidSmoke.verify(level,generator,HumidSmoke.fixture(generator,random),reload);
     }
-    /** Ground-cover smokes whose witnesses read variant-normalised litter codes, without the tropical-forest witnesses. WarmSmoke and WoodlandSmoke are omitted: their fixtures currently lie in coastal winter-rain oak woodland, so their biome assertions fail before any litter witness. */
+    /** Ground-cover smokes whose witnesses read variant-normalised litter codes, without the tropical-forest witnesses. */
     private static void verifyLitterCovers(net.minecraft.server.level.ServerLevel level,RealisticGenerator generator,boolean reload){
         var random=level.getChunkSource().randomState();
         JungleSmoke.verify(level,generator,reload);
         SavannaSmoke.verify(level,generator,reload);
-        var humid=HumidSmoke.fixture(generator,random);
-        for(int dz=-3;dz<=3;dz++)for(int dx=-3;dx<=3;dx++)level.getChunk((humid.getX()>>4)+dx,(humid.getZ()>>4)+dz);
+        var humid=HumidSmoke.fixture(generator,random);var warm=WarmSmoke.fixture(generator,random);var woodland=WoodlandSmoke.fixture(generator,random);
+        for(var pos:new net.minecraft.core.BlockPos[]{humid,warm,woodland})
+            for(int dz=-3;dz<=3;dz++)for(int dx=-3;dx<=3;dx++)level.getChunk((pos.getX()>>4)+dx,(pos.getZ()>>4)+dz);
         HumidSmoke.verify(level,generator,humid,reload);
+        WarmSmoke.verify(level,generator,warm,reload);
+        WoodlandSmoke.verify(level,generator,woodland,reload);
     }
     private FocusedHabitatSmoke(){}
 }

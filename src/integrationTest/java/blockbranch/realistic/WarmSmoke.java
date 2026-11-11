@@ -14,7 +14,8 @@ import net.minecraft.world.level.levelgen.*;
 /** Natural canopy, clipped queries, old habitats, cross-chunk state and persistent tree edits. */
 public final class WarmSmoke {
     public static BlockPos fixture(RealisticGenerator generator,RandomState random) {
-        var p=blockbranch.realistic.WarmWoodlandFixtures.fixture(generator.drainage(random),random.seed());
+        var source=generator.getBiomeSource().createUncachedResolver(random);var drainage=generator.drainage(random);
+        var p=blockbranch.realistic.WarmWoodlandFixtures.fixture(drainage,random.seed(),(x,z)->source.getNoiseBiome(x>>2,drainage.sample(x,z).height()>>2,z>>2).is(Blockbranch.id("warm_subhumid_oak_pine_woodland")));
         return new BlockPos(p.x(),generator.drainage(random).sample(p.x(),p.z()).height(),p.z());
     }
     public static BlockPos testLog(BlockPos bed) { return bed.above(30); }
@@ -76,11 +77,11 @@ public final class WarmSmoke {
         }
         boolean[] floorWitness=new boolean[9];int remaining=8;
         for(int dz=-128;dz<=128 && remaining>0;dz++) for(int dx=-128;dx<=128 && remaining>0;dx++) {
-            int x=bed.getX()+dx,z=bed.getZ()+dz,c=generator.warmCover(x,z,random);
+            int x=bed.getX()+dx,z=bed.getZ()+dz,raw=generator.warmCover(x,z,random),c=LeafLitter.warmBase(raw);
             if(c==0 || floorWitness[c])continue;
             int h=generator.drainage(random).sample(x,z).height();var chunk=level.getChunk(x>>4,z>>4);var base=((SparseColumn)chunk).blockbranch$terrain().base();
             if(base.canopy().state(x,h+1,z)!=null)continue;
-            for(int y=h-3;y<=h+2;y++) require(chunk.getBlockState(new BlockPos(x,y,z))==RealisticGenerator.material(y,h,DrainageNetwork.DRY,0,0,0,0,0,0,0,0,c),"Every warm floor component reaches native blocks");
+            for(int y=h-3;y<=h+2;y++) require(chunk.getBlockState(new BlockPos(x,y,z))==RealisticGenerator.material(y,h,DrainageNetwork.DRY,0,0,0,0,0,0,0,0,raw),"Every warm floor component reaches native blocks");
             if(c>=3 && c!=7)require(chunk.getBlockState(new BlockPos(x,h+1,z)).canSurvive(level,new BlockPos(x,h+1,z)),"Every natural warm plant has suitable support");
             floorWitness[c]=true;remaining--;components.add(c);
         }
@@ -117,7 +118,7 @@ public final class WarmSmoke {
     }
     private static void boundary(ServerLevel level,RealisticGenerator generator,BlockPos bed) {
         var random=level.getChunkSource().randomState();var source=generator.getBiomeSource().createUncachedResolver(random);
-        var edge=blockbranch.realistic.WarmWoodlandFixtures.transition(generator.drainage(random),random.seed(),false);
+        var drainage=generator.drainage(random);var edge=blockbranch.realistic.WarmWoodlandFixtures.transition(drainage,random.seed(),false,(x,z)->source.getNoiseBiome(x>>2,drainage.sample(x,z).height()>>2,z>>2).is(Blockbranch.id("warm_subhumid_oak_pine_woodland")));
         for(int dz=-32;dz<=32;dz+=16) for(int dx=-32;dx<=32;dx+=16) {
             int x=Math.floorDiv(edge.insideX()+dx,16)*16,z=Math.floorDiv(edge.insideZ()+dz,16)*16,count=0;
             for(int qz=0;qz<4;qz++) for(int qx=0;qx<4;qx++) if(source.getNoiseBiome((x>>2)+qx,0,(z>>2)+qz).is(Blockbranch.id("warm_subhumid_oak_pine_woodland"))) count++;

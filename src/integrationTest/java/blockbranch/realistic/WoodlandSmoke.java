@@ -14,7 +14,8 @@ import net.minecraft.world.level.levelgen.*;
 /** Natural canopy, clipped queries, old habitats, cross-chunk state and persistent tree edits. */
 public final class WoodlandSmoke {
     public static BlockPos fixture(RealisticGenerator generator,RandomState random) {
-        var p=blockbranch.realistic.OakBirchWoodlandFixtures.fixture(generator.drainage(random),random.seed());
+        var source=generator.getBiomeSource().createUncachedResolver(random);var drainage=generator.drainage(random);
+        var p=blockbranch.realistic.OakBirchWoodlandFixtures.fixture(drainage,random.seed(),(x,z)->source.getNoiseBiome(x>>2,drainage.sample(x,z).height()>>2,z>>2).is(Blockbranch.id("dappled_oak_birch_woodland")));
         return new BlockPos(p.x(),generator.drainage(random).sample(p.x(),p.z()).height(),p.z());
     }
     public static BlockPos testLog(BlockPos bed) { return bed.above(30); }
