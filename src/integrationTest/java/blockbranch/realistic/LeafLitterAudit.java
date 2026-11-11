@@ -104,7 +104,13 @@ public final class LeafLitterAudit {
     }
     /** Copy of the encoded generator with the given saved schema, litter definition (-1 removes the field) and ice definition (0 removes field and holder). */
     private static JsonObject variant(JsonObject base,int schema,int litter,int ice){var json=base.deepCopy();json.addProperty("shape_version",schema);if(litter<0)json.remove("leaf_litter_definition");else json.addProperty("leaf_litter_definition",litter);
-        if(ice==0){json.remove("continental_ice_definition");json.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}else json.addProperty("continental_ice_definition",ice);return json;}
+        if(ice==0){json.remove("continental_ice_definition");json.getAsJsonObject("additional_biomes").remove(ContinentalIceField.KEY);}else{json.addProperty("continental_ice_definition",ice);var biomes=json.getAsJsonObject("additional_biomes");if(!biomes.has(ContinentalIceField.KEY))biomes.addProperty(ContinentalIceField.KEY,presetIceHolder());}return json;}
+    /** The ice holder id of the bundled preset, so the codec matrix also runs against a legacy (no-ice) live world. */
+    private static String presetIceHolder(){
+        try(var input=new java.io.InputStreamReader(java.util.Objects.requireNonNull(LeafLitterAudit.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),java.nio.charset.StandardCharsets.UTF_8)){
+            return com.google.gson.JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").getAsJsonObject("additional_biomes").get(ContinentalIceField.KEY).getAsString();
+        }catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}
+    }
     /** Every reserved cover code renders its declared block state above exactly its base litter code's soil, in both the woodland and warm arrays. */
     private static void variantContract(){
         int ground=64;
