@@ -32,6 +32,18 @@ public final class ClimateField {
         double rainShadow=Math.clamp((Math.max(west20,west60)-elevation)/2000.0,0,1)*0.18;
         return new Sample(temperature,Math.clamp(regional+0.12*maritime+0.12*wetGround+windward-rainShadow,0,1));
     }
+    /** New climatologies may use this atmospheric suitability, never infer rain
+     * from the clamped total moisture (which also contains local wet ground).
+     * It remains unitless; assigning any rainfall scale is a separate model. */
+    double atmosphericSupply(int x,int z,BiFunction<Integer,Integer,DrainageNetwork.Sample> terrain) {
+        double elevation=Math.max(0,terrain.apply(x,z).regionalHeight()+1-TerrainShape.SEA_LEVEL);
+        double regional=.50+.30*noise(x,z,240000,211)+.14*noise(x,z,60000,307);
+        double west20=terrain.apply(x-20000,z).regionalHeight()+1-TerrainShape.SEA_LEVEL;
+        double west60=terrain.apply(x-60000,z).regionalHeight()+1-TerrainShape.SEA_LEVEL;
+        return Math.clamp(regional+.12*interpolateTerrain(x,z,64000,terrain,true)
+            +Math.clamp((elevation-west20)/2000.,-1,1)*.06
+            -Math.clamp((Math.max(west20,west60)-elevation)/2000.,0,1)*.18,0,1);
+    }
     /** Conservative interval for an entire terminal-lake proposal footprint.
      * Quintic fade has derivative <=1.875; signed value-noise partials are
      * <=3.75/scale. Closed banks bypass coastal uplift, and erosion only lowers

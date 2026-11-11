@@ -1,0 +1,101 @@
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/dry-season-reader-258')
+def readerClasses=layout.buildDirectory.dir('dry-season-reader-258')
+def runtimeReader=layout.buildDirectory.dir('dry-season-reader-runtime')
+def readerFiles=fileTree(readerClasses).matching {include '**/*.class'}
+def snapshotCollector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published258Snapshot.java')
+tasks.register('verifyDrySeasonReader') {
+    inputs.dir(fixture);inputs.file(snapshotCollector)
+    doLast {
+        def origin=new JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+        assert origin.repository=='KatOli-Dev/Blockbranch-Mod' && origin.commit=='e771c4ea5721530f882ba36aa8b7ec22f99007d5'
+        assert origin.sources*.path.toSet()==['src/main/java/blockbranch/realistic/RealisticGenerator.java','src/main/java/blockbranch/realistic/ScreeBiomeSource.java'].toSet()
+        origin.sources.each { row ->
+            def bytes=fixture.file(row.path.substring('src/main/java/'.length())).asFile.bytes
+            assert MessageDigest.getInstance('SHA-256').digest(bytes).encodeHex().toString()==row.sha256:'Frozen surface reader changed: '+row.path
+        }
+        assert MessageDigest.getInstance('SHA-256').digest(fixture.file(origin.baseline.path).asFile.bytes).encodeHex().toString()==origin.baseline.sha256:'Frozen independent published output changed'
+        assert MessageDigest.getInstance('SHA-256').digest(snapshotCollector.asFile.bytes).encodeHex().toString()==origin.baseline.collectorSha256:'Snapshot collector changed; review its independent recording provenance'
+    }
+}
+tasks.register('compileDrySeasonReader',JavaCompile) {
+    dependsOn 'classes','verifyDrySeasonReader'
+    source fixture.asFile;include '**/*.java'
+    classpath=sourceSets.main.output+sourceSets.main.compileClasspath
+    destinationDirectory=readerClasses
+    javaCompiler=javaToolchains.compilerFor { languageVersion=JavaLanguageVersion.of(25) }
+    options.release=25;options.compilerArgs.add('-proc:none')
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyDrySeasonReader'}
+
+// Preserve source bytes and algorithms. Rename only the two compiled class-name
+// prefixes so the original reader can use package-private production helpers in
+// the same loader/package. An isolated child loader does not have that access.
+tasks.register('relocateDrySeasonReader') {
+    dependsOn 'compileDrySeasonReader'
+    inputs.dir(readerClasses);outputs.dir(runtimeReader)
+    doLast {
+        readerFiles.files.each { inputFile ->
+            def buffer=new ByteArrayOutputStream()
+            inputFile.withDataInputStream { input ->
+                def output=new DataOutputStream(buffer)
+                output.writeInt(input.readInt());output.writeShort(input.readUnsignedShort());output.writeShort(input.readUnsignedShort())
+                int count=input.readUnsignedShort();output.writeShort(count)
+                for(int i=1;i<count;i++) {
+                    int tag=input.readUnsignedByte();output.writeByte(tag)
+                    if(tag==1)output.writeUTF(input.readUTF().replace('blockbranch/realistic/RealisticGenerator','blockbranch/realistic/Published258RealisticGenerator').replace('blockbranch/realistic/ScreeBiomeSource','blockbranch/realistic/Published258ScreeBiomeSource'))
+                    else {
+                        int length=tag in [3,4,9,10,11,12,17,18]?4:tag in [5,6]?8:tag in [7,8,16,19,20]?2:tag==15?3:-1
+                        assert length>0:'Unexpected constant-pool tag '+tag
+                        output.write(input.readNBytes(length));if(tag in [5,6])i++
+                    }
+                }
+                output.write(input.readAllBytes());output.flush()
+            }
+            def relative=readerClasses.get().asFile.toPath().relativize(inputFile.toPath()).toString().replace('RealisticGenerator','Published258RealisticGenerator').replace('ScreeBiomeSource','Published258ScreeBiomeSource')
+            def target=runtimeReader.get().file(relative).asFile;target.parentFile.mkdirs();target.bytes=buffer.toByteArray()
+        }
+    }
+}
+sourceSets.integrationTest.output.dir([builtBy:'relocateDrySeasonReader'],runtimeReader)
+
+tasks.register('checkDrySeasonPolicy',JavaExec) {
+    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+    mainClass='blockbranch.realistic.DrySeasonPolicyCheck';maxHeapSize='2G'
+}
+tasks.named('check'){dependsOn 'checkDrySeasonPolicy'}
+
+def dir=layout.projectDirectory.dir(providers.gradleProperty('dryForestDirectory').getOrElse('build/dry-forest-native'))
+def reopen=providers.gradleProperty('dryForestReopen').isPresent(),legacy=providers.gradleProperty('dryForestLegacy').isPresent()
+def resultName=(reopen?'reopen-':'')+'result.txt'
+loom.runs.register('dryForestQualification') {
+    server();runDir(dir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.dryForestQualification=true');vmArg('-Dblockbranch.dryForestResult='+dir.file(resultName).asFile.absolutePath)
+    vmArg('-Dblockbranch.dryForestLegacy='+legacy);vmArg('-Dblockbranch.dryForestReopen='+reopen)
+    vmArg('-Dblockbranch.dryForestBoundaryOnly='+providers.gradleProperty('dryForestBoundaryOnly').isPresent())
+}
+tasks.register('prepareDryForestQualification'){doLast{
+    assert !dir.file(resultName).asFile.exists():'Preserve results; choose a fresh directory or reopen phase.'
+    if(legacy||reopen)assert dir.file('survey/level.dat').asFile.exists():'Requires an actual closed saved world, never synthesized metadata.'
+    else assert !dir.file('server.properties').asFile.exists():'Use a fresh directory.'
+    dir.asFile.mkdirs();dir.file('eula.txt').asFile.text='eula=true\n'
+    dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25618\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runDryForestQualification'){
+    dependsOn 'prepareDryForestQualification','relocateDrySeasonReader'
+    doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}
+}
+
+def visualDir=layout.projectDirectory.dir(providers.gradleProperty('dryForestVisualDirectory').getOrElse('build/dry-forest-visual'))
+loom.runs.register('dryForestVisual'){
+    client();runDir(visualDir.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.dryForestVisual=true');vmArg('-Dblockbranch.dryForestVisualDirectory='+visualDir.asFile.absolutePath)
+    programArgs('--username','DryForestView','--width','1024','--height','576')
+}
+tasks.register('prepareDryForestVisual'){doLast{
+    assert !visualDir.file('options.txt').asFile.exists():'Preserve captures; use a fresh dryForestVisualDirectory.'
+    visualDir.asFile.mkdirs();visualDir.file('options.txt').asFile.text='renderDistance:10\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runDryForestVisual'){dependsOn 'prepareDryForestVisual';doLast{assert visualDir.file('result.txt').asFile.text.startsWith('PASS')}}

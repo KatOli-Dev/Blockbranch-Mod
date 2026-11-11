@@ -1,0 +1,19 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "e771c4ea5721530f882ba36aa8b7ec22f99007d5",
+  "sources": [
+    {"path": "src/main/java/blockbranch/realistic/RealisticGenerator.java", "sha256": "25deed979a74c76cd4cccecda0959b16ff64278a891ffbb19ec527ed55c1f68c"},
+    {"path": "src/main/java/blockbranch/realistic/ScreeBiomeSource.java", "sha256": "284bdd24415ba0ebb9e6e7ab41400f496396aea459d245eb1eb47b1a84a9bcb0"}
+  ],
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "68ebd572d01173b8d78a481b6e7899161c06f94c8a007e6bd9e6eb35a7607204",
+    "collector": "src/integrationTest/java/blockbranch/realistic/Published258Snapshot.java",
+    "collectorSha256": "4f35ffe75cf1c95861bd6f03ab94903582d44b00fc6bb5a7363cd24eefd9d642",
+    "method": "Recorded in a native JVM from the unchanged complete published e771c4e tree before any dry-season production edit; only development collector/registration/run setup added. All 2018 main/client blobs listed by git ls-tree; git diff HEAD -- src/main src/client was empty. Baseline is not produced by a candidate with shared helpers.",
+    "productionManifestSha256": "df2bd2c77154dc483bc828cc6bfd382653812ee771120741799ce0f873c6a944",
+    "evidence": "build/dry-season-evidence/published-e771/{result.txt,baseline.json,survey}; build/dry-season-evidence/published-e771-production-manifest.txt",
+    "bounds": "Seeds 424242/1/-17, centered 32 km grid over X/Z [-1920000,1920000): 43200 selector/terrain/climate/ownership reads. Seed 424242 physical/native reads at 12 fixed points in collector, including cold/water and warm-forest witnesses. Original binary creates closed schema258 world and gold-block edit.",
+    "limitation": "Finite observable-output baseline, not proof for all seeds. Renamed source readers separately share candidate helpers and are not independent alone. Never refresh baseline from candidate code."
+  }
+}
