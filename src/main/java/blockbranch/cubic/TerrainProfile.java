@@ -137,13 +137,13 @@ public final class TerrainProfile {
             if(meadow[i]<0 || meadow[i]>13 || (meadow[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (meadowPlantHeight(meadow[i])>0 && ground[i]+meadowPlantHeight(meadow[i])>=ceiling))
                 throw new IllegalArgumentException("Invalid meadow cover");
-            if(woodland[i]<0 || woodland[i]>blockbranch.realistic.BambooSoil.LAST || (woodland[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0
+            if(woodland[i]<0 || woodland[i]>blockbranch.realistic.LeafLitter.WOODLAND_LAST || (woodland[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (woodlandPlantHeight(woodland[i])>0 && ground[i]+woodlandPlantHeight(woodland[i])>=ceiling)) throw new IllegalArgumentException("Invalid woodland cover");
             if(steppe[i]<0 || steppe[i]>6 || (steppe[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (steppePlantPresent(steppe[i]) && ground[i]+1>=ceiling)) throw new IllegalArgumentException("Invalid steppe cover");
             if(boreal[i]<0 || boreal[i]>blockbranch.realistic.BorealSurface.LAST || (boreal[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (borealPlantPresent(boreal[i]) && ground[i]+1>=ceiling)) throw new IllegalArgumentException("Invalid boreal cover");
-            if(warm[i]<0 || warm[i]>12 || (warm[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0
+            if(warm[i]<0 || warm[i]>blockbranch.realistic.LeafLitter.WARM_LAST || (warm[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (warmPlantPresent(warm[i]) && ground[i]+1>=ceiling)) throw new IllegalArgumentException("Invalid warm woodland cover");
             if(coldSteppe[i]<0 || coldSteppe[i]>7&&!blockbranch.realistic.ColdUplands.encoded(coldSteppe[i])&&!blockbranch.realistic.LandIceField.encoded(coldSteppe[i]) || (coldSteppe[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0 || warm[i]!=0
                 || water[i]>ground[i] || ground[i]-coldLayerDepth(coldSteppe[i])<=floor)) || (coldPlantPresent(coldSteppe[i]) && ground[i]+1>=ceiling))throw new IllegalArgumentException("Invalid cold steppe cover");
@@ -335,6 +335,7 @@ public final class TerrainProfile {
                 return (steppe==2 ? Blocks.GRAVEL : steppe==3 || steppe==5 ? Blocks.GRASS_BLOCK : Blocks.COARSE_DIRT).defaultBlockState();
             }
             if(woodland>0 && y>ground-3) {
+                woodland=blockbranch.realistic.LeafLitter.woodlandBase(woodland);
                 if(blockbranch.realistic.BambooSoil.encoded(woodland)) {
                     if(y<ground)return Blocks.DIRT.defaultBlockState();
                     return switch(blockbranch.realistic.BambooSoil.soil(woodland)) {
@@ -393,8 +394,14 @@ public final class TerrainProfile {
     private static int coldLayerDepth(int c){return blockbranch.realistic.LandIceField.encoded(c)?blockbranch.realistic.LandIceField.depth(c):blockbranch.realistic.ColdUplands.encoded(c)?blockbranch.realistic.ColdUplands.depth(c):3;}
     private static boolean coldPlantPresent(int c){return c==12||c==13||c==3 || c==4 || c==6 || c==7;}
     private static BlockState coldPlant(int c){return switch(c){case 12->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 13->Blocks.SHORT_GRASS.defaultBlockState();case 3->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 4->blockbranch.realistic.MeadowContent.MEADOW_FESCUE.defaultBlockState().setValue(blockbranch.realistic.MeadowFescueBlock.CROPPED,false);case 6->blockbranch.realistic.SteppeContent.SILVER_SHRUB.defaultBlockState().setValue(blockbranch.realistic.SteppeShrubBlock.CLIPPED,false);case 7->Blocks.DEAD_BUSH.defaultBlockState();default->Blocks.AIR.defaultBlockState();};}
-    private static boolean warmPlantPresent(int cover){return cover>=3 && cover<=8 && cover!=7 || cover==10 || cover==11;}
-    private static BlockState warmPlant(int cover){return switch(cover){case 3->Blocks.LEAF_LITTER.defaultBlockState();case 4->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 5->Blocks.FERN.defaultBlockState();case 6->Blocks.BROWN_MUSHROOM.defaultBlockState();case 8->Blocks.DEAD_BUSH.defaultBlockState();case 10->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 11->Blocks.SHORT_GRASS.defaultBlockState();default->Blocks.AIR.defaultBlockState();};}
+    private static final net.minecraft.core.Direction[] LITTER_FACING={net.minecraft.core.Direction.NORTH,net.minecraft.core.Direction.EAST,net.minecraft.core.Direction.SOUTH,net.minecraft.core.Direction.WEST};
+    /** One of the vanilla leaf-litter block's 16 facing x segment states; index 0 is the original default state. */
+    public static BlockState leafLitterState(int index){
+        if(index<0||index>=blockbranch.realistic.LeafLitter.STATES)throw new IllegalArgumentException("Leaf-litter variant");
+        return Blocks.LEAF_LITTER.defaultBlockState().setValue(net.minecraft.world.level.block.LeafLitterBlock.FACING,LITTER_FACING[index&3]).setValue(net.minecraft.world.level.block.SegmentableBlock.AMOUNT,1+(index>>2));
+    }
+    private static boolean warmPlantPresent(int cover){cover=blockbranch.realistic.LeafLitter.warmBase(cover);return cover>=3 && cover<=8 && cover!=7 || cover==10 || cover==11;}
+    private static BlockState warmPlant(int cover){if(blockbranch.realistic.LeafLitter.warmVariant(cover))return leafLitterState(blockbranch.realistic.LeafLitter.warmIndex(cover));return switch(cover){case 3->Blocks.LEAF_LITTER.defaultBlockState();case 4->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 5->Blocks.FERN.defaultBlockState();case 6->Blocks.BROWN_MUSHROOM.defaultBlockState();case 8->Blocks.DEAD_BUSH.defaultBlockState();case 10->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 11->Blocks.SHORT_GRASS.defaultBlockState();default->Blocks.AIR.defaultBlockState();};}
     public static boolean borealPlantPresent(int cover){return cover>=4&&cover<=9||cover==11||cover==blockbranch.realistic.BorealSurface.CARPET;}
     private static BlockState borealPlant(int cover) {
         return switch(cover) { case 4->Blocks.FERN.defaultBlockState();case 5->Blocks.BROWN_MUSHROOM.defaultBlockState();case 6,blockbranch.realistic.BorealSurface.CARPET->Blocks.MOSS_CARPET.defaultBlockState();case 7->Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(net.minecraft.world.level.block.SweetBerryBushBlock.AGE,3);case 8->Blocks.SHORT_GRASS.defaultBlockState();case 9->Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(net.minecraft.world.level.block.SweetBerryBushBlock.AGE,1);case 11->blockbranch.realistic.MeadowContent.MEADOW_FESCUE.defaultBlockState().setValue(blockbranch.realistic.MeadowFescueBlock.CROPPED,false);default->Blocks.AIR.defaultBlockState(); };
@@ -405,8 +412,9 @@ public final class TerrainProfile {
     }
     private static int woodlandPlantHeight(int cover){return cover==53?2:woodlandPlantPresent(cover)?1:0;}
     private static BlockState woodlandPlant(int cover,int stem){return cover==53?Blocks.LARGE_FERN.defaultBlockState().setValue(DoublePlantBlock.HALF,stem==2?net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER:net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER):woodlandPlant(cover);}
-    private static boolean woodlandPlantPresent(int cover){cover=blockbranch.realistic.BambooSoil.vegetation(cover);return cover==53|| cover>=4&&cover<=7||cover==9||cover==10||cover==12||cover==14||cover==15||cover==17||cover==18||cover==20||cover>=21&&cover<=24||cover>=26&&cover<=52;}
+    private static boolean woodlandPlantPresent(int cover){cover=blockbranch.realistic.LeafLitter.woodlandBase(cover);cover=blockbranch.realistic.BambooSoil.vegetation(cover);return cover==53|| cover>=4&&cover<=7||cover==9||cover==10||cover==12||cover==14||cover==15||cover==17||cover==18||cover==20||cover>=21&&cover<=24||cover>=26&&cover<=52;}
     private static BlockState woodlandPlant(int cover) {
+        if(blockbranch.realistic.LeafLitter.woodlandVariant(cover))return leafLitterState(blockbranch.realistic.LeafLitter.woodlandIndex(cover));
         cover=blockbranch.realistic.BambooSoil.vegetation(cover);
         if(cover>=37){int i=cover-37;var facing=switch(i/4){case 0->net.minecraft.core.Direction.NORTH;case 1->net.minecraft.core.Direction.EAST;case 2->net.minecraft.core.Direction.SOUTH;default->net.minecraft.core.Direction.WEST;};return Blocks.PINK_PETALS.defaultBlockState().setValue(net.minecraft.world.level.block.FlowerBedBlock.AMOUNT,1+i%4).setValue(net.minecraft.world.level.block.FlowerBedBlock.FACING,facing);}
         return switch(cover) { case 32->Blocks.ALLIUM.defaultBlockState();case 33->Blocks.AZURE_BLUET.defaultBlockState();case 34->Blocks.POPPY.defaultBlockState();case 35->Blocks.CORNFLOWER.defaultBlockState();case 36->Blocks.LILY_OF_THE_VALLEY.defaultBlockState();case 30->Blocks.DANDELION.defaultBlockState();case 31->Blocks.OXEYE_DAISY.defaultBlockState();case 20->Blocks.BLUE_ORCHID.defaultBlockState();case 4,14,21,26->Blocks.FERN.defaultBlockState();case 5,15,22,27->Blocks.BROWN_MUSHROOM.defaultBlockState();case 6,17,23,28->Blocks.SHORT_GRASS.defaultBlockState();case 7,9,18,24,29->Blocks.LEAF_LITTER.defaultBlockState();case 10->Blocks.FERN.defaultBlockState();case 12->Blocks.SHORT_GRASS.defaultBlockState();default->Blocks.AIR.defaultBlockState(); };

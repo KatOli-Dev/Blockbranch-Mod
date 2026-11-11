@@ -34,6 +34,7 @@ public final class DryForestQualification {
             try(var input=new InputStreamReader(Objects.requireNonNull(DryForestQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){
                 fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
             }
+            if(fresh.has("leaf_litter_definition")){fresh.remove("leaf_litter_definition");fresh.addProperty("shape_version",264);}
             if(fresh.get("shape_version").getAsInt()==264){
                 require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
                 fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);

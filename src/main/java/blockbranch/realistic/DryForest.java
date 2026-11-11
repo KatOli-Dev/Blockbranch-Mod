@@ -35,14 +35,16 @@ public final class DryForest {
         return climate.meanTemperatureC()>23&&climate.meanTemperatureC()<=30
             &&WarmWoodland.surfaceContains(seed,x,z,d,c)&&DrySeasonPolicy.potential(x,z,d,c).regionalEnvelope();
     }
-    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear){
+    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear){return cover(seed,x,z,site,clear,false);}
+    /** With patchy litter the same gap rolls are kept; only the former uniform 86% litter roll becomes irregular. */
+    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear,boolean patchy){
         if(!clear)return 8;
         double roll=(OakBirchWoodland.mix(seed^0x445259464F524553L^x*1297L^z*1237L)>>>11)*0x1.0p-53;
         // Existing rooted-soil/litter roles; grasses and ferns remain rare,
         // rather than applying the old open oak/pine floor beneath closed crowns.
         if(!site.shaded()&&roll<.025)return 11;
         if(site.shaded()&&site.wetness()>.55&&roll<.008)return 10;
-        return roll<.86?9:8;
+        return (patchy?LeafLitter.present(seed,x,z,site):roll<.86)?9:8;
     }
     private DryForest(){}
 }
