@@ -66,7 +66,7 @@ public final class OverworldStructures {
         BiomeResolver resolver=surface;
         boolean underground=kind.equals("stronghold")||kind.startsWith("mineshaft")||kind.equals("trial_chambers")||kind.equals("ancient_city");
         if(kind.equals("ancient_city")){
-            if(!deepDark(c.seed(),x,DeepDarkHabitat.proposalY(site.height()),z,terrain))return Optional.empty();
+            if(!deepDark(c.seed(),x,DeepDarkHabitat.proposalY(terrain.bedHeight(x,z)),z,terrain))return Optional.empty();
             var dark=c.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.DEEP_DARK);
             resolver=(qx,qy,qz)->dark;
         }
@@ -94,10 +94,12 @@ public final class OverworldStructures {
         if(builder.isEmpty())return Optional.empty();
         var box=builder.getBoundingBox();int dy=0;
         if(underground){
-            int lowest=Integer.MAX_VALUE;
-            for(int wz=box.minZ();wz<=box.maxZ();wz+=8)for(int wx=box.minX();wx<=box.maxX();wx+=8)lowest=Math.min(lowest,terrain.sample(wx,wz).height());
+            // Rock-bed datum: a continental sheet is overburden, so these structures sit in
+            // the rock below it exactly as in the ice-free world (identical without a sheet).
+            int bed=terrain.bedHeight(x,z),lowest=Integer.MAX_VALUE;
+            for(int wz=box.minZ();wz<=box.maxZ();wz+=8)for(int wx=box.minX();wx<=box.maxX();wx+=8)lowest=Math.min(lowest,terrain.bedHeight(wx,wz));
             int depth=kind.equals("ancient_city")?320:kind.equals("trial_chambers")?192:96+c.random().nextInt(129);
-            int desired=kind.equals("ancient_city")?DeepDarkHabitat.cityFloor(site.height(),box.getYSpan()):site.height()-depth;
+            int desired=kind.equals("ancient_city")?DeepDarkHabitat.cityFloor(bed,box.getYSpan()):bed-depth;
             int target=Math.max(TerrainShape.FLOOR+64,Math.min(desired,lowest-32-box.getYSpan()));
             dy=target-box.minY();builder.offsetPiecesVertically(dy);box=builder.getBoundingBox();
             if(box.maxY()>lowest-32)return Optional.empty();

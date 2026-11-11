@@ -153,7 +153,10 @@ public final class OreLayer {
         }
         return host.is(Blocks.DEEPSLATE)?kind.deepslate:kind.stone;
     }
-    /** Immutable per-profile index; the descriptor never serializes this derived cache. */
+    /** Immutable per-profile index; the descriptor never serializes this derived cache.
+     * A rebind whose bounds exceed the index limits yields the unindexed direct path, never
+     * the previous index: that index covers only its own earlier bounds (a profile is rebound
+     * when a perennial sheet lowers its rock datum), so keeping it would silently omit ore. */
     public OreLayer bind(int lowestGround,int highestGround){
         if(definition<2)return this;
         int minX=(int)Math.floorDiv((long)cx*16+offsetX-3,8),maxX=(int)Math.floorDiv((long)cx*16+offsetX+18,8);
@@ -161,9 +164,9 @@ public final class OreLayer {
         int minY=(int)Math.floorDiv((long)lowestGround-MAX_DEPTH+offsetY-3,8),maxY=(int)Math.floorDiv((long)highestGround-MIN_DEPTH+offsetY+3,8);
         if(index!=null&&index.lowest==lowestGround&&index.highest==highestGround)return this;
         int nx=maxX-minX+1,ny=maxY-minY+1,nz=maxZ-minZ+1;
-        if((long)nx*ny*nz>2048)return this; // bounded direct fallback, including unusual cliffs
+        if((long)nx*ny*nz>2048)return unindexed(); // bounded direct fallback, including unusual cliffs
         int tileY=(int)Math.floorDiv((long)lowestGround-MAX_DEPTH,4),tileEnd=(int)Math.floorDiv((long)highestGround-MIN_DEPTH,4),tileHeight=tileEnd-tileY+1;
-        if((long)tileHeight*16>4096)return this;
+        if((long)tileHeight*16>4096)return unindexed();
         var values=new java.util.ArrayList<Proposal>();
         for(int x=minX;x<=maxX;x++)for(int y=minY;y<=maxY;y++)for(int z=minZ;z<=maxZ;z++){
             // Reject inactive cells before allocating/decoding their shapes.
@@ -192,6 +195,7 @@ public final class OreLayer {
         for(int i=0;i<values.size();i++){int[] b=ranges[i];for(int x=b[0];x<=b[1];x++)for(int y=b[2];y<=b[3];y++)for(int z=b[4];z<=b[5];z++)refs[cursor[(x*tileHeight+y)*4+z]++]=i;}
         return new OreLayer(seed,cx,cz,definition,emeraldMask,goldMask,new Index(tileY,tileHeight,lowestGround,highestGround,offsets,refs,values.toArray(Proposal[]::new)));
     }
+    private OreLayer unindexed(){return index==null?this:new OreLayer(seed,cx,cz,definition,emeraldMask,goldMask,null);}
     private static double density(Kind k,double depth){if(depth<k.min||depth>k.max)return 0;return depth<=k.peak?(depth-k.min)/(k.peak-k.min):(k.max-depth)/(k.max-k.peak);}
     private record Index(int y,int ny,int lowest,int highest,int[] offsets,int[] refs,Proposal[] values){}
     private record Proposal(Kind kind,double x,double y,double z,double invX,double invY,double invZ,double draw){}

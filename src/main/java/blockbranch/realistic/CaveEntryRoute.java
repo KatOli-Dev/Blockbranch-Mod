@@ -60,7 +60,7 @@ public final class CaveEntryRoute {
         }return NONE;
     }
     private static boolean floor(P p,DrainageNetwork terrain,UndergroundStructure field,Map<Long,Integer> heights,CaveApproach approach){
-        int ground=heights.computeIfAbsent(key(p.x,p.z),k->{var s=terrain.sample(p.x,p.z);return s.waterLevel()==DrainageNetwork.DRY?s.height():Integer.MIN_VALUE;});
+        int ground=heights.computeIfAbsent(key(p.x,p.z),k->{var s=terrain.bedSample(p.x,p.z);return s.waterLevel()==DrainageNetwork.DRY?s.height():Integer.MIN_VALUE;});
         return ground!=Integer.MIN_VALUE&&!approach.contains(p.x,p.y-1,p.z)&&p.y<=ground-16&&field.voidAt(p.x,p.y,p.z,ground)&&field.voidAt(p.x,p.y+1,p.z,ground)&&!field.voidAt(p.x,p.y-1,p.z,ground);
     }
     private static boolean chamber(P p,DrainageNetwork terrain,UndergroundStructure field,Map<Long,Integer> heights,CaveApproach approach){

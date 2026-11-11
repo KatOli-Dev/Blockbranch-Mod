@@ -37,7 +37,9 @@ tasks.register('preparePolarVisual'){doLast{
 tasks.named('runPolarVisual'){dependsOn 'preparePolarVisual';doLast{assert visual.file(providers.gradleProperty('polarVisualReopen').isPresent()?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
 
 tasks.register('checkContinentalIce',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn 'checkContinentalIce'}
+tasks.register('checkPolarUnderground',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.PolarUndergroundCheck';maxHeapSize='2G';args(providers.gradleProperty('polarUndergroundReport').isPresent() ? ['report'] : [])}
+tasks.register('checkOreRebind',JavaExec){dependsOn 'integrationTestClasses';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.OreRebindCheck';maxHeapSize='1G';workingDir=layout.buildDirectory.dir('polar-underground-evidence/ore-bootstrap').get().asFile;doFirst{workingDir.mkdirs()}}
+tasks.named('check'){dependsOn 'checkContinentalIce','checkPolarUnderground','checkOreRebind'}
 tasks.register('assessContinentalIce',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceAssessment';maxHeapSize='2G'}
 
 // The original source is useful for codec/surface comparisons, but shares

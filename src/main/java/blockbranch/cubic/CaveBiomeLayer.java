@@ -39,6 +39,8 @@ public final class CaveBiomeLayer {
     }
     private static int key(int x,int y,int z){return (y<<4)|(z&3)*4|(x&3);}
     public boolean enabled(){return lush!=null;}
+    /** Persisted 4x4 quart-column eligibility; zero when no deep-dark layer is attached. */
+    public int deepDarkMask(){return darkMask;}
     public void validate(TerrainProfile profile){
         if(!enabled()||!profile.underground().enabled()||profile.underground().seed()!=seed||!profile.underground().owns(cx,cz)||!profile.litCaves().enabled()||profile.dripstone().definition()!=2)throw new IllegalArgumentException("Cave biome/profile mismatch");
     }

@@ -246,6 +246,13 @@ public final class DrainageNetwork {
     public int continentalIceThickness(int x,int z){return continentalIceEnabled&&!structuralComparison&&PolarClimate.latitude(z)>PolarClimate.START?continentalIce().thickness(x,z):0;}
     public boolean permanentFreshwaterLid(int x,int z){return continentalIceEnabled&&!structuralComparison&&PolarClimate.latitude(z)>PolarClimate.START&&continentalIce().freshwaterLid(x,z);}
     public boolean polarClimateEnabled(){return continentalIceEnabled;}
+    /** Datum for rock-relative underground rules (deep dark, underground structures, cave
+     * approaches, cave-biome/dripstone depth). A grounded continental sheet is new
+     * overburden, not uplifted rock, so under it this is the complete original sample,
+     * including any buried water; everywhere else it is exactly {@link #sample}. Legacy
+     * alpine caps stay part of the published surface. Never differs without a sheet. */
+    Sample bedSample(int x,int z){return continentalIceThickness(x,z)>0?iceReference().sample(x,z):sample(x,z);}
+    public int bedHeight(int x,int z){var s=sample(x,z);int ice=continentalIceThickness(x,z);return ice>0?s.height()-ice:s.height();}
     /** Original complete surface, including erosion/coasts; eligibility never feeds back from new relief. */
     DrainageNetwork gravelReference() {
         if(!gravelReliefEnabled)return this;

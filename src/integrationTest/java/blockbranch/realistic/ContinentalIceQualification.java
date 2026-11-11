@@ -77,6 +77,7 @@ public final class ContinentalIceQualification {
                     if(legacy)require(depth==0&&!profile.perennialIce().enabled(),"Old saved/unexplored terrain has no new ice spans");
                     if(profiles.add(chunk.getPos().pack())){
                         var encoded=profile.encode(level.palettedContainerFactory());require(TerrainProfile.decode(encoded,level.palettedContainerFactory()).encode(level.palettedContainerFactory()).equals(encoded),"Native profile exact roundtrip");
+                        if(profile.caveBiomes().enabled()){int expected=DeepDarkHabitat.mask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),d);require(profile.caveBiomes().deepDarkMask()==expected&&(!profile.perennialIce().enabled()||expected==DeepDarkHabitat.mask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),d.iceReference())),"Native deep-dark mask follows the rock-bed datum under a sheet");}
                         if(profile.perennialIce().enabled())profileBarrier(encoded,level);
                     }
                     int bottom=top-depth+1;
