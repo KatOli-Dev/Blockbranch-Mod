@@ -27,7 +27,7 @@ public final class SwampSmoke {
     if(state.is(Blocks.OAK_LOG)&&y==s.height()+1&&state.getValue(RotatedPillarBlock.AXIS)!=Direction.Axis.Y){dead++;require(s.waterLevel()==DrainageNetwork.DRY&&d.channelAt(x,z).edge()<0&&level.getBlockState(pos.below()).isFaceSturdy(level,pos.below(),Direction.UP),"Fallen log is fully grounded and clear of channels");}
    }
    for(int z=0;z<16;z++)for(int x=0;x<16;x++){int wx=cx*16+x,wz=cz*16+z,h=d.sample(wx,wz).height();var p=new BlockPos(wx,h+1,wz);var state=level.getBlockState(p);if(state.is(Blocks.FERN)||state.is(Blocks.SHORT_GRASS)||state.is(Blocks.LEAF_LITTER)||state.is(Blocks.BLUE_ORCHID)||state.is(Blocks.BROWN_MUSHROOM))require(state.canSurvive(level,p),"Actual wetland ground plant support "+state+" on "+level.getBlockState(p.below())+" at "+p);}
-   for(int z=0;z<16;z+=4)for(int x=0;x<16;x+=4){int wx=cx*16+x,wz=cz*16+z,h=d.sample(wx,wz).height();floor.add(g.woodlandCover(wx,wz,random));
+   for(int z=0;z<16;z+=4)for(int x=0;x<16;x+=4){int wx=cx*16+x,wz=cz*16+z,h=d.sample(wx,wz).height();floor.add(LeafLitter.woodlandBase(g.woodlandCover(wx,wz,random)));
     for(int y=h-3;y<=Math.max(d.sample(wx,wz).waterLevel()==DrainageNetwork.DRY?h+2:d.sample(wx,wz).waterLevel()+2,base.canopy().topY(wx,wz));y++)require(base.state(wx,y,wz)==g.surfaceState(wx,y,wz,random),"Generator/profile floor,fluid and overhang queries agree");
     var plant=new BlockPos(wx,h+1,wz);if(level.getBlockState(plant).is(Blocks.BLUE_ORCHID)){flowers++;require(level.getBlockState(plant).canSurvive(level,plant),"Native marsh flower support");}
     for(var type:Heightmap.Types.values())require(chunk.getHeight(type,wx&15,wz&15)+1==g.getBaseHeight(wx,wz,type,level,random),"Water/foliage-aware native heightmap "+type);

@@ -22,6 +22,7 @@ public final class ForestGrasslandTransitionSmoke {
         var encoded=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
         Path dir=Path.of(System.getProperty("blockbranch.memorySmokeResult")).toAbsolutePath().getParent();
         Files.writeString(dir.resolve("generator.json"),encoded.toString());
+        if(encoded.get("shape_version").getAsInt()!=257){verifyCurrent(level,g,encoded,reload,dir);return;}
         require(encoded.get("shape_version").getAsInt()==257&&g.biomeTransitionDefinition()==1&&g.redwoodForestDefinition()==1,"Fresh and reopened world retain schema257/transition1/redwood1");
         // Schema 256 is the transition-only foundation: the same world without the redwood opt-in.
         var transitionOnly=encoded.deepCopy();transitionOnly.remove("redwood_forest_definition");transitionOnly.addProperty("shape_version",256);
@@ -48,11 +49,27 @@ public final class ForestGrasslandTransitionSmoke {
             require(codec.codec().parse(ops,transitionOnly).result().isEmpty(),"Prior reader rejects256 before chunks/clear plans");
             require(codec.codec().parse(ops,encoded).result().isEmpty(),"Prior reader rejects257 before chunks/clear plans");
         }
-        var d=g.drainage(random);var c=new ClimateField(seed);var p=OakBirchWoodlandFixtures.fixture(d,seed);
+        qualify(level,g,legacy,reload,dir,random,seed,OakBirchWoodlandFixtures.fixture(g.drainage(random),seed),true);
+    }
+    /** Current gated preset: the schema-257 contract above needs its own world and prior jar, so here the same transition paths run with a transition-off twin of this generator. */
+    private static void verifyCurrent(ServerLevel level,RealisticGenerator g,JsonObject encoded,boolean reload,Path dir)throws Exception {
+        var random=level.getChunkSource().randomState();long seed=random.seed();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
+        require(encoded.get("shape_version").getAsInt()==267&&encoded.get("leaf_litter_definition").getAsInt()==1&&encoded.get("continental_ice_definition").getAsInt()==1&&g.biomeTransitionDefinition()==1&&g.redwoodForestDefinition()==1,"Current preset retains schema267/leaf-litter1/ice1/transition1/redwood1");
+        var legacy=RealisticGenerator.CODEC.codec().parse(ops,encoded).getOrThrow();
+        var field=RealisticGenerator.class.getDeclaredField("biomeTransitionDefinition");field.setAccessible(true);field.setInt(legacy,0);
+        require(legacy.biomeTransitionDefinition()==0&&g.biomeTransitionDefinition()==1,"Transition-off twin differs only in the transition definition");
+        var source=g.getBiomeSource().createUncachedResolver(random);var drainage=g.drainage(random);
+        // The frozen schema-257 root set no longer equals current transition-off roots (later closed-canopy infill stems, family 1), so here the transition effect is measured against current transition-off roots; the frozen comparison stays in the 257 contract.
+        // Habitat membership alone now selects points owned by coastal winter-rain oak woodland, whose roots are not the frozen temperate set.
+        var owned=OakBirchWoodlandFixtures.fixture(drainage,seed,(x,z)->source.getNoiseBiome(x>>2,drainage.sample(x,z).height()>>2,z>>2).is(Blockbranch.id("dappled_oak_birch_woodland")));
+        qualify(level,g,legacy,reload,dir,random,seed,owned,false);
+    }
+    private static void qualify(ServerLevel level,RealisticGenerator g,RealisticGenerator legacy,boolean reload,Path dir,net.minecraft.world.level.levelgen.RandomState random,long seed,OakBirchWoodland.WoodlandPoint p,boolean frozen)throws Exception {
+        var d=g.drainage(random);var c=new ClimateField(seed);
         WoodlandTrees.Root added=null,removed=null;int rootSamples=0;
         for(int z=p.z()-384;z<=p.z()+384;z+=64)for(int x=p.x()-384;x<=p.x()+384;x+=64){
-            var a=HistoricalTemperateRoots.roots(seed,x,z,x+31,z+31,d,c);
-            require(a.equals(WoodlandTrees.roots(seed,x,z,x+31,z+31,d,c,0)),"Frozen roots including unexplored coordinates");rootSamples+=a.size();
+            var a=frozen?HistoricalTemperateRoots.roots(seed,x,z,x+31,z+31,d,c):WoodlandTrees.roots(seed,x,z,x+31,z+31,d,c,0);
+            if(frozen)require(a.equals(WoodlandTrees.roots(seed,x,z,x+31,z+31,d,c,0)),"Frozen roots including unexplored coordinates");rootSamples+=a.size();
             var b=WoodlandTrees.roots(seed,x,z,x+31,z+31,d,c,1);
             if(added==null)added=b.stream().filter(v->!a.contains(v)).findFirst().orElse(null);
             if(removed==null)removed=a.stream().filter(v->!b.contains(v)).findFirst().orElse(null);
@@ -66,9 +83,9 @@ public final class ForestGrasslandTransitionSmoke {
             var before=legacy.getBiomeSource().createUncachedResolver(random);var after=g.getBiomeSource().createUncachedResolver(random);
             require(before.getNoiseBiome(x>>2,0,z>>2).equals(after.getNoiseBiome(x>>2,0,z>>2)),"Biome identity unchanged");
             require(legacy.drainage(random).sample(x,z).equals(d.sample(x,z)),"Terrain/drainage unchanged");
-            int m=g.meadowCover(x,z,random),w=g.woodlandCover(x,z,random);
+            int m=g.meadowCover(x,z,random),w=LeafLitter.woodlandBase(g.woodlandCover(x,z,random));
             require(m==0||w==0,"Mutually exclusive cover vocabularies");
-            int om=legacy.meadowCover(x,z,random),ow=legacy.woodlandCover(x,z,random);
+            int om=legacy.meadowCover(x,z,random),ow=LeafLitter.woodlandBase(legacy.woodlandCover(x,z,random));
             int routedMeadow=originalCover(g,"originalMeadowCover",x,z,random),routedWoodland=originalCover(g,"originalWoodlandCover",x,z,random);
             if(m>0&&routedMeadow>0){require(m==routedMeadow,"Retain routed meadow subtype");subtypeChecks++;}
             if(w>0&&routedWoodland>0){require(w==routedWoodland,"Retain routed woodland subtype");subtypeChecks++;}

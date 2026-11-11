@@ -33,11 +33,13 @@ public final class SummerDryWoodland {
     }
     /** Existing rooted/litter/short-grass roles; a woody understory rather than
      * a fern carpet. The static green canopy does not implement leaf phenology. */
-    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear){
+    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear){return cover(seed,x,z,site,clear,false);}
+    /** With patchy litter the same gap rolls are kept; only the former uniform 80% litter roll becomes irregular. */
+    static int cover(long seed,int x,int z,GroundEcology.Site site,boolean clear,boolean patchy){
         if(!clear)return 8;
         double roll=(OakBirchWoodland.mix(seed^0x53554D4D4552464CL^x*1297L^z*1237L)>>>11)*0x1.0p-53;
         if(!site.shaded()&&roll<.06)return 12;
-        return roll<.80?9:8;
+        return (patchy?LeafLitter.present(seed,x,z,site):roll<.80)?9:8;
     }
     private SummerDryWoodland(){}
 }
