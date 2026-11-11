@@ -68,7 +68,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     void bind(long seed,DrainageNetwork drainage,ClimateField climate,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.LitCaveLayer> growth) {
         if(caveBiomeDefinition>0&&growth==null)throw new IllegalArgumentException("Cave biomes require a fixed-seed moss planner");
         var ecology=new GroundEcology.Field(drainage::sample,climate);
-        BiomeResolver rawSurface = (x, y, z) -> landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
+        BiomeResolver rawSurface = (x, y, z) -> drainage.continentalIceThickness(x*4,z*4)>0 ? palette.additional(ContinentalIceField.KEY) : drainage.permanentFreshwaterLid(x*4,z*4) ? palette.additional("frozen_river") : landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
             : LakeSediment.contains(x*4,z*4,drainage) ? lake
             : SnowySlopes.contains(x*4,z*4,drainage,climate) ? palette.additional("snowy_slopes")
             : MountainPeaks.kind(seed,x*4,z*4,drainage,climate)>0 ? palette.additional(MountainPeaks.key(MountainPeaks.kind(seed,x*4,z*4,drainage,climate)))

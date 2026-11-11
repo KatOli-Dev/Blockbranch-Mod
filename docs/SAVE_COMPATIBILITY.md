@@ -11,15 +11,15 @@ permission to resave a world with an older build.
 
 | Contract | Current new Realistic world | Source of truth |
 | --- | --- | --- |
-| Generator `shape_version` | 264 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
+| Generator `shape_version` | 265 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
 | Base geometry | 82 plus saved gravel/deep-basin relief and land ice 1 | [TerrainShape](../src/main/java/blockbranch/realistic/TerrainShape.java), [GravelReliefSchema](../src/main/java/blockbranch/realistic/GravelReliefSchema.java), [DeepBasinSchema](../src/main/java/blockbranch/realistic/DeepBasinSchema.java) |
-| Terrain profile | 76 for land-ice roles; 75 for appended benthic states; 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
+| Terrain profile | 77 for perennial spans; 76 for land-ice roles; 75 for appended benthic states; 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
 | Column / terrain-window protocol | 70 / 71 | [ColumnPacket](../src/main/java/blockbranch/cubic/ColumnPacket.java), [TerrainWindowPacket](../src/main/java/blockbranch/cubic/TerrainWindowPacket.java) |
 | World marker | 4, content catalog 21 (legacy metallurgy key), explicit decoration bit | [ColumnWorldFormat](../src/main/java/blockbranch/cubic/ColumnWorldFormat.java) |
 | Ore / layout definitions | 15 / 9 | [OreLayer](../src/main/java/blockbranch/realistic/OreLayer.java), generator codec |
 
-These numbers describe separate contracts: schema 264 does not mean geometry or
-profile 264. Validation checks complete feature combinations, holders and exact
+These numbers describe separate contracts: schema 265 does not mean geometry or
+profile 265. Validation checks complete feature combinations, holders and exact
 field types as well as versions. Unsupported combinations reject loading.
 
 The preset enables underground geometry, approaches, bounded entry routes,
@@ -27,7 +27,7 @@ icebergs and sandy coasts; dripstone/lit-cave growth 2, cave-biome 1 and structu
 3; discovery/waygates 1, shipwreck templates 2, huts/shelters/warm/cold/deep ruins 1;
 native huts/igloos and ordinary bodies, native Overworld coverage and layout 9.
 Wing, gallery, boreal crown, gravel relief, sanctuary/mansion replacement,
-biome-transition, redwood, surface-ownership, dry-forest, cool-desert, abyssal-trace, deep-basin-relief and land-ice definitions are all 1. Consult the preset for exact
+biome-transition, redwood, surface-ownership, dry-forest, cool-desert, abyssal-trace, deep-basin-relief, land-ice, summer-dry and continental-ice definitions are all 1. Consult the preset for exact
 serialized names and biome holders; changing its defaults does not promote saves.
 
 ## World barriers and recovery
@@ -230,6 +230,7 @@ and the generator/wrapper codecs.
 | 262 | Complete schema 261 plus independent deep-basin-relief definition 1 |
 | 263 | Complete schema 262 plus independent land-ice definition 1 and biome holder |
 | 264 | Complete schema 263 plus independent summer-dry woodland definition 1 and biome holder |
+| 265 | Complete schema 264 plus polar climate/continental-ice definition 1, grounded sheet holder and compatible static spans |
 
 Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
 224–227, 235–239 and 244–247 are unsupported. The 220–233 groups belong to the pyramid
@@ -345,9 +346,9 @@ Land-ice definition1 requires complete262 and its biome holder; absence retains 
 Explicit new-content edits remain section overrides: an old schema260 world can retain a command-placed waterlogged trace without changing its generation gate or base profile. The existing content catalog advances to21 (same marker4/22,20,22 packing; the retained field name is `metallurgy-catalog`). Opening with this build conservatively upgrades older canonical catalog markers before levels load, even when the generation gate stays0. The actual catalog20 reader rejects21; the wire catalog/hello also requires matching peers. Matching builds remain required; never downgrade an edited world to a build lacking the block registry entry. Native lifecycle checks cover exact saved properties, source water after reopen/neighbor changes, support removal and edited natural traces staying removed.
 Tree-clear definitions 9–16 add the saved dry-forest root bit to 1–8; new plans replace the old warm-tree footprints with complete broadleaf footprints in that domain. Definitions 1–8 keep exact historical root/crown choices and boxes, even when replayed against a newer generator. Only redwood-bearing plans reserve the 144-block upper halo; otherwise it remains 80. Clearing still follows its saved immutable log/leaf footprint, including player-placed logs/leaves within it.
 
-**Continental-ice preparation — implementation and geography remain undecided.** Current supported generation stops at schema 264; the alpine ice body and profile 76 do not establish a continental-sheet contract. Before changing production, record a closed, authentic schema 264 world and independently observed native/profile outputs plus saved edits against public main. Renamed readers alone cannot detect regressions shared through modified climate/drainage helpers. Any eventual opt-in must preserve old climate selection, physical cover, water behavior, explicit edits and untouched chunks, including helper-created climate fields and fixed-seed views. Depths beyond the existing 64 m roles require a deliberate saved representation and appropriate old-reader/peer rejection; no new schema, profile or wire number is assigned by this assessment.
+**Continental-ice candidate:** schema 265/definition 1 wraps complete 264; absence retains legacy climate, physical cover, water, edits and untouched generation. Partial/future/malformed settings reject, and the actual original 264 reader rejects 265. Original native/profile/climate/selector hashes plus a closed authentic saved-edit world were recorded before production changes; renamed readers still share helpers and are not an independent oracle. Fixed-seed helpers and spawn use the saved climate. New tree-clear plans encode polar climate in definitions 33–64; definitions 1–32 keep their saved legacy climate; retained old generators preserve their physical inputs and footprints. No old definition is promoted.
 
-An eventual ice–water contract must state which existing routed rivers, terminal lakes and coasts remain exposed, become ice-covered or change ownership inside the new footprint. The current dry-cap exclusion cannot silently stand in for that decision. Assess exposed versus buried water, liquid versus frozen state, cold-lake/reed eligibility, caves/ores and feature anchors beneath the body, and continuity at ice/rock/water edges. Qualification must cover native blocks, full/clipped height and column APIs, water/support/melt behavior, saved clearing and edits, authentic old-world reopening and new untouched chunks with the gate disabled. Keep all existing vertical bounds and coordinate packing while the separate height task is deferred. These are prospective checks, not a chosen hydrological model or a claim that sheets are implemented.
+Only profiles with new grounded-body or exposed-freshwater spans wrap their historical base in profile 77 plus `perennial_ice_base_profile_version` and a 256-int `perennial_ice` descriptor. Empty, stray, nested, malformed or future wrappers reject; original readers refuse 77. Grounded spans end at the raised ground and replace buried inland water, while anchoring cave-void and ore geometry to the original rock bed. Dripstone eligibility/depth labels still use physical overburden; this is not a new underground ecology model. Exposed lids retain water geometry/source water and use the existing frozen-river biome as a compatibility analog. Marine ownership stays with its corrected basin source and the inherited marine-ice policy; no new marine grounding or calving model is implied. Snow blocks/packed ice use existing immutable material behavior and section edits remain authoritative. The window/hello path appends `polar77` so old peers cannot accept new spans; marker 4/catalog 21, global 22/20/22 packing and packet numbers 70/71 stay unchanged. Native full/clipped column/height, mixed-edge, explicit edit/reopen and authentic old-world checks must qualify the final candidate. Global vertical bounds and skipped-level work remain deferred.
 
 ## Structure piece contracts
 

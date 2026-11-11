@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 264, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 265, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -80,11 +80,13 @@ public final class CurrentBiomeSurvey {
         var aggregateFallbacks = emptyFootprints();
         var fallbackBins = new TreeMap<String, TreeMap<String, Integer>>();
         try (var csv = Files.newBufferedWriter(directory.resolve("samples.csv"), StandardCharsets.UTF_8)) {
-            csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel\n");
+            csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel,continental_ice_depth,permanent_freshwater_lid\n");
             for (long seed : SEEDS) {
                 var drainage = seed == random.seed() ? generator.drainage(random) : new DrainageNetwork(
-                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1, preset.has("deep_basin_relief_definition") && preset.get("deep_basin_relief_definition").getAsInt() == 1, preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt() == 1);
-                var climate = new ClimateField(seed);
+                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1, preset.has("deep_basin_relief_definition") && preset.get("deep_basin_relief_definition").getAsInt() == 1, preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt() == 1, preset.has("continental_ice_definition") && preset.get("continental_ice_definition").getAsInt()==1);
+                var climate = new ClimateField(seed,preset.has("continental_ice_definition")&&preset.get("continental_ice_definition").getAsInt()==1);
+                var spawnBounds=new SpawnRegions.Bounds(-2097136,-2097136,2097136,2097136).reserve(10);
+                var spawn=SpawnRegions.select(seed,spawnBounds,drainage,climate);require(SpawnRegions.eligible(spawn.x(),spawn.z(),drainage,climate)&&spawnBounds.allows(spawn.x(),spawn.z()),"Current saved climate retains mild dry interior spawn policy");
                 var source = source(palette, preset, seed, drainage, climate);
                 var taggedSource = source(tagged, preset, seed, drainage, climate);
                 source.possibleBiomes().forEach(b -> inventory.add(id(b)));
@@ -119,8 +121,8 @@ public final class CurrentBiomeSurvey {
                             bins.merge("moisture:" + (moisture < .12 ? "below_.12" : moisture < .27 ? ".12_to_.27" :
                                 moisture < .55 ? ".27_to_.55" : moisture <= .85 ? ".55_to_.85" : "above_.85"), 1, Integer::sum);
                         }
-                        csv.write(String.format(Locale.ROOT, "%d,%d,%d,%s,%s,%s,%d,%d,%.6f,%.6f,%s,%s,%s%n",
-                            seed, x, z, footprint, id(selected), fallback, site.height(), site.waterLevel(), c.meanTemperatureC(), c.moisture(), ocean, lake, channel));
+                        csv.write(String.format(Locale.ROOT, "%d,%d,%d,%s,%s,%s,%d,%d,%.6f,%.6f,%s,%s,%s,%d,%s%n",
+                            seed, x, z, footprint, id(selected), fallback, site.height(), site.waterLevel(), c.meanTemperatureC(), c.moisture(), ocean, lake, channel, drainage.continentalIceThickness(x,z), drainage.permanentFreshwaterLid(x,z)));
                         witnesses.putIfAbsent(footprint, new Point(x, z));
                         if (fallback) witnesses.putIfAbsent("fallback", new Point(x, z));
                         else if (id(selected).equals("minecraft:plains")) witnesses.putIfAbsent("intentional_plains", new Point(x, z));
@@ -131,7 +133,7 @@ public final class CurrentBiomeSurvey {
                         Blockbranch.LOGGER.info("CURRENT_BIOME_SURVEY seed={} samples={}", seed, samples);
                 }
                 var entry = new JsonObject();
-                entry.addProperty("seed", seed);
+                entry.addProperty("seed", seed);entry.add("preferredSpawn",new Gson().toJsonTree(spawn));
                 entry.addProperty("samples", samples);
                 var totals = emptyFootprints();
                 counts.forEach((realm, biomes) -> totals.put(realm, biomes.values().stream().mapToInt(Integer::intValue).sum()));
@@ -157,6 +159,7 @@ public final class CurrentBiomeSurvey {
                     require(witnesses.containsKey("fallback") && witnesses.containsKey("intentional_plains"), "Fallback/plains attribution witnesses");
                     if(preset.has("surface_ownership_definition")){witnesses.put("basin_connected_coast",new Point(-1008000,-1776000));witnesses.put("cold_rockland_reference",new Point(-1328000,-1904000));}
                     if(preset.has("dry_forest_definition"))witnesses.put("dry_forest_reference",new Point(1648000,-208000));
+                    if(preset.has("continental_ice_definition"))witnesses.put("polar_ice_reference",new Point(-1552000,-1904000));
                     if(preset.has("cool_desert_definition"))witnesses.put("cool_desert_reference",new Point(400000,-1200000));
                     witnesses.put("redwood_reference", new Point(-844018, -1692020));
                     entry.add("nativeWitnesses", nativeWitnesses(level, generator, drainage, source, witnesses));
