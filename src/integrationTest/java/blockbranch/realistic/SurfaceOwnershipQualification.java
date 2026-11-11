@@ -32,7 +32,11 @@ public final class SurfaceOwnershipQualification {
                 fresh.remove("type");
                 // Keep this historical 257->258 qualification and its frozen
                 // counts intact when today's preset has an independent wrapper.
-                if(fresh.get("shape_version").getAsInt()==263){
+                if(fresh.get("shape_version").getAsInt()==264){
+                require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
+                fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
+            }
+            if(fresh.get("shape_version").getAsInt()==263){
                 require(fresh.get("land_ice_definition").getAsInt()==1,"Known complete land-ice wrapper");
                 fresh.remove("land_ice_definition");fresh.addProperty("shape_version",262);fresh.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);
             }

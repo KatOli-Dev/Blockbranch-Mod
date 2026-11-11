@@ -133,6 +133,9 @@ public final class WoodlandTrees {
         return column(seed,chunkX,chunkZ,drainage,climate,whorled,transitions,null);
     }
     public static int[] column(long seed,int chunkX,int chunkZ,DrainageNetwork drainage,ClimateField climate,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> dryForest) {
+        return column(seed,chunkX,chunkZ,drainage,climate,whorled,transitions,dryForest,null);
+    }
+    public static int[] column(long seed,int chunkX,int chunkZ,DrainageNetwork drainage,ClimateField climate,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry) {
         int minX=chunkX*16,minZ=chunkZ*16,halo=6,width=16+halo*2;
         int startX=minX-halo,startZ=minZ-halo;
         var roots=new ArrayList<>(roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,transitions));
@@ -149,8 +152,10 @@ public final class WoodlandTrees {
         var warm=WarmTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         warm.removeIf(root->Badlands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         if(dryForest!=null)warm.removeIf(root->dryForest.test(root.x(),root.z()));
+        if(summerDry!=null)warm.removeIf(root->summerDry.test(root.x(),root.z()));
         for(var root:warm){geometry.addAll(WarmTrees.tree(root));roots.add(new Root(root.x(),root.y(),root.z(),false,root.height(),root.variant()));}
         if(dryForest!=null){var dry=DryForestTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,dryForest);for(var root:dry)geometry.addAll(ForestTrees.tree(root));roots.addAll(dry);}
+        if(summerDry!=null){var dry=SummerDryTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,summerDry);for(var root:dry)geometry.addAll(SummerDryTrees.tree(root));roots.addAll(dry);}
         var redwoods=RedwoodForest.enabled(transitions)?RedwoodTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate):List.<Root>of();
         for(var root:redwoods)geometry.addAll(RedwoodTrees.tree(root));roots.addAll(redwoods);
         var humid=HumidTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);

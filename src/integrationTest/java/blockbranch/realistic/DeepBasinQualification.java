@@ -25,6 +25,10 @@ public final class DeepBasinQualification {
         try{
             var level=server.overworld();var random=level.getChunkSource().randomState();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());JsonObject fresh;
             try(var in=new InputStreamReader(Objects.requireNonNull(DeepBasinQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){fresh=JsonParser.parseReader(in).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
+            if(fresh.get("shape_version").getAsInt()==264){
+                require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
+                fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
+            }
             if(fresh.get("shape_version").getAsInt()==263){
                 require(fresh.get("land_ice_definition").getAsInt()==1,"Known complete land-ice wrapper");
                 fresh.remove("land_ice_definition");fresh.addProperty("shape_version",262);fresh.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);

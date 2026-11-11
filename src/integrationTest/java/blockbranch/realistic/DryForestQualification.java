@@ -34,6 +34,10 @@ public final class DryForestQualification {
             try(var input=new InputStreamReader(Objects.requireNonNull(DryForestQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){
                 fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
             }
+            if(fresh.get("shape_version").getAsInt()==264){
+                require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
+                fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
+            }
             if(fresh.get("shape_version").getAsInt()==263){
                 require(fresh.get("land_ice_definition").getAsInt()==1,"Known complete land-ice wrapper");
                 fresh.remove("land_ice_definition");fresh.addProperty("shape_version",262);fresh.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);
@@ -55,6 +59,11 @@ public final class DryForestQualification {
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact fresh codec roundtrip");
             var old=fresh.deepCopy();old.remove("dry_forest_definition");old.addProperty("shape_version",258);old.getAsJsonObject("additional_biomes").remove(DryForest.KEY);
             var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
+            if(Boolean.getBoolean("blockbranch.dryForestClearingOnly")){
+                var report=clearing(level,candidate,retained,result.getParent());
+                Files.writeString(result.resolveSibling("clearing.json"),new GsonBuilder().setPrettyPrinting().create().toJson(report)+"\n");
+                Files.writeString(result,"PASS explicit schema259 dry-forest clearing model under current wrapping preset; historical clear plans retained\n");return;
+            }
             require(retained.dryForestDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent gate retains exact published258 settings");
             for(int version:new int[]{82,257,258,260}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);rejected(ops,bad,"Partial/future foundation");}
             for(int value:new int[]{-1,0,2}){var bad=fresh.deepCopy();bad.addProperty("dry_forest_definition",value);rejected(ops,bad,"Bad definition");}
@@ -96,7 +105,9 @@ public final class DryForestQualification {
             if(!legacy){
                 require(owned>1000&&shade>owned*.60&&shade>oldShade+owned*.10,"Distinct closed broadleaf canopy rather than old open pine/oak: owned="+owned+" shade="+shade+" old="+oldShade);
                 require(litter>owned*.35&&grass<owned*.05,"Litter-dominated native floor, rare grass: litter="+litter+" grass="+grass);
-                report.put("savedTreeClear",clearing(level,actual,retained,result.getParent()));
+                // Qualify this fixture's explicit259 root/crown definition,
+                // independently of later flags in the bundled world's generator.
+                report.put("savedTreeClear",clearing(level,candidate,retained,result.getParent()));
             }
             var editPoint=Published258Snapshot.POINTS[0];int ex=editPoint[0]+1,ez=editPoint[1]+1;
             var edit=new BlockPos(ex,d.sample(ex,ez).height()-2,ez);

@@ -69,9 +69,11 @@ tasks.named('check'){dependsOn 'checkDrySeasonPolicy'}
 
 def dir=layout.projectDirectory.dir(providers.gradleProperty('dryForestDirectory').getOrElse('build/dry-forest-native'))
 def reopen=providers.gradleProperty('dryForestReopen').isPresent(),legacy=providers.gradleProperty('dryForestLegacy').isPresent()
-def resultName=(reopen?'reopen-':'')+'result.txt'
+def clearingOnly=providers.gradleProperty('dryForestClearingOnly').isPresent()
+def resultName=(clearingOnly?'clearing-':'')+(reopen?'reopen-':'')+'result.txt'
 loom.runs.register('dryForestQualification') {
     server();runDir(dir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.dryForestClearingOnly='+clearingOnly);
     vmArg('-Dblockbranch.dryForestQualification=true');vmArg('-Dblockbranch.dryForestResult='+dir.file(resultName).asFile.absolutePath)
     vmArg('-Dblockbranch.dryForestLegacy='+legacy);vmArg('-Dblockbranch.dryForestReopen='+reopen)
     vmArg('-Dblockbranch.dryForestBoundaryOnly='+providers.gradleProperty('dryForestBoundaryOnly').isPresent())
