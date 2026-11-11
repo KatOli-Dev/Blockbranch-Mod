@@ -1,0 +1,29 @@
+{
+  "grids": [
+    {
+      "seed": 424242,
+      "samples": 14400,
+      "fallback": 216,
+      "terrainClimateOwnershipSHA256": "e86f880b40e4eae09675b4774d1966f0d7397829883b5b249cc4f98a55474cd6",
+      "selectorSHA256": "2cc854ba4f0fe699dcc263a55fb26480670cccc17e982b1fbbc4161b6891fcc0"
+    },
+    {
+      "seed": 1,
+      "samples": 14400,
+      "fallback": 174,
+      "terrainClimateOwnershipSHA256": "ff066ae2754906f34ecdfc25deb76ac97e9bdfc9d084393d4ab77587931394fa",
+      "selectorSHA256": "9efe3f6cc0ea0efa5a5579dccb642939196ea73634696d8d614ed525f8f4d062"
+    },
+    {
+      "seed": -17,
+      "samples": 14400,
+      "fallback": 169,
+      "terrainClimateOwnershipSHA256": "3c11a18e554354ebc8b32ce097404934b07ac8a3e9017df982735b9be107e205",
+      "selectorSHA256": "1bbaa1cd4abe06e236f3701530344948cca2388fa1c6a348cf2ef3db060460c8"
+    }
+  ],
+  "physicalStates": 4569,
+  "physicalSHA256": "fa9cb0a6bd7a1e330dbcb0d8d469cdb135bf0dc0b296ef278b0bf9bc68ef65ee",
+  "nativeStates": 28433,
+  "nativeSHA256": "0fed10b8d4f6f12bb20772c8a84dd45c3dd89ce7bcd41a83fb3c50bbef98358a"
+}

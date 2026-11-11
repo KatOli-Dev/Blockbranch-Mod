@@ -24,7 +24,8 @@ public final class SurfaceBoundaryQualification {
                 var level=server.overworld();var random=level.getChunkSource().randomState();
                 var g=(RealisticGenerator)level.getChunkSource().getGenerator();
                 require(random.seed()==SEED&&g.surfaceOwnershipDefinition()==1,"Fixed candidate world/gate");
-                report.put("seed",SEED);report.put("shapeVersion",258);report.put("surfaceOwnershipDefinition",1);
+                var encoded=RealisticGenerator.CODEC.codec().encodeStart(net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess()),g).getOrThrow().getAsJsonObject();
+                report.put("seed",SEED);report.put("shapeVersion",encoded.get("shape_version").getAsInt());report.put("surfaceOwnershipDefinition",1);report.put("dryForestDefinition",g.dryForestDefinition());
                 report.put("rockland",rockland(level,g,random));
                 report.put("kelp",kelp(level,g,random));
                 Files.writeString(result.resolveSibling("result.json"),new GsonBuilder().setPrettyPrinting().create().toJson(report)+"\n");

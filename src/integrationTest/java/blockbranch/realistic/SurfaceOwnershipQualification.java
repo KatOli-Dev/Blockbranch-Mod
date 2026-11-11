@@ -29,7 +29,14 @@ public final class SurfaceOwnershipQualification {
                     var input=new InputStreamReader(stream,StandardCharsets.UTF_8)) {
                     fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
                 }
-                fresh.remove("type");require(fresh.get("shape_version").getAsInt()==258,"Current preset barrier");
+                fresh.remove("type");
+                // Keep this historical 257->258 qualification and its frozen
+                // counts intact when today's preset has an independent wrapper.
+                if(fresh.get("shape_version").getAsInt()==259){
+                    require(fresh.get("dry_forest_definition").getAsInt()==1,"Known complete dry-forest wrapper");
+                    fresh.remove("dry_forest_definition");fresh.addProperty("shape_version",258);fresh.getAsJsonObject("additional_biomes").remove(DryForest.KEY);
+                }
+                require(fresh.get("shape_version").getAsInt()==258,"Historical surface-ownership foundation");
                 var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
                 require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact flat new codec roundtrip");
                 Biome.DIRECT_CODEC.encodeStart(ops,HabitatPalette.CODEC.codec().parse(ops,fresh).getOrThrow().additional(ColdRockland.KEY).value()).getOrThrow();
@@ -76,6 +83,7 @@ public final class SurfaceOwnershipQualification {
                 report.put("independentProductionCommit","a41e39a00d4347a5a96773cfbb60fc3a7c038c70");
                 var actual=(RealisticGenerator)level.getChunkSource().getGenerator();
                 require(actual.surfaceOwnershipDefinition()==(legacyWorld?0:1),"Actual saved definition retains opt-in");
+                report.put("actualDryForestDefinition",actual.dryForestDefinition());
                 if(!legacyWorld){
                     int coastSand=0;
                     for(int z=-1776064;z<=-1775936;z++)for(int x=-1008064;x<=-1007936;x++){

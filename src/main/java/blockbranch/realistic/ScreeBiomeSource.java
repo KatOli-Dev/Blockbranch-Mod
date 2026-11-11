@@ -21,12 +21,14 @@ public final class ScreeBiomeSource extends BiomeSource {
     private final Holder<Biome> fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean;
     private final int dripstoneDefinition,caveBiomeDefinition;
     private volatile Bound bound;
-    private boolean deepDarkEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled;
+    private boolean deepDarkEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled;
+    ScreeBiomeSource withDryForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");dryForestEnabled=enabled;return this;}
+    java.util.function.BiPredicate<Integer,Integer> dryForestSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.dryForest;}
     ScreeBiomeSource withSurfaceOwnership(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");surfaceOwnershipEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> coldRocklandSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.rockland;}
     ScreeBiomeSource withRedwoodForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");redwoodForestsEnabled=enabled;return this;}
     ScreeBiomeSource withDeepDark(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");deepDarkEnabled=enabled;return this;}
-    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves,java.util.function.BiPredicate<Integer,Integer> rockland){}
+    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest){}
 
     public ScreeBiomeSource(HabitatPalette palette){this(palette,false);}
     public ScreeBiomeSource(HabitatPalette palette,boolean icebergsEnabled) {this(palette,icebergsEnabled,false);}
@@ -96,7 +98,7 @@ public final class ScreeBiomeSource extends BiomeSource {
             : DappledForest.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("dappled_forest")
             : OakBirchWoodland.contains(seed,x*4,z*4,drainage,climate) ? woodland
             : TropicalForestVariants.kind(seed,x*4,z*4,drainage,climate)>0 ? palette.additional(TropicalForestVariants.key(TropicalForestVariants.kind(seed,x*4,z*4,drainage,climate)))
-            : WarmWoodland.contains(seed,x*4,z*4,drainage,climate) ? warm
+            : WarmWoodland.contains(seed,x*4,z*4,drainage,climate) ? (dryForestEnabled&&DryForest.eligible(seed,x*4,z*4,drainage,climate)?palette.additional(DryForest.KEY):warm)
             : HumidWoodland.contains(seed,x*4,z*4,drainage,climate) ? humid
             : SunflowerPlains.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("sunflower_plains")
             : Plains.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("plains")
@@ -137,7 +139,8 @@ public final class ScreeBiomeSource extends BiomeSource {
         // eligibility clips it; competing selectors are not rerun between anchors.
         // A physical specialist can therefore meet rockland at a quart edge.
         java.util.function.BiPredicate<Integer,Integer> rockland=surfaceOwnershipEnabled?(x,z)->ColdRockland.eligible(x,z,drainage,climate)&&surface.getNoiseBiome(x>>2,0,z>>2)==palette.additional(ColdRockland.KEY):null;
-        bound=new Bound(surface,full,drainage,seed,caves,rockland);
+        java.util.function.BiPredicate<Integer,Integer> dryForest=dryForestEnabled?DryForest.domain(seed,drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(DryForest.KEY)):null;
+        bound=new Bound(surface,full,drainage,seed,caves,rockland,dryForest);
     }
     public boolean bound(){return bound!=null;}
     public BiomeResolver surfaceResolver(){var b=bound;if(b==null)throw new IllegalStateException("Unbound surface source");return b.surface;}
