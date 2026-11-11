@@ -1,0 +1,24 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "831987bb38a3f35cc8dc46d588b7706842be34d1",
+  "method": "Complete original public schema-259 production; recorded before production edits in a native JVM. Only opt-in development collector, registration, site survey and Gradle run setup added. Original source diff empty.",
+  "productionFiles": 2023,
+  "productionManifestSHA256": "e5d899fa34894e1b918ad40e18736f4e475aea1df6175664c1d26753f2cef09d",
+  "collector": "src/integrationTest/java/blockbranch/realistic/Published259Snapshot.java",
+  "limits": "Three fixed 14400-point grids; 16875 analytic physical and 168959 literal native states at 15 fixed witnesses; saved gold edit. Finite output oracle, not a global proof. No candidate-generated expected output.",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "0ea3404f70e49e88e11501bc65729ae81d3e7ed8c1429c2d9532d3d2d36a0974"
+    },
+    {
+      "path": "src/main/java/blockbranch/realistic/ScreeBiomeSource.java",
+      "sha256": "a779497539e65e43326b8ff73a50b85d19a8baedf93c34f0ff30bf8945ad1605"
+    }
+  ],
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "b7c55e4bda7cc33b53aad49c1e0129952187c796191fbe3bf176f31f7b33c3d8",
+    "collectorSha256": "5f344a088565058a7fab90fb130ffab37d7a747a0d957824adae94c8242ae26b"
+  }
+}

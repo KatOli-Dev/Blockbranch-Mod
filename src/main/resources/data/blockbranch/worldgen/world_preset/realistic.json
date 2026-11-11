@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 259,
+        "shape_version": 260,
+        "cool_desert_definition": 1,
         "dry_forest_definition": 1,
         "surface_ownership_definition": 1,
         "biome_transition_definition": 1,
@@ -84,6 +85,7 @@
           "redwood_forest": "blockbranch:maritime_redwood_fern_forest",
           "cold_rockland": "blockbranch:cold_exposed_rockland",
           "dry_forest": "blockbranch:seasonal_dry_broadleaf_forest",
+          "cool_desert": "blockbranch:cool_continental_stony_desert",
           "cherry_grove": "minecraft:cherry_grove",
           "sparse_jungle": "minecraft:sparse_jungle",
           "bamboo_jungle": "minecraft:bamboo_jungle",

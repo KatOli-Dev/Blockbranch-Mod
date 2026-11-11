@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 259, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 260, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -157,6 +157,7 @@ public final class CurrentBiomeSurvey {
                     require(witnesses.containsKey("fallback") && witnesses.containsKey("intentional_plains"), "Fallback/plains attribution witnesses");
                     if(preset.has("surface_ownership_definition")){witnesses.put("basin_connected_coast",new Point(-1008000,-1776000));witnesses.put("cold_rockland_reference",new Point(-1328000,-1904000));}
                     if(preset.has("dry_forest_definition"))witnesses.put("dry_forest_reference",new Point(1648000,-208000));
+                    if(preset.has("cool_desert_definition"))witnesses.put("cool_desert_reference",new Point(400000,-1200000));
                     witnesses.put("redwood_reference", new Point(-844018, -1692020));
                     entry.add("nativeWitnesses", nativeWitnesses(level, generator, drainage, source, witnesses));
                 }
@@ -176,7 +177,8 @@ public final class CurrentBiomeSurvey {
         var source = new ScreeBiomeSource(palette, preset.get("icebergs").getAsBoolean(), preset.get("sandy_coasts").getAsBoolean())
             .withRedwoodForests(preset.get("redwood_forest_definition").getAsInt() == 1)
             .withSurfaceOwnership(preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1)
-            .withDryForests(preset.has("dry_forest_definition") && preset.get("dry_forest_definition").getAsInt() == 1);
+            .withDryForests(preset.has("dry_forest_definition") && preset.get("dry_forest_definition").getAsInt() == 1)
+            .withCoolDeserts(preset.has("cool_desert_definition") && preset.get("cool_desert_definition").getAsInt() == 1);
         source.bind(seed, d, c);
         return source;
     }

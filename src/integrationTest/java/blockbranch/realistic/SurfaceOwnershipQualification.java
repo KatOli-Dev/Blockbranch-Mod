@@ -32,6 +32,10 @@ public final class SurfaceOwnershipQualification {
                 fresh.remove("type");
                 // Keep this historical 257->258 qualification and its frozen
                 // counts intact when today's preset has an independent wrapper.
+                if(fresh.get("shape_version").getAsInt()==260){
+                    require(fresh.get("cool_desert_definition").getAsInt()==1,"Known complete cool-desert wrapper");
+                    fresh.remove("cool_desert_definition");fresh.addProperty("shape_version",259);fresh.getAsJsonObject("additional_biomes").remove(CoolDesert.KEY);
+                }
                 if(fresh.get("shape_version").getAsInt()==259){
                     require(fresh.get("dry_forest_definition").getAsInt()==1,"Known complete dry-forest wrapper");
                     fresh.remove("dry_forest_definition");fresh.addProperty("shape_version",258);fresh.getAsJsonObject("additional_biomes").remove(DryForest.KEY);

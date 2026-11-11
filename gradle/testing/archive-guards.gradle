@@ -67,7 +67,7 @@ tasks.register('checkProductionArchives') {
                     }
                 }
                 assert !entries.any { it.startsWith('blockbranch-fixtures/') || it.startsWith('fixtures/') } : 'Test fixtures leaked into '+archive
-                assert !entries.any { it.startsWith('blockbranch/realistic/Published257') || it.startsWith('blockbranch/realistic/Published258') } : 'Generated published-reader QA classes leaked into '+archive
+                assert !entries.any { it.startsWith('blockbranch/realistic/Published257') || it.startsWith('blockbranch/realistic/Published258') || it.startsWith('blockbranch/realistic/Published259') } : 'Generated published-reader QA classes leaked into '+archive
                 assert !entries.contains('blockbranch.test.mixins.json') : 'Test mixins leaked into '+archive
                 def metadata=new groovy.json.JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
                 assert metadata.id=='blockbranch'
