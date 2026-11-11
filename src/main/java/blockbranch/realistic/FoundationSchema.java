@@ -1,8 +1,7 @@
 package blockbranch.realistic;
 /**
  * Saved schema number for the independent opt-ins that each wrap the complete published 264 definition:
- * continental ice (polar geography, {@link ContinentalIceSchema}) and leaf-litter variation
- * ({@link LeafLitterSchema}). A saved number must identify exactly one set of definitions, so each
+ * continental ice (polar geography) and leaf-litter variation. A saved number must identify exactly one set of definitions, so each
  * combination has its own: 265 = ice only, 266 = litter only, 267 = both. Absent definitions keep every
  * earlier number, and a number is read only under exactly the definitions it names, so no world is
  * reinterpreted as another. Neither definition changes the other's meaning: ice alters climate, cover

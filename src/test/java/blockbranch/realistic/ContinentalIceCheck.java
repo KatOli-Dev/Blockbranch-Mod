@@ -3,9 +3,9 @@ package blockbranch.realistic;
 /** Finite falsification controls, not empirical calibration or Earth-area accounting. */
 public final class ContinentalIceCheck {
     public static void main(String[] args){
-        require(ContinentalIceSchema.schema(264,1)==265&&ContinentalIceSchema.baseSchema(265,1)==264,"Complete foundation");
-        for(int v:new int[]{82,257,258,259,260,261,262,263,264,266})require(!ContinentalIceSchema.matches(v,1),"Reject partial/future foundations");
-        require(ContinentalIceSchema.matches(264,0)&&!ContinentalIceSchema.matches(265,0)&&!ContinentalIceSchema.matches(265,2),"Absent/future definitions");
+        require(FoundationSchema.schema(264,1,0)==265&&FoundationSchema.baseSchema(265,1,0)==264,"Complete foundation");
+        for(int v:new int[]{82,257,258,259,260,261,262,263,264,266,267})require(!FoundationSchema.matches(v,1,0),"Reject partial/future foundations");
+        require(FoundationSchema.matches(264,0,0)&&!FoundationSchema.matches(265,0,0)&&!FoundationSchema.matches(265,2,0),"Absent/future definitions");
         for(int z:new int[]{0,500000,1000000,1258291})require(PolarClimate.cooling(PolarClimate.latitude(z))==0,"Central climate unchanged");
         require(PolarClimate.cooling(1)==36,"Disclosed edge convention");
         double previous=0;for(int z=0;z<=2097152;z+=256){double q=PolarClimate.cooling(PolarClimate.latitude(z));require(q>=previous&&q<=36,"Monotone bounded transition");previous=q;}

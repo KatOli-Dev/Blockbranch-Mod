@@ -16,11 +16,11 @@ public final class LeafLitterCheck {
     }
 
     private static void schema() {
-        require(LeafLitterSchema.schema(264,1)==266&&LeafLitterSchema.baseSchema(266,1)==264,"Complete saved foundation");
-        for(int v:new int[]{82,257,258,259,260,261,262,263,264,265,267})require(!LeafLitterSchema.matches(v,1),"Reject partial, reserved and future foundations");
-        require(LeafLitterSchema.matches(264,0)&&!LeafLitterSchema.matches(266,0)&&!LeafLitterSchema.matches(266,2),"Absent gate retains the original schema only");
-        for(int d:new int[]{0,1,2})require(!LeafLitterSchema.matches(265,d)&&LeafLitterSchema.baseSchema(265,d)==Integer.MAX_VALUE,"Reserved 265 is never read as this foundation or as the original");
-        expect(()->LeafLitterSchema.schema(263,1));expect(()->LeafLitterSchema.schema(264,2));
+        require(FoundationSchema.schema(264,0,1)==266&&FoundationSchema.baseSchema(266,0,1)==264,"Complete saved foundation");
+        for(int v:new int[]{82,257,258,259,260,261,262,263,264,265,267})require(!FoundationSchema.matches(v,0,1),"Reject partial, polar-only, combined and future foundations");
+        require(FoundationSchema.matches(264,0,0)&&!FoundationSchema.matches(266,0,0)&&!FoundationSchema.matches(266,0,2),"Absent gate retains the original schema only");
+        for(int d:new int[]{0,1,2})require(!FoundationSchema.matches(265,0,d)&&FoundationSchema.baseSchema(265,0,d)==Integer.MAX_VALUE,"265 is never read under a litter-only definition set");
+        expect(()->FoundationSchema.schema(263,0,1));expect(()->FoundationSchema.schema(264,0,2));
     }
 
     private static void mapping() {

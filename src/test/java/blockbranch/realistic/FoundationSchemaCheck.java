@@ -17,7 +17,7 @@ public final class FoundationSchemaCheck {
             }
         }
         // Agreement with the single-definition classes where they apply.
-        require(FoundationSchema.schema(264,1,0)==ContinentalIceSchema.schema(264,1)&&FoundationSchema.schema(264,0,1)==LeafLitterSchema.schema(264,1),"Single-definition numbers agree");
+        require(FoundationSchema.schema(264,1,0)==265&&FoundationSchema.schema(264,0,1)==266&&FoundationSchema.schema(264,1,1)==267&&FoundationSchema.schema(264,0,0)==264,"Published 265 stays polar only; litter only is 266; both is 267");
         // Later layers cannot be promoted into either wrapper, and unknown definitions reject.
         for(int base:new int[]{82,257,263,265,266,267,268}){expect(()->FoundationSchema.schema(base,1,0));expect(()->FoundationSchema.schema(base,0,1));expect(()->FoundationSchema.schema(base,1,1));}
         expect(()->FoundationSchema.schema(264,2,0));expect(()->FoundationSchema.schema(264,0,-1));

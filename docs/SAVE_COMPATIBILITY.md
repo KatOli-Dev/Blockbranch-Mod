@@ -234,7 +234,7 @@ and the generator/wrapper codecs.
 | 266 | Complete schema 264 plus independent leaf-litter definition 1 (no ice) |
 | 267 | Complete schema 264 plus both continental-ice definition 1 and leaf-litter definition 1; read only under exactly both |
 
-Schema 265 is unassigned: a saved schema number must identify exactly one set of definitions, so no reader accepts it and a world combining separately developed foundations needs its own number and reader. Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
+A saved schema number identifies exactly one set of definitions (265 polar only, 266 litter only, 267 both), and `FoundationSchema` reads it only under those definitions. Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
 224–227, 235–239 and 244–247 are unsupported. The 220–233 groups belong to the pyramid
 replacement; 234 independently wraps complete 233. Reserved layout 6 and its
 private schema 192 remain unsupported.
