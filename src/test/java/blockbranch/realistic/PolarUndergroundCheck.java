@@ -7,7 +7,7 @@ import java.util.ArrayList;
  * are defined relative to rock (deep-dark/Ancient City, underground structures, cave
  * entry routes) read the ice-free bed under a sheet, cave approaches plan nothing on or
  * under a sheet, and everything reads the unchanged published surface elsewhere, including
- * legacy alpine caps. Dripstone, lush and sulfur labels deliberately stay overburden-relative
+ * legacy alpine caps. Dripstone and sulfur cave-biome labels still stay overburden-relative (an open gap)
  * (see the limitation block below).
  * Window sites are the fixed native-cost coordinates; counts below are measurements at
  * seed 424242, not Earth-area claims or tuned acceptance thresholds. */
@@ -74,7 +74,7 @@ public final class PolarUndergroundCheck {
             require(!DeepDarkHabitat.eligibleColumn(SEED,mx,mz,polar),"The saved city start column is no longer deep-dark eligible");
             require(!DeepDarkHabitat.contains(SEED,mx,DeepDarkHabitat.proposalY(polar.bedHeight(mx,mz)),mz,polar),"The city first gate rejects that start");
         }
-        // Documented limitation, not a datum switch: dripstone (48..320 m), lush and sulfur
+        // Documented limitation, not a datum switch: dripstone (48..320 m) and sulfur
         // (96..384 m) labels stay overburden-relative because the saved foundation decode
         // validates them before the perennial wrapper attaches. They use surface-relative
         // depth with no rock test, so under sheets thinner than the window the label can still

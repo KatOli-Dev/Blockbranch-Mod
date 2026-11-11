@@ -247,9 +247,9 @@ public final class DrainageNetwork {
     public boolean permanentFreshwaterLid(int x,int z){return continentalIceEnabled&&!structuralComparison&&PolarClimate.latitude(z)>PolarClimate.START&&continentalIce().freshwaterLid(x,z);}
     public boolean polarClimateEnabled(){return continentalIceEnabled;}
     /** Datum for rock-relative underground rules (deep dark, underground structures, cave
-     * entry routes; cave approaches instead exclude sheet columns). Dripstone, lush and
-     * sulfur labels deliberately keep the overburden-relative depth because saved profiles
-     * validate them before the perennial wrapper attaches. A grounded continental sheet is new
+     * entry routes; cave approaches instead exclude sheet columns). Dripstone and sulfur
+     * cave-biome labels still keep the overburden-relative depth because saved profiles
+     * validate them before the perennial wrapper attaches (an open consistency gap). A grounded continental sheet is new
      * overburden, not uplifted rock, so under it this is the complete original sample,
      * including any buried water; everywhere else it is exactly {@link #sample}. Legacy
      * alpine caps stay part of the published surface. Never differs without a sheet. */
