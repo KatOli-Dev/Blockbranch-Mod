@@ -225,9 +225,9 @@ public final class TerrainProfile {
     public LitCaveLayer litCaves(){return litCaves;}
     public int ceiling(){return ceiling;}
     public DripstoneLayer dripstone(){return dripstone;}
-    public Holder<Biome> biome(int x,int absoluteQuartY,int z){return caveBiomes.biome(x,absoluteQuartY,z,groundHeight((x&3)*4,(z&3)*4),dripstone.biome(x,absoluteQuartY,z,groundHeight((x&3)*4,(z&3)*4),biomes.get(x&3,absoluteQuartY&3,z&3)));}
+    public Holder<Biome> biome(int x,int absoluteQuartY,int z){return caveBiomes.biome(x,absoluteQuartY,z,habitatGround((x&3)*4,(z&3)*4),dripstone.biome(x,absoluteQuartY,z,habitatGround((x&3)*4,(z&3)*4),biomes.get(x&3,absoluteQuartY&3,z&3)));}
     private PalettedContainerRO<Holder<Biome>> sectionBiomes(int sy){
-        if(!dripstone.mayHaveBiome(sy,lowestGround,highestGround)&&!caveBiomes.mayHaveBiome(sy,lowestGround,highestGround))return biomes;var result=biomes.recreate();boolean changed=false;
+        if(!dripstone.mayHaveBiome(sy,lowestRock,highestRock)&&!caveBiomes.mayHaveBiome(sy,lowestRock,highestRock))return biomes;var result=biomes.recreate();boolean changed=false;
         for(int y=0;y<4;y++)for(int z=0;z<4;z++)for(int x=0;x<4;x++){var value=biome(x,(sy<<2)+y,z);result.set(x,y,z,value);changed|=!value.equals(biomes.get(x,y,z));}return changed?blockbranch.realistic.UniformSnapshots.compactBiomes(result):biomes;
     }
     public OreLayer ores(){return ores;}
@@ -248,6 +248,10 @@ public final class TerrainProfile {
     /** Immutable bare terrain datum, independent of surface block type and canopy. */
     public int groundHeight(int x,int z){return ground[(z&15)*16+(x&15)];}
     private int rockHeight(int x,int z){return rockGround[(z&15)*16+(x&15)];}
+    /** Datum for dripstone and sulfur habitat windows, formations and cave labels: the rock surface, which is the
+     * ice-free bed under a grounded continental sheet (new ice is overburden) and exactly {@link #groundHeight}
+     * everywhere else, including legacy alpine caps and every profile without perennial ice. */
+    public int habitatGround(int x,int z){return rockHeight(x,z);}
     public Set<Integer> randomTickSections(){return randomTickSections;}
     public FloatingIceLayer floatingIce(){return floatingIce;}
     public CanopyLayer canopy() { return canopy; }
@@ -751,48 +755,53 @@ public final class TerrainProfile {
     private static boolean freshBoreal(byte[] cover){for(byte value:cover)if(value>14)return true;return false;}
     private static boolean benthicTraces(int[] blocks){for(int value:blocks)if((value&CanopyLayer.STATE_MASK)>=blockbranch.realistic.AbyssalTraces.FIRST)return true;return false;}
     private static boolean landIce(byte[] roles){for(byte code:roles)if(blockbranch.realistic.LandIceField.encoded(code))return true;return false;}
-    public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {
+    public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {return decode(tag,factory,PerennialIceLayer.EMPTY);}
+    /** {@code ice} is the perennial-ice wrapper being unwrapped. The foundation is rebuilt with it attached from the start,
+     * so every foundation layer (dripstone, cave biomes, lit caves) is validated against the same rock datum it was
+     * planned with, never against the ice-inclusive surface. */
+    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,PerennialIceLayer ice) {
         if(tag.getIntOr("version",-1)==77){
+            if(ice.enabled())throw new IllegalArgumentException("Nested perennial-ice wrapper");
             int base=tag.getInt("perennial_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing perennial-ice foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75&&base!=76)throw new IllegalArgumentException("Unsupported perennial-ice foundation");
-            var ice=new PerennialIceLayer(tag.getIntArray("perennial_ice").orElseThrow());if(!ice.enabled())throw new IllegalArgumentException("Empty perennial-ice wrapper");
-            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("perennial_ice_base_profile_version");foundation.remove("perennial_ice");return decode(foundation,factory).withPerennialIce(ice);
+            var wrapped=new PerennialIceLayer(tag.getIntArray("perennial_ice").orElseThrow());if(!wrapped.enabled())throw new IllegalArgumentException("Empty perennial-ice wrapper");
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("perennial_ice_base_profile_version");foundation.remove("perennial_ice");return decode(foundation,factory,wrapped).withPerennialIce(wrapped);
         }
         if(tag.contains("perennial_ice_base_profile_version")||tag.contains("perennial_ice"))throw new IllegalArgumentException("Perennial ice on legacy profile");
         if(tag.getIntOr("version",-1)==76){
             int base=tag.getInt("land_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing land-ice foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75)throw new IllegalArgumentException("Unsupported land-ice foundation");
             if(!landIce(tag.getByteArray("cold_steppe").orElseThrow()))throw new IllegalArgumentException("Land-ice wrapper requires ice roles");
-            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("land_ice_base_profile_version");return decodeFoundation(foundation,factory);
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("land_ice_base_profile_version");return decodeFoundation(foundation,factory,ice);
         }
         if(tag.contains("land_ice_base_profile_version")||landIce(tag.getByteArray("cold_steppe").orElse(new byte[0])))throw new IllegalArgumentException("Land ice on legacy profile");
-        return decodeFoundation(tag,factory);
+        return decodeFoundation(tag,factory,ice);
     }
-    private static TerrainProfile decodeFoundation(CompoundTag tag,PalettedContainerFactory factory) {
+    private static TerrainProfile decodeFoundation(CompoundTag tag,PalettedContainerFactory factory,PerennialIceLayer ice) {
         // Appended environmental states are explicit reader barriers; profiles
         // without them keep their exact historical versions and descriptors.
         if(tag.getIntOr("version",-1)==75){
             int base=tag.getInt("benthic_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing benthic foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74)throw new IllegalArgumentException("Unsupported benthic foundation");
             if(!benthicTraces(tag.getIntArray("canopy").orElseThrow(()->new IllegalArgumentException("Missing benthic canopy"))))throw new IllegalArgumentException("Benthic wrapper requires traces");
-            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("benthic_base_profile_version");return decode(foundation,factory,false,false);
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("benthic_base_profile_version");return decode(foundation,factory,false,false,ice);
         }
         if(tag.contains("benthic_base_profile_version")||benthicTraces(tag.getIntArray("canopy").orElse(new int[0])))throw new IllegalArgumentException("Benthic states on legacy profile");
-        return decode(tag,factory,false,false);
+        return decode(tag,factory,false,false,ice);
     }
     private static boolean shortReeds(int[] ground,int[] water,byte[] cover) {
         if(ground.length!=256||water.length!=256||cover.length!=256)return false;
         for(int i=0;i<256;i++)if((cover[i]==2||cover[i]==3)&&water[i]-ground[i]==cover[i])return true;
         return false;
     }
-    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,boolean freshBoreal,boolean shortReeds) {
+    private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,boolean freshBoreal,boolean shortReeds,PerennialIceLayer ice) {
         if(tag.getIntOr("version",-1)==74){
             if(shortReeds||freshBoreal)throw new IllegalArgumentException("Nested reed profile wrapper");
             int base=tag.getInt("reed_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing reed foundation version"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72)throw new IllegalArgumentException("Unsupported reed foundation version");
             if(!shortReeds(tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("reedbed").orElseThrow()))throw new IllegalArgumentException("Reed profile wrapper requires short emergent stems");
             var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("reed_base_profile_version");
-            return decode(foundation,factory,false,true);
+            return decode(foundation,factory,false,true,ice);
         }
         if(tag.contains("reed_base_profile_version"))throw new IllegalArgumentException("Reed foundation descriptor on legacy profile");
         if(!shortReeds&&shortReeds(tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("reedbed").orElseThrow()))throw new IllegalArgumentException("Short emergent reeds on legacy profile");
@@ -802,13 +811,13 @@ public final class TerrainProfile {
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70)throw new IllegalArgumentException("Unsupported boreal foundation version");
             if(!freshBoreal(tag.getByteArray("boreal").orElseThrow()))throw new IllegalArgumentException("Boreal profile wrapper requires appended cover");
             var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("base_profile_version");
-            return decode(foundation,factory,true,shortReeds);
+            return decode(foundation,factory,true,shortReeds,ice);
         }
         if(tag.contains("base_profile_version"))throw new IllegalArgumentException("Boreal foundation descriptor on legacy profile");
         if(!freshBoreal&&freshBoreal(tag.getByteArray("boreal").orElseThrow()))throw new IllegalArgumentException("Appended boreal cover on legacy profile");
         if(tag.getIntOr("version",-1)==70){
             var foundation=tag.copy();foundation.putInt("version",68);foundation.remove("cave_biomes");
-            var base=decode(foundation,factory,freshBoreal,shortReeds);
+            var base=decode(foundation,factory,freshBoreal,shortReeds,ice);
             return base.withCaveBiomes(CaveBiomeLayer.decode(tag.getCompound("cave_biomes").orElseThrow(),factory,base.litCaves()));
         }
         if(tag.contains("cave_biomes"))throw new IllegalArgumentException("Cave biome descriptor on legacy profile");
@@ -816,6 +825,7 @@ public final class TerrainProfile {
         var profile=new TerrainProfile(tag.getIntOr("floor",0),tag.getIntOr("ceiling",0),
             tag.getIntArray("ground").orElseThrow(),tag.getIntArray("water").orElseThrow(),tag.getByteArray("scree").orElseThrow(),tag.getByteArray("reedbed").orElseThrow(),tag.getByteArray("river_margin").orElseThrow(),tag.getByteArray("sandy_shore").orElseThrow(),tag.getByteArray("meadow").orElseThrow(),tag.getByteArray("woodland").orElseThrow(),tag.getByteArray("steppe").orElseThrow(),tag.getByteArray("boreal").orElseThrow(),tag.getByteArray("warm").orElseThrow(),tag.getByteArray("cold_steppe").orElseThrow(),tag.getByteArray("desert").orElseThrow(),new CanopyLayer(tag.getIntArray("canopy").orElseThrow()),tag.getIntOr("version",-1)==57?FloatingIceLayer.EMPTY:new FloatingIceLayer(tag.getIntArray("floating_ice").orElseThrow(()->new IllegalArgumentException("Missing floating ice layer"))),
             factory.biomeContainerCodec().parse(NbtOps.INSTANCE,tag.getCompoundOrEmpty("biomes")).getOrThrow(),factory.blockStatesStrategy());
+        if(ice.enabled())profile=profile.withPerennialIce(ice);
         if(tag.getIntOr("version",-1)<66&&tag.contains("lit_caves"))throw new IllegalArgumentException("Lit cave descriptor on legacy profile");
         if(tag.getIntOr("version",-1)==64||tag.getIntOr("version",-1)==66||tag.getIntOr("version",-1)==68){
             var under=UndergroundLayer.decode(tag.getCompound("underground").orElseThrow(()->new IllegalArgumentException("Missing cave descriptor")));

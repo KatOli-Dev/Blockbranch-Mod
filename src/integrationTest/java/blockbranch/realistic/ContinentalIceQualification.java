@@ -79,6 +79,7 @@ public final class ContinentalIceQualification {
                         var encoded=profile.encode(level.palettedContainerFactory());require(TerrainProfile.decode(encoded,level.palettedContainerFactory()).encode(level.palettedContainerFactory()).equals(encoded),"Native profile exact roundtrip");
                         if(profile.caveBiomes().enabled()){int expected=DeepDarkHabitat.mask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),d);require(profile.caveBiomes().deepDarkMask()==expected&&(!profile.perennialIce().enabled()||expected==DeepDarkHabitat.mask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),d.iceReference())),"Native deep-dark mask follows the rock-bed datum under a sheet");}
                         if(profile.perennialIce().enabled())profileBarrier(encoded,level);
+                        PolarHabitatChecks.chunk(level,actual,random,d,chunk,profile);
                     }
                     int bottom=top-depth+1;
                     for(int y=top-2;y<=top+2;y++)if(!(reopen&&!legacy&&(removed.equals(new BlockPos(x,y,z))||edit.equals(new BlockPos(x,y,z))))){require(level.getBlockState(new BlockPos(x,y,z)).equals(actual.surfaceState(x,y,z,random)),"Native material contract "+new BlockPos(x,y,z));states++;}
@@ -90,6 +91,8 @@ public final class ContinentalIceQualification {
                 for(int offset:new int[]{-8,0,8})states+=baseApis(level,actual,px+offset,pz+offset);
             }
             if(!legacy){require(owned>2000&&uncovered>1000,"Nonvacuous body and uncovered controls");report.put("waterWitnesses",waterWitnesses(level,actual,reopen,result.getParent()));profileBounds(level,((SparseColumn)level.getChunk(272000>>4,-720000>>4)).blockbranch$terrain().base());report.put("horizonInterfaces",horizonInterfaces(level,actual,retained,reader.codec().parse(ops,old).getOrThrow()));}
+            if(!legacy)report.put("habitatWindows",PolarHabitatChecks.windows(level,actual,random,d,reopen,result.getParent()));
+            if(!legacy)report.put("structureFit",PolarHabitatChecks.structures(level,actual,random,d));report.put("habitatCoverage",PolarHabitatChecks.finish(legacy));
             int ex=Published264Snapshot.POINTS[0][0]+1,ez=Published264Snapshot.POINTS[0][1]+1;
             var oldEdit=new BlockPos(ex,d.sample(ex,ez).height()-2,ez);
             if(legacy)require(level.getBlockState(oldEdit).is(Blocks.GOLD_BLOCK),"Authentic original-build saved gold edit");

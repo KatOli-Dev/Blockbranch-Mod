@@ -849,16 +849,16 @@ public final class RealisticGenerator extends ChunkGenerator {
     blockbranch.cubic.DripstoneLayer independentDripstonePlan(int cx,int cz,RandomState random){
         return blockbranch.cubic.DripstoneLayer.plan(independentDripstoneSampler(cx,cz,random),random.seed(),cx,cz,palette.additional("dripstone_caves"),dripstoneDefinition);
     }
-    /** Same physical sampler as profile-backed planning. Keep the historical
-     * overburden-based planner range; ice is a nonhost and void/ore tests below
-     * a new body use its original rock datum, irrespective of which API runs first. */
+    /** Same physical sampler as profile-backed planning. The habitat datum is the rock surface
+     * (the original bed under a continental sheet, whose ice is overburden and a nonhost),
+     * irrespective of which API runs first. */
     blockbranch.cubic.DripstoneLayer.Sampler independentDripstoneSampler(int cx,int cz,RandomState random){
         int[] ground=new int[256],rocks=continentalIceDefinition>0?new int[256]:ground;for(int z=0;z<16;z++)for(int x=0;x<16;x++){int wx=cx*16+x,wz=cz*16+z;ground[z*16+x]=drainage(random).sample(wx,wz).height();rocks[z*16+x]=ground[z*16+x]-drainage(random).continentalIceThickness(wx,wz);}
         int emerald=0,gold=0;for(int z=0;z<4;z++)for(int x=0;x<4;x++){int flags=oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(cx*4+x,0,cz*4+z));if((flags&1)!=0)emerald|=1<<(z*4+x);if((flags&2)!=0)gold|=1<<(z*4+x);}
         var ores=oreDefinition==0?OreLayer.NONE:new OreLayer(random.seed(),cx,cz,oreDefinition,emerald,gold).bind(java.util.Arrays.stream(rocks).min().orElseThrow(),java.util.Arrays.stream(rocks).max().orElseThrow());
         var under=new blockbranch.cubic.UndergroundLayer(random.seed(),cx,cz,approach(cx*16,cz*16,random));
         return new blockbranch.cubic.DripstoneLayer.Sampler(){
-            public int groundHeight(int x,int z){return ground[(z&15)*16+(x&15)];}
+            public int groundHeight(int x,int z){return rocks[(z&15)*16+(x&15)];}
             public boolean protectedRoute(){return under.hasApproach();}
             public BlockState state(int x,int y,int z){if(continentalIceDefinition>0){var ice=landIceBlock(cx*16+x,y,cz*16+z,random);if(ice!=null)return ice;}int h=groundHeight(x,z),rock=rocks[(z&15)*16+(x&15)];var value=blockbranch.cubic.TerrainProfile.material(TerrainShape.FLOOR,TerrainShape.CEILING,y,h,Integer.MIN_VALUE,0);if(under.approachClears(x,y,z,rock)&&blockbranch.cubic.UndergroundLayer.approachMaterial(value)||(value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&under.voidAt(x,y,z,rock))return Blocks.AIR.defaultBlockState();return ores.state(x,y,z,rock,value,true);}
         };
