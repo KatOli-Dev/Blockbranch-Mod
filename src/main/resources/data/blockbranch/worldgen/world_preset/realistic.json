@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 261,
+        "shape_version": 262,
+        "deep_basin_relief_definition": 1,
         "abyssal_trace_definition": 1,
         "cool_desert_definition": 1,
         "dry_forest_definition": 1,

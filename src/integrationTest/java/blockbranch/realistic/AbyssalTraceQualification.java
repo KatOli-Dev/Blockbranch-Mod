@@ -34,6 +34,10 @@ public final class AbyssalTraceQualification {
                 Files.writeString(result,"PASS explicit trace edit/source water; neighbor/support changes; saved properties; unchanged old generator/profile gate\n");return;
             }
             try(var in=new InputStreamReader(Objects.requireNonNull(AbyssalTraceQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){fresh=JsonParser.parseReader(in).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
+            if(fresh.get("shape_version").getAsInt()==262){
+                require(fresh.get("deep_basin_relief_definition").getAsInt()==1,"Known complete deep-basin wrapper");
+                fresh.remove("deep_basin_relief_definition");fresh.addProperty("shape_version",261);
+            }
             fresh.remove("type");require(fresh.get("shape_version").getAsInt()==261,"Current complete preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact candidate roundtrip");
             var old=fresh.deepCopy();old.remove("abyssal_trace_definition");old.addProperty("shape_version",260);var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();

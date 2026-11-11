@@ -1,0 +1,19 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "2b35817d27e7c8444575653ecab6276b32c712f7",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "c3cb1c7a8dbfa3de7d102f00d97b995c88e967c4cc87d9a4f62ed2b30b312c2e"
+    }
+  ],
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "6881e179eb91006d13d35cb32b40a2128a070be1cbeb398fa5e6ced166f548f5",
+    "collectorPath": "src/integrationTest/java/blockbranch/realistic/Published261Snapshot.java",
+    "collectorSha256": "80a5bdff36d5db6f3d8e50e491e5e72a3a4d30b36e07789cc7fe0548d53f3413"
+  },
+  "productionManifestSHA256": "ac8b16892edd45b537f040797eac5fbc4799fea563ac3cdaed268c2b1adaa5ea",
+  "productionBlobCount": 2035,
+  "provenance": "Recorded in a native JVM before any production edits; all main/client files matched this published commit. Genuine closed schema-261 world and gold edit retained under ignored build/deep-basin-evidence/published-2b35817. Generator reader compiled/renamed against candidate helpers is not independently complete; the original whole-production output hashes cover these finite inputs. No oracle may be refreshed from candidate output."
+}
