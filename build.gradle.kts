@@ -161,6 +161,7 @@ apply(from = "gradle/testing/dry-season.gradle")
 apply(from = "gradle/testing/cool-desert.gradle")
 apply(from = "gradle/testing/abyssal-traces.gradle")
 apply(from = "gradle/testing/deep-basin.gradle")
+apply(from = "gradle/testing/land-ice.gradle")
 
 apply(from = "gradle/testing/magnetite.gradle")
 

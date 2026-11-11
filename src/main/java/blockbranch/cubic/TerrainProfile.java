@@ -145,13 +145,13 @@ public final class TerrainProfile {
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (borealPlantPresent(boreal[i]) && ground[i]+1>=ceiling)) throw new IllegalArgumentException("Invalid boreal cover");
             if(warm[i]<0 || warm[i]>12 || (warm[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0
                 || water[i]>ground[i] || ground[i]-3<=floor)) || (warmPlantPresent(warm[i]) && ground[i]+1>=ceiling)) throw new IllegalArgumentException("Invalid warm woodland cover");
-            if(coldSteppe[i]<0 || coldSteppe[i]>7&&!blockbranch.realistic.ColdUplands.encoded(coldSteppe[i]) || (coldSteppe[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0 || warm[i]!=0
+            if(coldSteppe[i]<0 || coldSteppe[i]>7&&!blockbranch.realistic.ColdUplands.encoded(coldSteppe[i])&&!blockbranch.realistic.LandIceField.encoded(coldSteppe[i]) || (coldSteppe[i]>0 && (scree[i]!=0 || reedbed[i]!=0 || riverMargin[i]!=0 || sandyShore[i]!=0 || meadow[i]!=0 || woodland[i]!=0 || steppe[i]!=0 || boreal[i]!=0 || warm[i]!=0
                 || water[i]>ground[i] || ground[i]-coldLayerDepth(coldSteppe[i])<=floor)) || (coldPlantPresent(coldSteppe[i]) && ground[i]+1>=ceiling))throw new IllegalArgumentException("Invalid cold steppe cover");
             if(desert[i]<0||desert[i]>20&&!blockbranch.realistic.Badlands.encoded(desert[i])||(desert[i]>0&&(scree[i]!=0||reedbed[i]!=0||riverMargin[i]!=0||sandyShore[i]!=0||meadow[i]!=0||woodland[i]!=0||steppe[i]!=0||boreal[i]!=0||warm[i]!=0||coldSteppe[i]!=0||water[i]>ground[i]||ground[i]-desertLayerDepth(desert[i])<=floor))||(desertPlantHeight(desert[i])>0&&ground[i]+desertPlantHeight(desert[i])>=ceiling))throw new IllegalArgumentException("Invalid desert cover");
             if(desertPlantHeight(desert[i])>0){top=Math.max(top,ground[i]+desertPlantHeight(desert[i]));transitions.add((ground[i]+desertPlantHeight(desert[i]))>>4);}
             if(blockbranch.realistic.SandyDesert.cactus(desert[i]))for(int py=ground[i]+1;py<=ground[i]+desertPlantHeight(desert[i]);py++)ticking.add(py>>4);
             if(blockbranch.realistic.Badlands.encoded(desert[i]))for(int sy=(ground[i]-64)>>4;sy<=ground[i]>>4;sy++)transitions.add(sy);
-            if(blockbranch.realistic.ColdUplands.encoded(coldSteppe[i]))transitions.add((ground[i]-coldLayerDepth(coldSteppe[i]))>>4);
+            if(blockbranch.realistic.ColdUplands.encoded(coldSteppe[i])||blockbranch.realistic.LandIceField.encoded(coldSteppe[i]))transitions.add((ground[i]-coldLayerDepth(coldSteppe[i]))>>4);
             if(desert[i]>=8){transitions.add((ground[i]-desertSandDepth(desert[i]))>>4);transitions.add((ground[i]-desertLayerDepth(desert[i]))>>4);}
             if(meadowPlantHeight(meadow[i])>0){top=Math.max(top,ground[i]+meadowPlantHeight(meadow[i]));for(int stem=1;stem<=meadowPlantHeight(meadow[i]);stem++)transitions.add((ground[i]+stem)>>4);}
             top=Math.max(top,Math.max(ground[i],water[i]- (water[i]==Integer.MIN_VALUE ? 0 : 1)));
@@ -247,6 +247,9 @@ public final class TerrainProfile {
     }
     private BlockState state(int x,int y,int z,SectionScratch scratch) {
         int i=(z&15)*16+(x&15);
+        // Prescribed perennial bodies bury old openings; do not carve a new
+        // approach or ore/decorative feature into their stored solid ice.
+        if(blockbranch.realistic.LandIceField.encoded(coldSteppe[i])&&y<=ground[i]&&y>ground[i]-coldLayerDepth(coldSteppe[i]))return material(floor,ceiling,y,ground[i],water[i],0,0,0,0,0,0,0,0,0,coldSteppe[i],0);
         var ice=floatingIce.state(x,y,z);if(ice!=null)return ice;
         var tree=canopy.state(x,y,z);
         var value=tree!=null ? tree : material(floor,ceiling,y,ground[i],water[i],scree[i],reedbed[i],riverMargin[i],sandyShore[i],meadow[i],woodland[i],steppe[i],boreal[i],warm[i],coldSteppe[i],desert[i]);
@@ -305,6 +308,7 @@ public final class TerrainProfile {
                 if(y<ground)return(desert>=4?Blocks.DIRT:Blocks.SAND).defaultBlockState();
                 return switch(desert){case 1->blockbranch.realistic.DesertContent.PAVEMENT.defaultBlockState();case 2->Blocks.GRAVEL.defaultBlockState();case 3->Blocks.SAND.defaultBlockState();case 6->Blocks.GRASS_BLOCK.defaultBlockState();default->Blocks.COARSE_DIRT.defaultBlockState();};
             }
+            if(blockbranch.realistic.LandIceField.encoded(coldSteppe)&&y>ground-coldLayerDepth(coldSteppe))return(y==ground?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState();
             if(blockbranch.realistic.ColdUplands.encoded(coldSteppe)&&y>ground-coldLayerDepth(coldSteppe)){
                 if(coldSteppe>=16)return(blockbranch.realistic.ColdUplands.snowCap(coldSteppe)&&y==ground?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState();
                 if(coldSteppe<=10)return Blocks.GRAVEL.defaultBlockState();
@@ -386,7 +390,7 @@ public final class TerrainProfile {
     public static int desertLayerDepth(int c){if(blockbranch.realistic.Badlands.encoded(c))return 64;return c==16?0:c>=8&&c<=12?5:c==13||c>=17&&c<=20?3:c>0?2:0;}
     public static int desertPlantHeight(int c){if(blockbranch.realistic.Badlands.encoded(c)){int cap=blockbranch.realistic.Badlands.cap(c);return cap==2||cap>=4?1:0;}return c>=10&&c<=12?c-9:c>=18&&c<=20?c-17:c>=5&&c<=7||c==9||c==17?1:0;}
     private static BlockState desertPlant(int c){if(blockbranch.realistic.Badlands.encoded(c))return(blockbranch.realistic.Badlands.cap(c)==4?Blocks.SHORT_DRY_GRASS:Blocks.DEAD_BUSH).defaultBlockState();return switch(c){case 5,9,17->Blocks.DEAD_BUSH.defaultBlockState();case 10,11,12,18,19,20->Blocks.CACTUS.defaultBlockState();case 6->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 7->blockbranch.realistic.SteppeContent.SILVER_SHRUB.defaultBlockState().setValue(blockbranch.realistic.SteppeShrubBlock.CLIPPED,false);default->Blocks.AIR.defaultBlockState();};}
-    private static int coldLayerDepth(int c){return blockbranch.realistic.ColdUplands.encoded(c)?blockbranch.realistic.ColdUplands.depth(c):3;}
+    private static int coldLayerDepth(int c){return blockbranch.realistic.LandIceField.encoded(c)?blockbranch.realistic.LandIceField.depth(c):blockbranch.realistic.ColdUplands.encoded(c)?blockbranch.realistic.ColdUplands.depth(c):3;}
     private static boolean coldPlantPresent(int c){return c==12||c==13||c==3 || c==4 || c==6 || c==7;}
     private static BlockState coldPlant(int c){return switch(c){case 12->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 13->Blocks.SHORT_GRASS.defaultBlockState();case 3->Blocks.SHORT_DRY_GRASS.defaultBlockState();case 4->blockbranch.realistic.MeadowContent.MEADOW_FESCUE.defaultBlockState().setValue(blockbranch.realistic.MeadowFescueBlock.CROPPED,false);case 6->blockbranch.realistic.SteppeContent.SILVER_SHRUB.defaultBlockState().setValue(blockbranch.realistic.SteppeShrubBlock.CLIPPED,false);case 7->Blocks.DEAD_BUSH.defaultBlockState();default->Blocks.AIR.defaultBlockState();};}
     private static boolean warmPlantPresent(int cover){return cover>=3 && cover<=8 && cover!=7 || cover==10 || cover==11;}
@@ -693,6 +697,7 @@ public final class TerrainProfile {
         // Older readers reject that geometry, so gate only profiles that use it.
         if(shortReeds(ground,water,reedbed)){tag.putInt("reed_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",74);}
         if(benthicTraces(canopy.encode())){tag.putInt("benthic_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",75);}
+        if(landIce(coldSteppe)){tag.putInt("land_ice_base_profile_version",tag.getIntOr("version",-1));tag.putInt("version",76);}
         if(caveBiomes.enabled())tag.put("cave_biomes",caveBiomes.encode(factory));
         if(litCaves.enabled()){tag.put("lit_caves",litCaves.encode());tag.putInt("dripstone_definition",dripstone.definition());tag.putInt("ore_definition",ores.enabled()?ores.definition():0);}
         if(dripstone.definition()==2){tag.putInt("dripstone_definition",2);tag.putInt("lit_cave_definition",litCaves.enabled()?2:0);}
@@ -714,7 +719,18 @@ public final class TerrainProfile {
     }
     private static boolean freshBoreal(byte[] cover){for(byte value:cover)if(value>14)return true;return false;}
     private static boolean benthicTraces(int[] blocks){for(int value:blocks)if((value&CanopyLayer.STATE_MASK)>=blockbranch.realistic.AbyssalTraces.FIRST)return true;return false;}
+    private static boolean landIce(byte[] roles){for(byte code:roles)if(blockbranch.realistic.LandIceField.encoded(code))return true;return false;}
     public static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory) {
+        if(tag.getIntOr("version",-1)==76){
+            int base=tag.getInt("land_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing land-ice foundation"));
+            if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75)throw new IllegalArgumentException("Unsupported land-ice foundation");
+            if(!landIce(tag.getByteArray("cold_steppe").orElseThrow()))throw new IllegalArgumentException("Land-ice wrapper requires ice roles");
+            var foundation=tag.copy();foundation.putInt("version",base);foundation.remove("land_ice_base_profile_version");return decodeFoundation(foundation,factory);
+        }
+        if(tag.contains("land_ice_base_profile_version")||landIce(tag.getByteArray("cold_steppe").orElse(new byte[0])))throw new IllegalArgumentException("Land ice on legacy profile");
+        return decodeFoundation(tag,factory);
+    }
+    private static TerrainProfile decodeFoundation(CompoundTag tag,PalettedContainerFactory factory) {
         // Appended environmental states are explicit reader barriers; profiles
         // without them keep their exact historical versions and descriptors.
         if(tag.getIntOr("version",-1)==75){

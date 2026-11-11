@@ -1,0 +1,23 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "f68535cd9640c31c0a20c1b889afa42297d4dc6d",
+  "sources": [
+    {
+      "path": "src/main/java/blockbranch/realistic/RealisticGenerator.java",
+      "sha256": "b2b44021f71014a82285a21cb30eec80b3eeb3f61284b309578ba7787427133b"
+    },
+    {
+      "path": "src/main/java/blockbranch/cubic/TerrainProfile.java",
+      "sha256": "47df85f29748907108b2a554f720639388199775fb12df7eafe8295fc80482d3"
+    }
+  ],
+  "baseline": {
+    "path": "baseline.json",
+    "sha256": "0a8f944d020349a1c823d63c5e7c9288de47f7df0934f380062c7c8d8d23b256",
+    "collectorPath": "src/integrationTest/java/blockbranch/realistic/Published262Snapshot.java",
+    "collectorSha256": "e2a45a4e44c9b4bd93d0d303f0b5c8dc855db17811a9d418217f815242cf3acb"
+  },
+  "productionManifestSHA256": "d601ad080d55785711607981322300647811c2adcc03efee636c31980a8e5e49",
+  "productionBlobCount": 2037,
+  "provenance": "Recorded before any ice production edits, in a native JVM whose complete main/client source tree matched the published commit. Closed world and edit retained under ignored build/land-ice-evidence/published-f68535c. Renamed readers share candidate helpers; independently recorded whole-original output hashes bound that gap to the recorded inputs. Never refresh from candidate output."
+}

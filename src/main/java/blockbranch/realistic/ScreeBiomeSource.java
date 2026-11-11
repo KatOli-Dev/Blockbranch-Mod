@@ -21,7 +21,8 @@ public final class ScreeBiomeSource extends BiomeSource {
     private final Holder<Biome> fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean;
     private final int dripstoneDefinition,caveBiomeDefinition;
     private volatile Bound bound;
-    private boolean deepDarkEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled;
+    private boolean deepDarkEnabled,landIceEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled;
+    ScreeBiomeSource withLandIce(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");landIceEnabled=enabled;return this;}
     ScreeBiomeSource withCoolDeserts(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");coolDesertEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> coolDesertSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.coolDesert;}
     ScreeBiomeSource withDryForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");dryForestEnabled=enabled;return this;}
@@ -65,7 +66,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     void bind(long seed,DrainageNetwork drainage,ClimateField climate,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.LitCaveLayer> growth) {
         if(caveBiomeDefinition>0&&growth==null)throw new IllegalArgumentException("Cave biomes require a fixed-seed moss planner");
         var ecology=new GroundEcology.Field(drainage::sample,climate);
-        BiomeResolver rawSurface = (x, y, z) -> StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
+        BiomeResolver rawSurface = (x, y, z) -> landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
             : LakeSediment.contains(x*4,z*4,drainage) ? lake
             : SnowySlopes.contains(x*4,z*4,drainage,climate) ? palette.additional("snowy_slopes")
             : MountainPeaks.kind(seed,x*4,z*4,drainage,climate)>0 ? palette.additional(MountainPeaks.key(MountainPeaks.kind(seed,x*4,z*4,drainage,climate)))
@@ -140,7 +141,7 @@ public final class ScreeBiomeSource extends BiomeSource {
         // Ownership follows the existing 4 m fallback identity. Physical cold/dry
         // eligibility clips it; competing selectors are not rerun between anchors.
         // A physical specialist can therefore meet rockland at a quart edge.
-        java.util.function.BiPredicate<Integer,Integer> rockland=surfaceOwnershipEnabled?(x,z)->ColdRockland.eligible(x,z,drainage,climate)&&surface.getNoiseBiome(x>>2,0,z>>2)==palette.additional(ColdRockland.KEY):null;
+        java.util.function.BiPredicate<Integer,Integer> rockland=surfaceOwnershipEnabled?(x,z)->(!landIceEnabled||drainage.landIceThickness(x,z)==0)&&ColdRockland.eligible(x,z,drainage,climate)&&surface.getNoiseBiome(x>>2,0,z>>2)==palette.additional(ColdRockland.KEY):null;
         java.util.function.BiPredicate<Integer,Integer> dryForest=dryForestEnabled?DryForest.domain(seed,drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(DryForest.KEY)):null;
         java.util.function.BiPredicate<Integer,Integer> coolDesert=coolDesertEnabled?CoolDesert.domain(drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(CoolDesert.KEY)):null;
         bound=new Bound(surface,full,drainage,seed,caves,rockland,dryForest,coolDesert);
