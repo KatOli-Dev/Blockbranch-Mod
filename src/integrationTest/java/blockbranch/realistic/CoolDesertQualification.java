@@ -23,6 +23,10 @@ public final class CoolDesertQualification {
             JsonObject fresh;try(var in=new InputStreamReader(Objects.requireNonNull(CoolDesertQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){
                 fresh=JsonParser.parseReader(in).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
             }
+            if(fresh.get("shape_version").getAsInt()==261){
+                require(fresh.get("abyssal_trace_definition").getAsInt()==1,"Known complete abyssal wrapper");
+                fresh.remove("abyssal_trace_definition");fresh.addProperty("shape_version",260);
+            }
             fresh.remove("type");require(fresh.get("shape_version").getAsInt()==260,"Reviewed current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Fresh codec exact roundtrip");

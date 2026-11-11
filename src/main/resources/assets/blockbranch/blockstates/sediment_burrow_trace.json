@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "form=0,facing=north": {
+      "model": "blockbranch:block/sediment_burrow_trace_0",
+      "y": 0
+    },
+    "form=0,facing=east": {
+      "model": "blockbranch:block/sediment_burrow_trace_0",
+      "y": 90
+    },
+    "form=0,facing=south": {
+      "model": "blockbranch:block/sediment_burrow_trace_0",
+      "y": 180
+    },
+    "form=0,facing=west": {
+      "model": "blockbranch:block/sediment_burrow_trace_0",
+      "y": 270
+    },
+    "form=1,facing=north": {
+      "model": "blockbranch:block/sediment_burrow_trace_1",
+      "y": 0
+    },
+    "form=1,facing=east": {
+      "model": "blockbranch:block/sediment_burrow_trace_1",
+      "y": 90
+    },
+    "form=1,facing=south": {
+      "model": "blockbranch:block/sediment_burrow_trace_1",
+      "y": 180
+    },
+    "form=1,facing=west": {
+      "model": "blockbranch:block/sediment_burrow_trace_1",
+      "y": 270
+    },
+    "form=2,facing=north": {
+      "model": "blockbranch:block/sediment_burrow_trace_2",
+      "y": 0
+    },
+    "form=2,facing=east": {
+      "model": "blockbranch:block/sediment_burrow_trace_2",
+      "y": 90
+    },
+    "form=2,facing=south": {
+      "model": "blockbranch:block/sediment_burrow_trace_2",
+      "y": 180
+    },
+    "form=2,facing=west": {
+      "model": "blockbranch:block/sediment_burrow_trace_2",
+      "y": 270
+    }
+  }
+}

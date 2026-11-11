@@ -31,6 +31,7 @@ public final class RealisticRuntime implements ModInitializer {
         SteppeContent.initialize();
         DesertContent.initialize();
         DarkOakBranchContent.initialize();
+        BenthicTraceContent.initialize();
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR, Blockbranch.id("realistic"), RealisticGenerator.CODEC);
         Registry.register(BuiltInRegistries.BIOME_SOURCE, Blockbranch.id("scree"), ScreeBiomeSource.CODEC);
     }

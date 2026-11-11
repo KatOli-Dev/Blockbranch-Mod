@@ -50,14 +50,14 @@ public final class RedwoodForestCheck {
         }
         require(shapes.size()>85&&giants>20&&thick>50,"Varied silhouettes across all height classes");
         require(WoodlandTrees.logCode(170)&&WoodlandTrees.logCode(171)&&WoodlandTrees.logCode(172)&&!WoodlandTrees.logCode(173),"Bark codes are logs for support");
-        require(blockbranch.cubic.CanopyLayer.LAST_CODE==172,"Canopy codes extend exactly to the bark states");
+        require(blockbranch.cubic.CanopyLayer.REDWOOD_WOOD_CODE+2==172&&blockbranch.cubic.CanopyLayer.LAST_CODE>=172,"Historical bark-state codes retain their bounds");
         System.out.println("REDWOOD_SHAPES unique="+shapes.size()+" giants="+giants);
     }
     private static void resources() throws Exception {
         var preset=new String(RedwoodForestCheck.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json").readAllBytes());
         // This checks today's wrapping preset; the historical 256/257 schema and
         // frozen selector assertions above remain unchanged when a new gate wraps it.
-        require(preset.contains("\"shape_version\": 260")&&preset.contains("\"redwood_forest_definition\": 1")&&preset.contains("\"redwood_forest\": \"blockbranch:maritime_redwood_fern_forest\""),"Bundled preset opts in to redwoods");
+        require(preset.contains("\"shape_version\": 261")&&preset.contains("\"redwood_forest_definition\": 1")&&preset.contains("\"redwood_forest\": \"blockbranch:maritime_redwood_fern_forest\""),"Bundled preset opts in to redwoods");
         var biome=new String(RedwoodForestCheck.class.getResourceAsStream("/data/blockbranch/worldgen/biome/maritime_redwood_fern_forest.json").readAllBytes());
         require(biome.contains("natural_mob_spawns")&&biome.contains("\"has_precipitation\": true"),"Biome resource is a precipitating woodland with empty native spawns");
         var lang=new String(RedwoodForestCheck.class.getResourceAsStream("/assets/blockbranch/lang/en_us.json").readAllBytes());

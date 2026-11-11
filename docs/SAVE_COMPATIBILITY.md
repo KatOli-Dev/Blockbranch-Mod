@@ -11,15 +11,15 @@ permission to resave a world with an older build.
 
 | Contract | Current new Realistic world | Source of truth |
 | --- | --- | --- |
-| Generator `shape_version` | 260 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
+| Generator `shape_version` | 261 | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
 | Base geometry | 82 plus saved gravel relief 1 | [TerrainShape](../src/main/java/blockbranch/realistic/TerrainShape.java), [GravelReliefSchema](../src/main/java/blockbranch/realistic/GravelReliefSchema.java) |
-| Terrain profile | 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
+| Terrain profile | 75 for appended benthic states; 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
 | Column / terrain-window protocol | 70 / 71 | [ColumnPacket](../src/main/java/blockbranch/cubic/ColumnPacket.java), [TerrainWindowPacket](../src/main/java/blockbranch/cubic/TerrainWindowPacket.java) |
-| World marker | 4, metallurgy catalog 20, explicit decoration bit | [ColumnWorldFormat](../src/main/java/blockbranch/cubic/ColumnWorldFormat.java) |
+| World marker | 4, content catalog 21 (legacy metallurgy key), explicit decoration bit | [ColumnWorldFormat](../src/main/java/blockbranch/cubic/ColumnWorldFormat.java) |
 | Ore / layout definitions | 15 / 9 | [OreLayer](../src/main/java/blockbranch/realistic/OreLayer.java), generator codec |
 
-These numbers describe separate contracts: schema 260 does not mean geometry or
-profile 260. Validation checks complete feature combinations, holders and exact
+These numbers describe separate contracts: schema 261 does not mean geometry or
+profile 261. Validation checks complete feature combinations, holders and exact
 field types as well as versions. Unsupported combinations reject loading.
 
 The preset enables underground geometry, approaches, bounded entry routes,
@@ -27,7 +27,7 @@ icebergs and sandy coasts; dripstone/lit-cave growth 2, cave-biome 1 and structu
 3; discovery/waygates 1, shipwreck templates 2, huts/shelters/warm/cold/deep ruins 1;
 native huts/igloos and ordinary bodies, native Overworld coverage and layout 9.
 Wing, gallery, boreal crown, gravel relief, sanctuary/mansion replacement,
-biome-transition, redwood, surface-ownership, dry-forest and cool-desert definitions are all 1. Consult the preset for exact
+biome-transition, redwood, surface-ownership, dry-forest, cool-desert and abyssal-trace definitions are all 1. Consult the preset for exact
 serialized names and biome holders; changing its defaults does not promote saves.
 
 ## World barriers and recovery
@@ -109,10 +109,10 @@ and genuine diamonds. Depth is below local ground, not absolute world Y.
 | 15 | Bismuth, 24–192, peak 96 |
 
 The uranium field preserves the shallow 224-block index and skips the empty gap
-in section/height queries. Ore14 readers reject ore15. Catalog 20 and ore15 require
+in section/height queries. Ore14 readers reject ore15. Catalog 21 and ore15 require
 matching peers before sparse-state exchange despite unchanged numeric protocols.
 The terrain channel is currently
-`terrain_window_v71_canopy172_boreal16_reed74_ore15_metals20`; hello derives from it.
+`terrain_window_v71_canopy184_boreal16_reed74_ore15_metals21`; hello derives from it.
 Both channels are required before custom state is sent, including before JOIN
 rejection. Capabilities identify supported catalogs, not exact build identity or
 negotiated backward compatibility. Pre-guard builds through `2ba0671` could share
@@ -226,6 +226,7 @@ and the generator/wrapper codecs.
 | 258 | Complete schema 257 plus independent surface ownership definition 1 |
 | 259 | Complete schema 258 plus independent dry-forest definition 1 |
 | 260 | Complete schema 259 plus independent cool-desert definition 1 |
+| 261 | Complete schema 260 plus independent abyssal-trace definition 1 |
 
 Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
 224–227, 235–239 and 244–247 are unsupported. The 220–233 groups belong to the pyramid
@@ -241,11 +242,11 @@ separate supported revision, rejected by binaries that lack it.
 ## Profile wrappers and fresh selectors
 
 Supported profile versions are **57, 58, 59, 60, 61, 62, 63, 64, 66, 68, 70, 72,
-74**, subject to descriptor validation, not a continuous range. Cave-biome
+74, 75**, subject to descriptor validation, not a continuous range. Cave-biome
 foundation 70 can retain descriptor 1 or coverage-enabled deep-dark descriptor 2.
 
 - Canopy codes 1–168 retain meaning; 169 adds native acacia wood, 170–172 mangrove
-  bark on Y/X/Z axes. Eight-bit packing remains. The canopy surface validation
+  bark on Y/X/Z axes; 173–184 add waterlogged sediment traces. Eight-bit packing remains. The canopy surface validation
   window is now 128 blocks above ground; older readers may reject newer codes.
 - Boreal surface roles 15/16 mean podzol / podzol with moss carpet. Saved 3/6 keep
   full moss blocks (with original carpet for 6). Only profiles containing 15/16
@@ -306,6 +307,7 @@ automatic migration. Existing arrays/edits remain authoritative in every case.
 | Surface ownership | 257→258 | Basin-owned marine habitats and cold exposed rockland |
 | Dry forest | 258→259 | Idealized precipitation seasonality and a regional broadleaf forest analog |
 | Cool desert | 259→260 | Supported cool-arid fallback with static thermal suitability and sparse dwarf shrubs |
+| Abyssal traces | 260→261 | Static waterlogged microrelief on existing fine marine beds |
 
 Gravel eligibility uses immutable old terrain, excluding wet/specialist/Badlands
 cells. Regional climate/drainage/water datums remain; profiles, base-state/height,
@@ -329,6 +331,8 @@ ones. Fallen logs and wildlife share the saved definition/domain gating.
 Surface ownership definition 1 requires the cold-rockland holder and complete schema 257. Absent = retained legacy selection/cover, including unexplored chunks; partial, malformed and future combinations reject. It repairs submerged marine ecology using the basin that created sea-level water, while geometry, dry backshore/fringe reservations and structural ocean ownership retain their contracts. Cold rockland only replaces final fallback below mean −6°C, with supported debris and static retained snow, not glacial ice. Existing loose-scree/canopy roles and protocols retain their meanings. The original schema-257 reader refuses 258 before loading the new biome; no migration or palette rewrite occurs in older saves.
 Dry-forest definition 1 requires its holder and complete schema 258; absent retains old climate/biomes/cover/canopy in saved and unexplored chunks. It adds a static idealized precipitation-seasonality analog only within existing warm-woodland ownership; old mean climate, hydrology, terrain, weather, material roles and protocols retain their contracts. The original schema-258 reader rejects 259; partial/malformed/future foundations reject without promotion.
 Cool-desert definition 1 requires its holder and complete schema 259; absent retains the published selector and physical cover, including unexplored chunks. Only final cool/arid fallback may gain the sparse stony-desert analog; all earlier owners are preserved. Its local idealized annual temperature cycle does not change ClimateField samples, geometry, hydrology, weather, tree plans, material-role meanings or protocols. Original schema-259 readers reject 260; partial/malformed/future foundations reject. Native, base-column and base-height paths intersect selected quart ownership with actual physical eligibility.
+Abyssal-trace definition 1 requires complete schema260. Absent retains old placement, including untouched terrain. It appends canopy codes173–184 without changing 8-bit packing or old code meanings. Only profiles containing these states wrap their historical foundation with version75 and `benthic_base_profile_version`; absent/invalid foundations, empty wrappers, unwrapped appended states and future/nested versions reject. The original schema260 generator and original profile reader reject261/75 respectively. Source water, bed materials, biome identity and geometry remain; trace blocks are static, noncolliding and noncollectible.
+Explicit new-content edits remain section overrides: an old schema260 world can retain a command-placed waterlogged trace without changing its generation gate or base profile. The existing content catalog advances to21 (same marker4/22,20,22 packing; the retained field name is `metallurgy-catalog`). Opening with this build conservatively upgrades older canonical catalog markers before levels load, even when the generation gate stays0. The actual catalog20 reader rejects21; the wire catalog/hello also requires matching peers. Matching builds remain required; never downgrade an edited world to a build lacking the block registry entry. Native lifecycle checks cover exact saved properties, source water after reopen/neighbor changes, support removal and edited natural traces staying removed.
 Tree-clear definitions 9–16 add the saved dry-forest root bit to 1–8; new plans replace the old warm-tree footprints with complete broadleaf footprints in that domain. Definitions 1–8 keep exact historical root/crown choices and boxes, even when replayed against a newer generator. Only redwood-bearing plans reserve the 144-block upper halo; otherwise it remains 80. Clearing still follows its saved immutable log/leaf footprint, including player-placed logs/leaves within it.
 
 ## Structure piece contracts

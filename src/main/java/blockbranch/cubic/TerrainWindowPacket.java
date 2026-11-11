@@ -12,8 +12,8 @@ public record TerrainWindowPacket(int x,int z,int min,int max,CompoundTag base,i
     // profile and packet layouts do not change. Pre-catalog peers cannot safely
     // advertise their decoder range, so both endpoints require the guarded ID.
     // Boreal surface codes and short reed geometry require matching profile-wrapper support.
-    // Inventory catalog changes also require matching peers, independently of ore geometry.
-    public static final Type<TerrainWindowPacket> TYPE=new Type<>(Blockbranch.id("terrain_window_v71_canopy"+CanopyLayer.LAST_CODE+"_boreal"+blockbranch.realistic.BorealSurface.LAST+"_reed74_ore"+blockbranch.realistic.OreLayer.DEFINITION+"_metals20"));
+    // Content catalog revisions also require matching peers, independently of ore geometry.
+    public static final Type<TerrainWindowPacket> TYPE=new Type<>(Blockbranch.id("terrain_window_v71_canopy"+CanopyLayer.LAST_CODE+"_boreal"+blockbranch.realistic.BorealSurface.LAST+"_reed74_ore"+blockbranch.realistic.OreLayer.DEFINITION+"_metals"+ColumnWorldFormat.CONTENT_CATALOG));
     public static final StreamCodec<RegistryFriendlyByteBuf,TerrainWindowPacket> CODEC=new StreamCodec<>() {
         public TerrainWindowPacket decode(RegistryFriendlyByteBuf b) {
             int x=b.readInt(),z=b.readInt(),min=b.readInt(),max=b.readInt();

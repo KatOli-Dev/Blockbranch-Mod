@@ -34,6 +34,10 @@ public final class DryForestQualification {
             try(var input=new InputStreamReader(Objects.requireNonNull(DryForestQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){
                 fresh=JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
             }
+            if(fresh.get("shape_version").getAsInt()==261){
+                require(fresh.get("abyssal_trace_definition").getAsInt()==1,"Known complete abyssal wrapper");
+                fresh.remove("abyssal_trace_definition");fresh.addProperty("shape_version",260);
+            }
             if(fresh.get("shape_version").getAsInt()==260){
                 require(fresh.get("cool_desert_definition").getAsInt()==1,"Known complete cool-desert wrapper");
                 fresh.remove("cool_desert_definition");fresh.addProperty("shape_version",259);fresh.getAsJsonObject("additional_biomes").remove(CoolDesert.KEY);
