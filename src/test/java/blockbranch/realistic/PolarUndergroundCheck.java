@@ -94,6 +94,10 @@ public final class PolarUndergroundCheck {
             boolean e=DeepDarkHabitat.eligibleColumn(SEED,x,z,polar);if(e)highBedEligible++;
             require(e==DeepDarkHabitat.eligibleColumn(SEED,x,z,bed),"Sheet over a high bed keeps bed eligibility at "+x+","+z);
         }
+        // Sheet thickness split of the 16 km survey grid (the denominator behind the dripstone/sulfur window statements).
+        int[] split=new int[4];long iceSum=0;int iceMax=0;
+        for(int z=-2000000;z<=2000000;z+=16000)for(int x=-2000000;x<=2000000;x+=16000){int t=polar.continentalIceThickness(x,z);if(t==0)continue;split[t<48?0:t<320?1:t<384?2:3]++;iceSum+=t;iceMax=Math.max(iceMax,t);}
+        require(split[0]+split[1]+split[2]+split[3]>0,"Nonvacuous sheet thickness survey");
         // Bounded evidence for the ore-index fallback: rock relief per chunk stays far below the
         // ~800 m at which OreLayer.bind stops indexing (native repro covers the mechanism itself).
         int maxRelief=0;
@@ -132,7 +136,7 @@ public final class PolarUndergroundCheck {
             }
         }
         require(sheetCells>0&&presentApproaches>0&&entries>0,"Nonvacuous approach/route planning: sheet cells "+sheetCells+" approaches "+presentApproaches+" entries "+entries);
-        System.out.println("PASS polar underground datum: max sampled chunk rock relief "+maxRelief+" m, "+insideIce+"/"+thick+" sheets of at least 320 m keep the dripstone window wholly in ice (arithmetic only), "+highBedSheet+" surveyed sheet columns over a bed above 384 m ("+highBedEligible+" eligible), "+checked+" datum points ("+sheetPoints+" under a sheet), "+sheetChunks+" sheet-bearing chunks, deep-dark masks identical to the ice-free bed ("+maskColumnsAlt+" eligible columns), "+survey+" surveyed approaches/"+present+" affected columns, none under a sheet; approach planning "+planned+" cells ("+sheetCells+" with a sheet): "+presentApproaches+" approaches, "+walkPoints+" walking-route points, "+entries+" entry continuations equal to the ice-free reference, "+entryPoints+" entry points ("+entryUnderSheet+" under a sheet)");
+        System.out.println("PASS polar underground datum: sheet columns on the 16 km grid by thickness <48/48-319/320-383/>=384 m = "+split[0]+"/"+split[1]+"/"+split[2]+"/"+split[3]+" (mean "+iceSum/Math.max(1,split[0]+split[1]+split[2]+split[3])+" m, max "+iceMax+"); max sampled chunk rock relief "+maxRelief+" m, "+insideIce+"/"+thick+" sheets of at least 320 m keep the dripstone window wholly in ice (arithmetic only), "+highBedSheet+" surveyed sheet columns over a bed above 384 m ("+highBedEligible+" eligible), "+checked+" datum points ("+sheetPoints+" under a sheet), "+sheetChunks+" sheet-bearing chunks, deep-dark masks identical to the ice-free bed ("+maskColumnsAlt+" eligible columns), "+survey+" surveyed approaches/"+present+" affected columns, none under a sheet; approach planning "+planned+" cells ("+sheetCells+" with a sheet): "+presentApproaches+" approaches, "+walkPoints+" walking-route points, "+entries+" entry continuations equal to the ice-free reference, "+entryPoints+" entry points ("+entryUnderSheet+" under a sheet)");
     }
     private static void require(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private PolarUndergroundCheck(){}

@@ -16,8 +16,8 @@ import net.minecraft.world.level.levelgen.RandomState;
  * legacy, alpine caps) the datum is the unchanged surface. Counts are bounded observations at seed 424242. */
 final class PolarHabitatChecks {
     private static final String[] BANDS={"thin(<48m)","intermediate(48-319m)","sulfur-band(320-383m)","thick(>=384m)","no-sheet"};
-    private static final long[][] COUNTS=new long[5][8];
-    private static final int COLUMNS=0,DRIPSTONE=1,SULFUR=2,ICE_LABELS=3,OLD_DATUM_ICE_LABELS=4,PLACEMENTS=5,FORMATIONS=6,CELLS=7;
+    private static final long[][] COUNTS=new long[5][9];
+    private static final int COLUMNS=0,DRIPSTONE=1,SULFUR=2,ICE_LABELS=3,OLD_DATUM_ICE_LABELS=4,PLACEMENTS=5,FORMATIONS=6,CELLS=7,SECTION_CELLS=8;
     private static final TreeMap<Long,Long> SIGNATURES=new TreeMap<>();
     private static final Set<Long> SKIP=new HashSet<>();
     private PolarHabitatChecks(){}
@@ -61,6 +61,22 @@ final class PolarHabitatChecks {
                 if(ice>0&&DripstoneHabitat.contains(seed,x,qy*4,z,surface,province))COUNTS[b][OLD_DATUM_ICE_LABELS]++;
             }
         }
+        // The loaded sections' biome containers (their rock-bounds gate decides whether a section is labelled at all) and the fast
+        // per-chunk resolver native biome filling uses are separate producers; both must give the same labels as the full resolver.
+        int lo=Integer.MAX_VALUE,hi=Integer.MIN_VALUE;
+        for(int z=0;z<16;z++)for(int x=0;x<16;x++){int bed=d.bedHeight(cx*16+x,cz*16+z);lo=Math.min(lo,bed);hi=Math.max(hi,bed);}
+        lo=Math.max(TerrainShape.FLOOR,lo-400);
+        var fast=g.getBiomeSource().createResolverForChunk(random.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build()),cx*4,0,cz*4,4,0,4);
+        for(int sy=Math.floorDiv(lo,16);sy<=Math.floorDiv(hi,16);sy++){
+            var section=chunk.getSection(chunk.getSectionIndexFromSectionY(sy));
+            for(int qz=0;qz<4;qz++)for(int qx=0;qx<4;qx++)for(int qy=0;qy<4;qy++){
+                int gx=cx*4+qx,gz=cz*4+qz,gy=sy*4+qy,bed=d.bedHeight(gx*4,gz*4);if(gy*4>bed||gy*4<bed-400)continue;
+                var expected=source.getNoiseBiome(gx,gy,gz);
+                require(section.getBiomes().get(qx,qy,qz).equals(expected),"Section biome container agrees at "+gx+","+gy+","+gz);
+                require(fast.getNoiseBiome(gx,gy,gz).equals(expected),"Fast chunk resolver agrees at "+gx+","+gy+","+gz);
+                COUNTS[band(d.continentalIceThickness(gx*4,gz*4))][SECTION_CELLS]++;
+            }
+        }
         SIGNATURES.put(chunk.getPos().pack(),sig);
     }
 
@@ -102,10 +118,15 @@ final class PolarHabitatChecks {
         var factory=level.palettedContainerFactory();var tamperProfile=((blockbranch.cubic.SparseColumn)tamperChunk).blockbranch$terrain().base();var encoded=tamperProfile.encode(factory);
         TerrainProfile.decode(encoded,factory);
         var bad=encoded.copy();var drip=bad.getCompoundOrEmpty("dripstone");int[] moved=drip.getIntArray("placements").orElseThrow().clone();
-        // Move the first formation up by the sheet thickness: valid under the overburden datum, invalid under the rock datum.
-        moved[1]+=firstPlacementSheet(d,tamperChunk,tamperProfile);drip.putIntArray("placements",moved);bad.put("dripstone",drip);
-        boolean rejected=false;try{TerrainProfile.decode(bad,factory);}catch(IllegalArgumentException expected){rejected=true;}
-        require(rejected,"A formation moved to the overburden datum is rejected on decode");
+        // Move the first formation to 10 m below the rock surface: too shallow for the rock-datum window (48..320 m), but at
+        // sheet thickness + 10 m below the ice-inclusive surface, inside the old overburden window. Only the window check can
+        // reject it with this message, so the assertion fails if validation went back to the ice-inclusive height.
+        int packed=moved[0],tx=tamperChunk.getPos().x()*16+(packed&15),tz=tamperChunk.getPos().z()*16+(packed>>4);
+        require(d.continentalIceThickness(tx,tz)>=48,"Tamper column lies under a sheet of at least 48 m");
+        moved[1]=d.bedHeight(tx,tz)-10;drip.putIntArray("placements",moved);bad.put("dripstone",drip);
+        String reason=null;try{TerrainProfile.decode(bad,factory);}catch(IllegalArgumentException expected){reason=expected.getMessage();}
+        boolean rejected=reason!=null&&reason.contains("outside its province/depth");
+        require(rejected,"A formation above the rock-datum window is rejected on decode by the window check: "+reason);
         if(!reopen){
             var map=new StringBuilder();
             for(var e:SIGNATURES.entrySet())map.append(e.getKey()).append(' ').append(e.getValue()).append('\n');
@@ -145,16 +166,16 @@ final class PolarHabitatChecks {
                 var rng=new net.minecraft.world.level.levelgen.WorldgenRandom(new net.minecraft.world.level.levelgen.LegacyRandomSource(0));rng.setLargeFeatureSeed(seed,chunkPos.x(),chunkPos.z());
                 var context=new net.minecraft.world.level.levelgen.structure.Structure.GenerationContext(level.registryAccess(),g,g.getBiomeSource(),random.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build()),surface,random,manager,rng,seed,chunkPos,level,b->true);
                 var stub=holder.value().findValidGenerationPoint(context);if(stub.isEmpty())continue;var box=stub.get().getPiecesBuilder().getBoundingBox();
-                int lowest=Integer.MAX_VALUE,surfaceLowest=Integer.MAX_VALUE;
-                for(int wz=box.minZ();wz<=box.maxZ();wz+=8)for(int wx=box.minX();wx<=box.maxX();wx+=8){lowest=Math.min(lowest,d.bedHeight(wx,wz));surfaceLowest=Math.min(surfaceLowest,d.sample(wx,wz).height());}
+                int lowest=Integer.MAX_VALUE;
+                for(int wz=box.minZ();wz<=box.maxZ();wz+=8)for(int wx=box.minX();wx<=box.maxX();wx+=8){lowest=Math.min(lowest,d.bedHeight(wx,wz));}
                 accepted[slot]++;
-                require(box.maxY()<=lowest-32,kind+" lies below the rock bed (not the ice) at chunk "+chunkPos+": maxY "+box.maxY()+" lowest bed "+lowest+" sheet "+ice+" surface lowest "+surfaceLowest);
+                require(box.maxY()<=lowest-32,kind+" lies below the rock bed (not the ice) at chunk "+chunkPos+": maxY "+box.maxY()+" lowest bed "+lowest+" sheet "+ice);
                 if(kind.equals("trial_chambers")||kind.equals("ancient_city")){
                     // Deterministic depth: the exact target is the rock-bed one (the ice-inclusive surface would be higher by up to the sheet).
                     int bed=d.bedHeight(chunkPos.getMiddleBlockX(),chunkPos.getMiddleBlockZ()),desired=kind.equals("ancient_city")?DeepDarkHabitat.cityFloor(bed,box.getYSpan()):bed-192;
                     require(box.minY()==Math.max(TerrainShape.FLOOR+64,Math.min(desired,lowest-32-box.getYSpan())),kind+" depth follows the rock bed at chunk "+chunkPos+": minY "+box.minY()+" bed "+bed+" sheet "+ice);
                 }
-                if(ice>0){differs[slot]++;require(box.maxY()<=surfaceLowest-32,kind+" stays below the ice-inclusive surface too");}
+                if(ice>0)differs[slot]++;
             }
             var row=new LinkedHashMap<String,Object>();String[] names={"thin","intermediate","unused","thick","no-sheet"};
             for(int i=0;i<5;i++)if(i!=2)row.put(names[i],"accepted "+accepted[i]+" of "+attempts[i]+" sites"+(i==4?"":" ("+differs[i]+" under a sheet)"));
@@ -172,7 +193,7 @@ final class PolarHabitatChecks {
     static Map<String,Object> finish(boolean legacy){
         var out=new LinkedHashMap<String,Object>();
         for(int b=0;b<5;b++){var row=new LinkedHashMap<String,Object>();row.put("columns",COUNTS[b][COLUMNS]);row.put("labelledCells",COUNTS[b][CELLS]);row.put("dripstoneLabelCells",COUNTS[b][DRIPSTONE]);row.put("sulfurLabelCells",COUNTS[b][SULFUR]);
-            row.put("labelsInIce",COUNTS[b][ICE_LABELS]);row.put("previousDatumLabelsInIce",COUNTS[b][OLD_DATUM_ICE_LABELS]);row.put("formationPlacements",COUNTS[b][PLACEMENTS]);row.put("pointedFormationsInRock",COUNTS[b][FORMATIONS]);out.put(BANDS[b],row);
+            row.put("labelsInIce",COUNTS[b][ICE_LABELS]);row.put("previousDatumLabelsInIce",COUNTS[b][OLD_DATUM_ICE_LABELS]);row.put("formationPlacements",COUNTS[b][PLACEMENTS]);row.put("sectionAndFastResolverCells",COUNTS[b][SECTION_CELLS]);row.put("pointedFormationsInRock",COUNTS[b][FORMATIONS]);out.put(BANDS[b],row);
             require(COUNTS[b][ICE_LABELS]==0,"No dripstone or sulfur label inside ice in band "+BANDS[b]);}
         if(!legacy){
             require(COUNTS[0][COLUMNS]>0&&COUNTS[1][COLUMNS]>0&&COUNTS[2][COLUMNS]>0&&COUNTS[3][COLUMNS]>0,"Every sheet band is present");

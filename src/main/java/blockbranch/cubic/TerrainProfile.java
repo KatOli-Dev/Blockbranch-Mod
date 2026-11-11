@@ -761,7 +761,6 @@ public final class TerrainProfile {
      * planned with, never against the ice-inclusive surface. */
     private static TerrainProfile decode(CompoundTag tag,PalettedContainerFactory factory,PerennialIceLayer ice) {
         if(tag.getIntOr("version",-1)==77){
-            if(ice.enabled())throw new IllegalArgumentException("Nested perennial-ice wrapper");
             int base=tag.getInt("perennial_ice_base_profile_version").orElseThrow(()->new IllegalArgumentException("Missing perennial-ice foundation"));
             if(base!=60&&base!=61&&base!=62&&base!=63&&base!=64&&base!=66&&base!=68&&base!=70&&base!=72&&base!=74&&base!=75&&base!=76)throw new IllegalArgumentException("Unsupported perennial-ice foundation");
             var wrapped=new PerennialIceLayer(tag.getIntArray("perennial_ice").orElseThrow());if(!wrapped.enabled())throw new IllegalArgumentException("Empty perennial-ice wrapper");
