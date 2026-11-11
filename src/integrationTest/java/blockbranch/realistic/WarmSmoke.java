@@ -59,7 +59,7 @@ public final class WarmSmoke {
             }
             for(int oz=0;oz<16;oz+=4) for(int ox=0;ox<16;ox+=4) {
                 int x=cx*16+ox,z=cz*16+oz,h=generator.drainage(random).sample(x,z).height();
-                int cover=generator.warmCover(x,z,random);components.add(cover);
+                int cover=LeafLitter.warmBase(generator.warmCover(x,z,random));components.add(cover);
                 for(int y=h-3;y<=Math.max(h+2,base.canopy().topY(x,z));y++) require(base.state(x,y,z)==generator.surfaceState(x,y,z,random),"Tree and forest-floor query agreement");
                 for(var bounds:new LevelHeightAccessor[]{level,LevelHeightAccessor.create(h-2,2),LevelHeightAccessor.create(h+1,2),LevelHeightAccessor.create(h+7,3),LevelHeightAccessor.create(h+25,2)}) {
                     var column=generator.getBaseColumn(x,z,bounds,random);

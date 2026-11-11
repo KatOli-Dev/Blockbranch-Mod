@@ -83,7 +83,7 @@ public final class ForestSmoke {
             }
         }
         for(int dz=-96;dz<=96&&!(components.contains(4)&&components.contains(5)&&components.contains(7));dz++)for(int dx=-96;dx<=96;dx++){
-            int x=bed.getX()+dx,z=bed.getZ()+dz,cover=generator.woodlandCover(x,z,random);if(cover!=4&&cover!=5&&cover!=7||components.contains(cover))continue;
+            int x=bed.getX()+dx,z=bed.getZ()+dz,cover=LeafLitter.woodlandBase(generator.woodlandCover(x,z,random));if(cover!=4&&cover!=5&&cover!=7||components.contains(cover))continue;
             int h=generator.drainage(random).sample(x,z).height();var actual=level.getChunk(x>>4,z>>4);var profile=((SparseColumn)actual).blockbranch$terrain().base();var plant=new BlockPos(x,h+1,z);
             require(actual.getBlockState(plant)==profile.state(x,h+1,z)&&actual.getBlockState(plant).canSurvive(level,plant),"Actual clustered understory support");components.add(cover);
         }

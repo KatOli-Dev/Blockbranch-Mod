@@ -33,7 +33,7 @@ public final class JungleSmoke {
                 }else{require(state.is(Blocks.JUNGLE_LOG),"Acacia material identity");logs++;}
             }
             for(int z=cz*16;z<cz*16+16;z+=4)for(int x=cx*16;x<cx*16+16;x+=4){
-                int h=g.drainage(random).sample(x,z).height();covers.add(g.woodlandCover(x,z,random));
+                int h=g.drainage(random).sample(x,z).height();covers.add(LeafLitter.woodlandBase(g.woodlandCover(x,z,random)));
                 for(int y=h-3;y<=Math.max(h+2,base.canopy().topY(x,z));y++)require(base.state(x,y,z)==g.surfaceState(x,y,z,random),"Native Jungle floor and canopy query consistency");
                 for(var type:Heightmap.Types.values())require(chunk.getHeight(type,x&15,z&15)+1==base.top(type.isOpaque(),x,z,ColumnLimits.MAX_Y-1),"Native Jungle heightmap");
                 for(var bounds:List.of(net.minecraft.world.level.LevelHeightAccessor.create(h+7,3),net.minecraft.world.level.LevelHeightAccessor.create(h+24,3),net.minecraft.world.level.LevelHeightAccessor.create(h+36,3))){var column=g.getBaseColumn(x,z,bounds,random);for(var type:Heightmap.Types.values()){int expected=bounds.getMinY();for(int y=bounds.getMaxY();y>=bounds.getMinY();y--)if(type.isOpaque().test(column.getBlock(y))){expected=y+1;break;}require(g.getBaseHeight(x,z,type,bounds,random)==expected,"Clipped tropical canopy tier heightmap "+type);}}
@@ -55,7 +55,7 @@ public final class JungleSmoke {
         require(logs>5&&leaves>50,"Nontrivial native jungle canopy");
         boolean[] witness=new boolean[13];int remaining=5;
         for(int dz=-128;dz<=128&&remaining>0;dz++)for(int dx=-128;dx<=128&&remaining>0;dx++){
-            int x=bed.getX()+dx,z=bed.getZ()+dz,code=g.woodlandCover(x,z,random);if(code<8||code>12||witness[code])continue;int h=g.drainage(random).sample(x,z).height();var base=((SparseColumn)level.getChunk(x>>4,z>>4)).blockbranch$terrain().base();if(base.canopy().state(x,h+1,z)!=null)continue;
+            int x=bed.getX()+dx,z=bed.getZ()+dz,code=LeafLitter.woodlandBase(g.woodlandCover(x,z,random));if(code<8||code>12||witness[code])continue;int h=g.drainage(random).sample(x,z).height();var base=((SparseColumn)level.getChunk(x>>4,z>>4)).blockbranch$terrain().base();if(base.canopy().state(x,h+1,z)!=null)continue;
             for(int y=h-3;y<=h+2;y++)require(level.getBlockState(new BlockPos(x,y,z))==g.surfaceState(x,y,z,random),"Every Jungle ground material reaches native terrain");
             if(code==9||code==10||code==12){var plant=new BlockPos(x,h+1,z);require(level.getBlockState(plant).canSurvive(level,plant),"Grass has supported dry soil");}
             witness[code]=true;remaining--;

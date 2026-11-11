@@ -40,7 +40,7 @@ public final class SavannaSmoke {
                 }else{require(state.is(Blocks.ACACIA_LOG)||state.is(Blocks.ACACIA_WOOD),"Acacia material identity");logs++;}
             }
             for(int z=cz*16;z<cz*16+16;z+=4)for(int x=cx*16;x<cx*16+16;x+=4){
-                int h=g.drainage(random).sample(x,z).height();covers.add(g.warmCover(x,z,random));
+                int h=g.drainage(random).sample(x,z).height();covers.add(LeafLitter.warmBase(g.warmCover(x,z,random)));
                 for(int y=h-3;y<=Math.max(h+2,base.canopy().topY(x,z));y++){
                     // Saved/native/decoded/materialized canopy equality is checked
                     // above. Only its equality to newly generated trees is omitted.
@@ -58,7 +58,7 @@ public final class SavannaSmoke {
         if(legacyCanopy){require(skippedCanopyQueries>0,"Legacy fixture must exercise saved canopy queries");Blockbranch.LOGGER.info("SAVANNA_LEGACY_CANOPY_QUERIES_OMITTED count={}",skippedCanopyQueries);}
         boolean[] witness=new boolean[13];int remaining=4;
         for(int dz=-128;dz<=128&&remaining>0;dz++)for(int dx=-128;dx<=128&&remaining>0;dx++){
-            int x=bed.getX()+dx,z=bed.getZ()+dz,code=g.warmCover(x,z,random);if(code<9||witness[code])continue;int h=g.drainage(random).sample(x,z).height();var base=((SparseColumn)level.getChunk(x>>4,z>>4)).blockbranch$terrain().base();if(base.canopy().state(x,h+1,z)!=null)continue;
+            int x=bed.getX()+dx,z=bed.getZ()+dz,code=LeafLitter.warmBase(g.warmCover(x,z,random));if(code<9||witness[code])continue;int h=g.drainage(random).sample(x,z).height();var base=((SparseColumn)level.getChunk(x>>4,z>>4)).blockbranch$terrain().base();if(base.canopy().state(x,h+1,z)!=null)continue;
             for(int y=h-3;y<=h+2;y++)require(level.getBlockState(new BlockPos(x,y,z))==g.surfaceState(x,y,z,random),"Every Savanna ground material reaches native terrain");
             if(code==10||code==11){var plant=new BlockPos(x,h+1,z);require(level.getBlockState(plant).canSurvive(level,plant),"Grass has supported dry soil");}
             witness[code]=true;remaining--;

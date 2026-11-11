@@ -66,9 +66,9 @@ public final class ForestGrasslandTransitionSmoke {
             var before=legacy.getBiomeSource().createUncachedResolver(random);var after=g.getBiomeSource().createUncachedResolver(random);
             require(before.getNoiseBiome(x>>2,0,z>>2).equals(after.getNoiseBiome(x>>2,0,z>>2)),"Biome identity unchanged");
             require(legacy.drainage(random).sample(x,z).equals(d.sample(x,z)),"Terrain/drainage unchanged");
-            int m=g.meadowCover(x,z,random),w=g.woodlandCover(x,z,random);
+            int m=g.meadowCover(x,z,random),w=LeafLitter.woodlandBase(g.woodlandCover(x,z,random));
             require(m==0||w==0,"Mutually exclusive cover vocabularies");
-            int om=legacy.meadowCover(x,z,random),ow=legacy.woodlandCover(x,z,random);
+            int om=legacy.meadowCover(x,z,random),ow=LeafLitter.woodlandBase(legacy.woodlandCover(x,z,random));
             int routedMeadow=originalCover(g,"originalMeadowCover",x,z,random),routedWoodland=originalCover(g,"originalWoodlandCover",x,z,random);
             if(m>0&&routedMeadow>0){require(m==routedMeadow,"Retain routed meadow subtype");subtypeChecks++;}
             if(w>0&&routedWoodland>0){require(w==routedWoodland,"Retain routed woodland subtype");subtypeChecks++;}
