@@ -1,0 +1,99 @@
+tasks.register('assessSummerDry',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SummerDryAssessment';maxHeapSize='2G'}
+
+def original=layout.projectDirectory.dir(providers.gradleProperty('published263Directory').getOrElse('build/summer-dry-evidence/published-c031463'))
+loom.runs.register('published263Snapshot') {
+    server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.published263Snapshot=true')
+    vmArg('-Dblockbranch.published263SnapshotResult='+original.file('result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished263Snapshot'){doLast{
+    assert !original.file('server.properties').asFile.exists():'Use a fresh directory; retain original evidence.'
+    original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+    original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25622\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished263Snapshot'){
+    dependsOn 'preparePublished263Snapshot'
+    doLast{assert original.file('result.txt').asFile.text.startsWith('PASS')}
+}
+
+tasks.register('checkSummerDry',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SummerDryCheck';maxHeapSize='2G'}
+tasks.named('check'){dependsOn 'checkSummerDry'}
+
+// The original source is useful for codec/surface comparisons, but shares
+// candidate helpers. Whole-original output hashes are the independent oracle.
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/summer-dry-reader-263')
+def reader=layout.buildDirectory.dir('summer-dry-reader-263'),runtime=layout.buildDirectory.dir('summer-dry-reader-runtime')
+def readerFiles=fileTree(reader).matching{include '**/*.class'}
+def snapshotCollector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published263Snapshot.java')
+tasks.register('verifySummerDryReader'){
+    inputs.dir(fixture);inputs.file(snapshotCollector)
+    doLast{
+        def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+        assert origin.repository=='KatOli-Dev/Blockbranch-Mod'&&origin.commit=='c031463a3c01cf19f587517a5c0f627fd8813e2b'
+        assert origin.sources*.path.toSet()==['src/main/java/blockbranch/realistic/RealisticGenerator.java','src/main/java/blockbranch/realistic/ScreeBiomeSource.java','src/main/java/blockbranch/cubic/TerrainProfile.java'].toSet()
+        def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+        origin.sources.each{assert hash(fixture.file(it.path.substring('src/main/java/'.length())).asFile)==it.sha256}
+        assert hash(fixture.file(origin.baseline.path).asFile)==origin.baseline.sha256
+        assert hash(snapshotCollector.asFile)==origin.baseline.collectorSha256
+    }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifySummerDryReader'}
+tasks.register('compileSummerDryReader',JavaCompile){
+    dependsOn 'classes','verifySummerDryReader';source fixture.asFile;include '**/*.java'
+    classpath=sourceSets.main.output+sourceSets.main.compileClasspath;destinationDirectory=reader
+    javaCompiler=javaToolchains.compilerFor{languageVersion=JavaLanguageVersion.of(25)}
+    options.release=25;options.compilerArgs.add('-proc:none')
+}
+tasks.register('relocateSummerDryReader'){
+    dependsOn 'compileSummerDryReader';inputs.dir(reader);outputs.dir(runtime)
+    doLast{readerFiles.files.each{inputFile->
+        def bytes=new ByteArrayOutputStream()
+        inputFile.withDataInputStream{input->
+            def output=new DataOutputStream(bytes);output.writeInt(input.readInt());output.writeShort(input.readUnsignedShort());output.writeShort(input.readUnsignedShort())
+            int count=input.readUnsignedShort();output.writeShort(count)
+            for(int i=1;i<count;i++){
+                int tag=input.readUnsignedByte();output.writeByte(tag)
+                if(tag==1){def value=input.readUTF();if(inputFile.path.replace('\\','/').contains('/blockbranch/cubic/TerrainProfile'))value=value.replace('blockbranch/cubic/TerrainProfile','blockbranch/cubic/Published263TerrainProfile');output.writeUTF(value.replace('blockbranch/realistic/RealisticGenerator','blockbranch/realistic/Published263RealisticGenerator').replace('blockbranch/realistic/ScreeBiomeSource','blockbranch/realistic/Published263ScreeBiomeSource'))}
+                else{int length=tag in [3,4,9,10,11,12,17,18]?4:tag in [5,6]?8:tag in [7,8,16,19,20]?2:tag==15?3:-1;assert length>0;output.write(input.readNBytes(length));if(tag in [5,6])i++}
+            }
+            output.write(input.readAllBytes());output.flush()
+        }
+        def relative=reader.get().asFile.toPath().relativize(inputFile.toPath()).toString().replace('RealisticGenerator','Published263RealisticGenerator').replace('TerrainProfile','Published263TerrainProfile').replace('ScreeBiomeSource','Published263ScreeBiomeSource')
+        def target=runtime.get().file(relative).asFile;target.parentFile.mkdirs();target.bytes=bytes.toByteArray()
+    }}
+}
+sourceSets.integrationTest.output.dir([builtBy:'relocateSummerDryReader'],runtime)
+
+
+def dir=layout.projectDirectory.dir(providers.gradleProperty('summerDryDirectory').getOrElse('build/summer-dry-native'))
+def reopen=providers.gradleProperty('summerDryReopen').isPresent(),legacy=providers.gradleProperty('summerDryLegacy').isPresent()
+def savedPlanOnly=providers.gradleProperty('summerDrySavedPlanOnly').isPresent()
+def resultName=(savedPlanOnly?'plan-':'')+(reopen?'reopen-':'')+'result.txt'
+loom.runs.register('summerDryQualification'){
+ server();runDir(dir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.summerDryQualification=true');vmArg('-Dblockbranch.summerDryResult='+dir.file(resultName).asFile.absolutePath)
+ vmArg('-Dblockbranch.summerDryNativeOnly='+providers.gradleProperty('summerDryNativeOnly').isPresent());vmArg('-Dblockbranch.summerDrySavedPlanOnly='+savedPlanOnly);vmArg('-Dblockbranch.summerDryLegacy='+legacy);vmArg('-Dblockbranch.summerDryReopen='+reopen);vmArg('-Dblockbranch.summerDrySurvey='+providers.gradleProperty('summerDrySurvey').isPresent())
+}
+tasks.register('prepareSummerDryQualification'){doLast{
+ assert !dir.file(resultName).asFile.exists():'Preserve results; choose a fresh directory or reopen phase.'
+ if(legacy||reopen)assert dir.file('survey/level.dat').asFile.exists():'Requires an actual closed saved world, never synthesized metadata.'
+ else assert !dir.file('server.properties').asFile.exists():'Use a fresh directory.'
+ dir.asFile.mkdirs();dir.file('eula.txt').asFile.text='eula=true\n'
+ dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25622\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runSummerDryQualification'){dependsOn 'prepareSummerDryQualification','relocateSummerDryReader';doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('summerDryVisualDirectory').getOrElse('build/summer-dry-visual'))
+def visualLegacy=providers.gradleProperty('summerDryVisualLegacy').isPresent()
+loom.runs.register('summerDryVisual'){
+    client();runDir(visual.asFile.absolutePath);vmArg('-Xmx3G')
+    vmArg('-Dblockbranch.summerDryVisual=true');vmArg('-Dblockbranch.summerDryVisualDirectory='+visual.asFile.absolutePath)
+    vmArg('-Dblockbranch.summerDryVisualReopen='+visualLegacy)
+    programArgs('--username','SummerDryView','--width','1024','--height','576')
+}
+tasks.register('prepareSummerDryVisual'){doLast{
+    assert !visual.file('options.txt').asFile.exists():'Preserve captures; use a fresh visual directory.'
+    if(visualLegacy)assert visual.dir('saves/SummerDryVisualReview').asFile.exists():'Copy a closed actual schema263 visual world, never fabricate old metadata.'
+    visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:30\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runSummerDryVisual'){dependsOn 'prepareSummerDryVisual';doLast{assert visual.file((visualLegacy?'reopen-':'')+'result.txt').asFile.text.startsWith('PASS')}}

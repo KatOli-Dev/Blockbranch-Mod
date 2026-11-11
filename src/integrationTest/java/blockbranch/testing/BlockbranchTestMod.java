@@ -87,6 +87,8 @@ public final class BlockbranchTestMod implements ModInitializer {
         if (Boolean.getBoolean("blockbranch.deepBasinQualification")) blockbranch.realistic.DeepBasinQualification.register();
         if (Boolean.getBoolean("blockbranch.landIceQualification")) blockbranch.realistic.LandIceQualification.register();
         if (Boolean.getBoolean("blockbranch.published262Snapshot")) blockbranch.realistic.Published262Snapshot.register();
+        if (Boolean.getBoolean("blockbranch.published263Snapshot")) blockbranch.realistic.Published263Snapshot.register();
+        if (Boolean.getBoolean("blockbranch.summerDryQualification")) blockbranch.realistic.SummerDryQualification.register();
         if (Boolean.getBoolean("blockbranch.published261Snapshot")) blockbranch.realistic.Published261Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published260Snapshot")) blockbranch.realistic.Published260Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published259Snapshot")) blockbranch.realistic.Published259Snapshot.register();

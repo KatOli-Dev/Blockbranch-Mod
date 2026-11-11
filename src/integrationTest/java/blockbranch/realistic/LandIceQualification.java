@@ -30,6 +30,10 @@ public final class LandIceQualification {
             }
             var level=server.overworld();var random=level.getChunkSource().randomState();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());JsonObject fresh;
             try(var in=new InputStreamReader(Objects.requireNonNull(LandIceQualification.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),StandardCharsets.UTF_8)){fresh=JsonParser.parseReader(in).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
+            if(fresh.get("shape_version").getAsInt()==264){
+                require(fresh.get("summer_dry_definition").getAsInt()==1,"Known complete summer-dry wrapper");
+                fresh.remove("summer_dry_definition");fresh.addProperty("shape_version",263);fresh.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
+            }
             fresh.remove("type");require(fresh.get("shape_version").getAsInt()==263,"Complete current preset");
             var candidate=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();require(RealisticGenerator.CODEC.codec().encodeStart(ops,candidate).getOrThrow().equals(fresh),"Exact263 roundtrip");
             var old=fresh.deepCopy();old.remove("land_ice_definition");old.addProperty("shape_version",262);old.getAsJsonObject("additional_biomes").remove(LandIceField.KEY);var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
