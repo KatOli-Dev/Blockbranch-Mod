@@ -5,6 +5,7 @@ public final class BlockbranchTestClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
         if(Boolean.getBoolean("blockbranch.forestGrasslandVisual"))blockbranch.client.realistic.ForestGrasslandVisualReview.register();
         if(Boolean.getBoolean("blockbranch.surfaceOwnershipVisual"))blockbranch.realistic.SurfaceOwnershipVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.deepBasinVisual"))blockbranch.realistic.DeepBasinVisualReview.register();
         if(Boolean.getBoolean("blockbranch.abyssalTraceVisual"))blockbranch.realistic.AbyssalTraceVisualReview.register();
         if(Boolean.getBoolean("blockbranch.coolDesertVisual"))blockbranch.realistic.CoolDesertVisualReview.register();
         if(Boolean.getBoolean("blockbranch.dryForestVisual"))blockbranch.realistic.DryForestVisualReview.register();

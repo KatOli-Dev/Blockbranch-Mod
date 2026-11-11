@@ -32,6 +32,10 @@ public final class SurfaceOwnershipQualification {
                 fresh.remove("type");
                 // Keep this historical 257->258 qualification and its frozen
                 // counts intact when today's preset has an independent wrapper.
+                if(fresh.get("shape_version").getAsInt()==262){
+                    require(fresh.get("deep_basin_relief_definition").getAsInt()==1,"Known complete deep-basin wrapper");
+                    fresh.remove("deep_basin_relief_definition");fresh.addProperty("shape_version",261);
+                }
                 if(fresh.get("shape_version").getAsInt()==261){
                     require(fresh.get("abyssal_trace_definition").getAsInt()==1,"Known complete abyssal wrapper");
                     fresh.remove("abyssal_trace_definition");fresh.addProperty("shape_version",260);

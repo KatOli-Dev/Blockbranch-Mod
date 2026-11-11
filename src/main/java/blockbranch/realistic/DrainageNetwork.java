@@ -22,6 +22,7 @@ public final class DrainageNetwork {
     private volatile ErodedBadlands eroded;
     private final boolean gravelReliefEnabled;
     private final boolean surfaceOwnership;
+    private final DeepBasinRelief deepBasinRelief;
     private volatile DrainageNetwork unrelieved;
     private volatile GravelDesertRelief gravelRelief;
     private final CoastalHeadlands headlands;
@@ -67,6 +68,10 @@ public final class DrainageNetwork {
         this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,false);
     }
     DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership) {
+        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,false);
+    }
+    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief) {
+        this.deepBasinRelief=deepBasinRelief?new DeepBasinRelief(shape):null;
         this.surfaceOwnership=surfaceOwnership;
         this.gravelReliefEnabled=gravelReliefEnabled;
         this.sandyCoasts=sandyCoasts;this.sandyCoast=new SandyCoast(seed,shape,this);
@@ -209,7 +214,9 @@ public final class DrainageNetwork {
     /** Immutable preformation view shares the solved graph, never a modified sample cache. */
     private DrainageNetwork(DrainageNetwork owner) {this(owner,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {
-        surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=false;
+        // Legacy reference views disable this final physical adjustment; apply once,
+        // after the complete original surface, retaining its climate references.
+        deepBasinRelief=null;surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=false;
         ground=owner.ground;parent=owner.parent;root=owner.root;area=owner.area;water=owner.water;ocean=owner.ocean;
         tangentX=owner.tangentX;tangentZ=owner.tangentZ;
         nodeXs=owner.nodeXs;nodeZs=owner.nodeZs;edgeSlot=owner.edgeSlot;edgeControl=owner.edgeControl;
@@ -255,6 +262,7 @@ public final class DrainageNetwork {
             value=weathered&&!base.structuralComparison?base.sample(x,z):sample(x,z,!structuralComparison);
             if(weathered)value=eroded().apply(x,z,value);
         }
+        if(deepBasinRelief!=null&&!structuralComparison)value=deepBasinRelief.apply(this,x,z,value);
         sampleCache[slot]=new CachedSample(key,value);
         return value;
     }

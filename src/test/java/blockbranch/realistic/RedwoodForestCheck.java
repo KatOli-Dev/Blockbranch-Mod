@@ -57,7 +57,7 @@ public final class RedwoodForestCheck {
         var preset=new String(RedwoodForestCheck.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json").readAllBytes());
         // This checks today's wrapping preset; the historical 256/257 schema and
         // frozen selector assertions above remain unchanged when a new gate wraps it.
-        require(preset.contains("\"shape_version\": 261")&&preset.contains("\"redwood_forest_definition\": 1")&&preset.contains("\"redwood_forest\": \"blockbranch:maritime_redwood_fern_forest\""),"Bundled preset opts in to redwoods");
+        require(preset.contains("\"shape_version\": 262")&&preset.contains("\"redwood_forest_definition\": 1")&&preset.contains("\"redwood_forest\": \"blockbranch:maritime_redwood_fern_forest\""),"Bundled preset opts in to redwoods");
         var biome=new String(RedwoodForestCheck.class.getResourceAsStream("/data/blockbranch/worldgen/biome/maritime_redwood_fern_forest.json").readAllBytes());
         require(biome.contains("natural_mob_spawns")&&biome.contains("\"has_precipitation\": true"),"Biome resource is a precipitating woodland with empty native spawns");
         var lang=new String(RedwoodForestCheck.class.getResourceAsStream("/assets/blockbranch/lang/en_us.json").readAllBytes());
