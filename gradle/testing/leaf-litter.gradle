@@ -9,6 +9,16 @@ tasks.register('prepareLeafLitterAudit'){doLast{
  audit.asFile.mkdirs();audit.file('eula.txt').asFile.text='eula=true\n'
  audit.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25624\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
 }}
+loom.runs.register('leafLitterReopen') {
+ server();runDir(audit.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.leafLitterReopen='+providers.gradleProperty('leafLitterReopen').getOrElse('prepare'));vmArg('-Dblockbranch.leafLitterDirectory='+audit.asFile.absolutePath)
+}
+tasks.named('runLeafLitterReopen'){dependsOn 'prepareLeafLitterReopen';doLast{assert audit.file('reopen-result.txt').asFile.text.startsWith('PASS')}}
+tasks.register('prepareLeafLitterReopen'){doLast{
+ audit.file('reopen-result.txt').asFile.delete()
+ if(!audit.file('server.properties').asFile.exists()){audit.asFile.mkdirs();audit.file('eula.txt').asFile.text='eula=true\n'
+ audit.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25625\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'}
+}}
 tasks.named('runLeafLitterAudit'){dependsOn 'prepareLeafLitterAudit';doLast{assert audit.file('result.txt').asFile.text.startsWith('PASS')}}
 
 def visual=layout.projectDirectory.dir(providers.gradleProperty('leafLitterVisualDirectory').getOrElse('build/leaf-litter-evidence/visual-NEW'))
