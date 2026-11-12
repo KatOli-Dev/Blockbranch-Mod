@@ -1,0 +1,13 @@
+{
+  "grids": [],
+  "nativeSeed": 1,
+  "physicalStates": 633059,
+  "physicalSHA256": "72052b26dcc48b874e1d160bc6e3cb3289c30a8e018cf3126cc27884c4ef2bae",
+  "nativeExcludedPoints": [
+    4,
+    5
+  ],
+  "nativeStates": 6456552,
+  "nativeSHA256": "a6e061a8cf655a395b438a0de2fa79d02b13fa3ce68ae3f5a6eaad3c410d45d4",
+  "nativeProfileSHA256": "d1c7b5aebc2173dddf12d7d4e0a71e9db28c7647c9f74888e4fecfb0226936b1"
+}
