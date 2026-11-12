@@ -2,6 +2,7 @@ package blockbranch.realistic;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
 
 /** Frozen published-270 boreal placement stays byte-for-byte reproducible. */
@@ -63,6 +64,12 @@ public final class BorealSlopeCheck {
             for(int v:WoodlandTrees.column(1,cx,cz,d,c,true,16|BorealSlope.FLAG))if(v!=0)on++;
         }
         require(off==0&&on>0,"Canopy columns: published flags treeless ("+off+"), slope flag stands ("+on+")");
+        // Flat stands: the saved flag changes nothing, for every flag combination that needs no saved owner.
+        for(int site=0;site<flat.length;site++)if(flat[site]){
+            var s=BorealSlopeOracle.SITES[site];long seed=s[0];var fd=BorealSlopeOracle.terrain(seed);var fc=new ClimateField(seed,true);int fx=(int)s[1]>>4,fz=(int)s[2]>>4;
+            for(int flags:new int[]{0,1,2,16,17,18})for(int cz=fz-1;cz<=fz;cz++)for(int cx=fx-1;cx<=fx;cx++)
+                require(Arrays.equals(WoodlandTrees.column(seed,cx,cz,fd,fc,true,flags),WoodlandTrees.column(seed,cx,cz,fd,fc,true,flags|BorealSlope.FLAG)),"Flat window "+site+" chunk "+cx+","+cz+" flags "+flags+" identical under the slope flag");
+        }
     }
     private static void require(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private BorealSlopeCheck(){}

@@ -128,8 +128,8 @@ public final class ContinentalIceQualification {
         var root=SummerDryTrees.roots(random.seed(),271984,-720016,272016,-719984,d,c,g.summerDryOwner(random)).stream().filter(r->r.height()>=12).findFirst().orElseThrow();
         var box=new net.minecraft.world.level.levelgen.structure.BoundingBox(root.x(),root.y(),root.z(),root.x(),root.y(),root.z());
         var context=net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext.fromLevel(level);
-        var piece=new ReimaginedTreeClearPiece(box,random.seed(),g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);int definition=g.continentalIceDefinition()>0?64:32;
-        require(tag.getIntOr("ClearDefinition",0)==definition,"Saved tree-clear climate bit derives from the actual old/new generation gate");
+        var piece=new ReimaginedTreeClearPiece(box,random.seed(),g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);int definition=1+g.borealCrownDefinition()+2*g.vegetationFlags();
+        require(tag.getIntOr("ClearDefinition",0)==definition&&((g.vegetationFlags()&16)!=0)==(g.continentalIceDefinition()>0),"Saved tree-clear climate bit derives from the actual old/new generation gate");
         var plan=BorealClearSmoke.plan(piece,g,random);require(!plan.isEmpty()&&SummerDryTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole saved woody footprint is nonvacuous");
         Path file=dir.resolve("tree-clear.nbt");if(!reopen){require(!Files.exists(file),"Preserve original plan evidence");net.minecraft.nbt.NbtIo.writeCompressed(tag,file);}
         var saved=net.minecraft.nbt.NbtIo.readCompressed(file,net.minecraft.nbt.NbtAccounter.unlimitedHeap());require(tag.equals(saved)&&plan.equals(BorealClearSmoke.plan(BorealClearSmoke.load(context,saved),g,random)),"Exact compressed plan and footprint replay across process/gate");

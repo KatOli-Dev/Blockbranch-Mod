@@ -24,12 +24,13 @@ tasks.named('check'){dependsOn 'checkBorealSlope','checkSavedGateRegistry'}
 
 // Native qualification over the sampled treeless boreal slope (seed 1).
 def slopeDir=layout.projectDirectory.dir(providers.gradleProperty('borealSlopeDirectory').getOrElse('build/boreal-slope-native'))
-def slopeMode=providers.gradleProperty('borealSlopeMode').getOrElse('record270')
+def slopeMode=providers.gradleProperty('borealSlopeMode').getOrElse('fresh271')
 loom.runs.register('borealSlopeQualification'){
  server();runDir(slopeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
  vmArg('-Dblockbranch.borealSlopeMode='+slopeMode);vmArg('-Dblockbranch.borealSlopeDirectory='+slopeDir.asFile.absolutePath)
 }
 tasks.register('prepareBorealSlopeQualification'){doLast{
+ assert slopeMode in ['record270','verify270','fresh271','verify271']:'Unknown borealSlopeMode '+slopeMode
  slopeDir.file('result.txt').asFile.delete()
  if(slopeMode in ['record270','fresh271'])assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert slopeDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'

@@ -178,7 +178,7 @@ public final class SeasonalForestQualification {
             .filter(r->r.height()>=18&&!retained.dryForestOwner(random).test(r.x(),r.z())&&Math.hypot(r.x()-p[0],r.z()-p[1])>96).findFirst().orElseThrow();
         var box=new BoundingBox(root.x(),root.y(),root.z(),root.x(),root.y(),root.z());
         var piece=new ReimaginedTreeClearPiece(box,SEED,g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);
-        require(tag.getIntOr("ClearDefinition",0)==128,"Explicit complete refined root/crown flags");
+        require(tag.getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags()&&(g.vegetationFlags()&SeasonalForestExpansion.FLAG)!=0,"Explicit complete refined root/crown flags");
         var plan=BorealClearSmoke.plan(piece,g,random);
         require(!plan.isEmpty()&&ForestTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
         NbtIo.writeCompressed(tag,saved);Files.writeString(signature,new TreeMap<>(plan).toString());
@@ -207,7 +207,7 @@ public final class SeasonalForestQualification {
         var nativeResult=BorealClearSmoke.replay(level,g,context,tag,initial,false,true,dir,true);
         var text=new StringBuilder();for(long key:new TreeSet<>(plan.keySet())){var state=level.getBlockState(BlockPos.of(key));require(state.equals(nativeResult.get(key)),"Actual native replay matches virtual clipped replay");text.append(key).append('\t').append(state).append('\n');}
         Files.writeString(states,text.toString());
-        return Map.of("newDefinition",128,"footprintCells",plan.size(),"historicalNBTRoundtrips",historical,"oldForestFootprintsCompared",compared,"nativeReplayStates",plan.size());
+        return Map.of("newDefinition",1+g.borealCrownDefinition()+2*g.vegetationFlags(),"footprintCells",plan.size(),"historicalNBTRoundtrips",historical,"oldForestFootprintsCompared",compared,"nativeReplayStates",plan.size());
     }
     private static void reject(RegistryOps<JsonElement> ops,JsonObject json){require(RealisticGenerator.CODEC.codec().parse(ops,json).error().isPresent(),"Malformed/incomplete/future refinement rejects");}
     private static void add(MessageDigest digest,String text){digest.update((text+"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));}
