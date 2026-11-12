@@ -70,13 +70,10 @@ public final class CoolDesertVisualReview {
                     var original=g.alluvialDefinition()>0?d.alluvialReference():d;ey=original.sample(ex,ez).height()+1;
                     if(view<3){cameraY=Math.max(original.sample(ex,ez).height()+39,original.sample(cameraX,cameraZ).height()+39);}
                     else{
-                        var proposed=new AlluvialFloodplain(original);boolean found=false;
-                        search:for(int dz=-24;dz<=24;dz++)for(int dx=-24;dx<=24;dx++){
-                            int wx=ex+dx,wz=ez+dz;var plan=proposed.plan(wx,wz);if(!plan.changed()||!plan.connectedCore())continue;
-                            int h=original.sample(wx,wz).height();
-                            if(plan.cut()<=2){cameraX=wx;cameraZ=wz;cameraY=h+2;found=true;break search;}
-                        }
-                        if(!found)throw new AssertionError("Bounded dry connected-bench camera");
+                        // Frozen original review pose (visual269/reopen-views,
+                        // view3). Geometry changes must not move the camera.
+                        cameraX=1478324;cameraZ=-996788;cameraY=890;
+
                     }
                 }
                 camera=new BlockPos(cameraX,cameraY,cameraZ);

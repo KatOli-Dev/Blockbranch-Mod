@@ -130,6 +130,16 @@ return Map.of("steep",steep,"highWalls",gorge,"wet",wet,"ice",ice);
                         if((x-s.x)%8==0&&(z-s.z)%8==0){api+=baseApis(x,z,h,chunk);}
                     }
                 }
+                int edgePairs=0,maxCutDifference=0,maxAddedRise=0;
+                for(int z=0;z<sizeZ;z++)for(int x=0;x<sizeX;x++)for(var offset:new int[][]{{1,0},{0,1}}){
+                    int nx=x+offset[0],nz=z+offset[1];if(nx>=sizeX||nz>=sizeZ)continue;
+                    int i=z*sizeX+x,j=nz*sizeX+nx;
+                    int original=d.alluvialReference().sample(s.minX+x,s.minZ+z).height(),neighbor=d.alluvialReference().sample(s.minX+nx,s.minZ+nz).height();
+                    int cut=original-ground[i],otherCut=neighbor-ground[j];require(cut>=0&&cut<=8&&otherCut>=0&&otherCut<=8,"Native edge cut stays bounded and conservative");
+                    int difference=Math.abs(cut-otherCut),added=Math.abs(ground[i]-ground[j])-Math.abs(original-neighbor);
+                    require(difference<=1&&added<=1,"Bench filtering introduced a multi-block cliff at "+(s.minX+x)+","+(s.minZ+z));
+                    maxCutDifference=Math.max(maxCutDifference,difference);maxAddedRise=Math.max(maxAddedRise,added);edgePairs++;
+                }
                 var stageRows=new ArrayList<Object>();
                 for(int ordinary:groups)for(int rise:new int[]{3,4,5,6}){
                     boolean[] reached=flood(ground,water,sizeX,sizeZ,ordinary,rise);int claimed=0,reachable=0;
@@ -137,7 +147,7 @@ return Map.of("steep",steep,"highWalls",gorge,"wet",wet,"ice",ice);
                     stageRows.add(Map.of("ordinaryWater",ordinary,"rise",rise,"certified",claimed,"nativeReachableModified",reachable));
                 }
                 if(!s.junction)require(changed>0&&core>0&&extended>0,"Nonvacuous native bench and extended core");
-                rows.add(Map.of("center",List.of(s.x,s.z),"nativeBounds",List.of(s.minX,s.maxX,s.minZ,s.maxZ),"junction",s.junction,"changed",changed,"certifiedCore4",core,"extended",extended,"fineSediment",fines,"stageSensitivity",stageRows));
+                var sceneRow=new LinkedHashMap<String,Object>();sceneRow.put("center",List.of(s.x,s.z));sceneRow.put("nativeBounds",List.of(s.minX,s.maxX,s.minZ,s.maxZ));sceneRow.put("junction",s.junction);sceneRow.put("changed",changed);sceneRow.put("certifiedCore4",core);sceneRow.put("extended",extended);sceneRow.put("fineSediment",fines);sceneRow.put("stageSensitivity",stageRows);sceneRow.put("edgePairs",edgePairs);sceneRow.put("maxAdjacentCutDifference",maxCutDifference);sceneRow.put("maxAddedFaceRise",maxAddedRise);rows.add(sceneRow);
             }
             String stateHash=HexFormat.of().formatHex(nativeHash.digest()),profileHash=HexFormat.of().formatHex(profiles.digest());
             if(reopen){var prior=JsonParser.parseString(Files.readString(dir.resolve("result.txt.json"))).getAsJsonObject();require(prior.get("naturalNativeSHA256").getAsString().equals(stateHash)&&prior.get("profileSHA256").getAsString().equals(profileHash),"Natural states and profiles survive reopen");for(var entry:JsonParser.parseString(Files.readString(dir.resolve("edits.json"))).getAsJsonArray()){var e=entry.getAsJsonObject();require(level.getBlockState(BlockPos.of(e.get("position").getAsLong())).toString().equals(e.get("state").getAsString()),"Saved native clear/player edit lost");}if(!clear.isEmpty())require(Files.readString(dir.resolve("clear-footprint.txt")).equals(new TreeMap<>(clear).toString()),"Exact saved clearing footprint");}

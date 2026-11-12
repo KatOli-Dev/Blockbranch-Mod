@@ -22,9 +22,38 @@ final class AlluvialFloodplain {
     // Exact block keys and immutable plans; cache hits never approximate slopes
     // or move a boundary. Positive/negative entries share the same fixed budget.
     private final LinkedHashMap<Long,Plan> plans=new LinkedHashMap<>(512,.75f,true);
+    private static final int TILE=32,HALO=2*MAX_CUT,SPAN=TILE+2*HALO;
+    private final LinkedHashMap<Long,byte[]> cutTiles=new LinkedHashMap<>(32,.75f,true);
     private final LinkedHashMap<Long,Boolean> connected=new LinkedHashMap<>(512,.75f,true);
     AlluvialFloodplain(DrainageNetwork reference){this.reference=reference;}
     private Plan geometryPlan(int x,int z){
+        var raw=rawPlan(x,z);if(!raw.changed())return raw;
+        int tx=Math.floorDiv(x,TILE),tz=Math.floorDiv(z,TILE);long key=(tx&0xffffffffL)|((long)tz<<32);byte[] tile;
+        // One immutable tile fill at a time avoids duplicate radial traces by
+        // neighboring generation workers. It reads only the original reference
+        // and raw plans, never connectivity or another filtered tile.
+        synchronized(cutTiles){tile=cutTiles.get(key);if(tile==null){tile=cutTile(tx,tz);cutTiles.put(key,tile);if(cutTiles.size()>128)cutTiles.remove(cutTiles.keySet().iterator().next());}}
+        int cut=tile[Math.floorMod(z,TILE)*TILE+Math.floorMod(x,TILE)];
+        return cut==0?Plan.NONE:new Plan(raw.height()+raw.cut()-cut,raw.water(),cut,false);
+    }
+    private byte[] cutTile(int tx,int tz){
+        int[] units=new int[SPAN*SPAN];int ox=tx*TILE-HALO,oz=tz*TILE-HALO;
+        for(int z=0;z<SPAN;z++)for(int x=0;x<SPAN;x++)units[z*SPAN+x]=2*rawPlan(ox+x,oz+z).cut();
+        limitCutGradient(units,SPAN,SPAN);
+        byte[] result=new byte[TILE*TILE];for(int z=0;z<TILE;z++)for(int x=0;x<TILE;x++)result[z*TILE+x]=(byte)(units[(z+HALO)*SPAN+x+HALO]/2);
+        return result;
+    }
+    /** Exact min-plus Manhattan envelope: min_q(2*rawCut(q)+|p-q|).
+     * Thus cuts never expand, and adjacent integer cuts differ by at most1m.
+     * A16m halo is sufficient because cuts are bounded at8m: farther zeros
+     * cannot lower the result. This prevents eligibility/fit boundaries from
+     * adding a many-block scarp to a stepped original slope. Half-block units
+     * are a construction convention, not an ecological slope calibration. */
+    static void limitCutGradient(int[] units,int width,int height){
+        for(int z=0;z<height;z++)for(int x=0;x<width;x++){int i=z*width+x;if(x>0)units[i]=Math.min(units[i],units[i-1]+1);if(z>0)units[i]=Math.min(units[i],units[i-width]+1);}
+        for(int z=height-1;z>=0;z--)for(int x=width-1;x>=0;x--){int i=z*width+x;if(x+1<width)units[i]=Math.min(units[i],units[i+1]+1);if(z+1<height)units[i]=Math.min(units[i],units[i+width]+1);}
+    }
+    private Plan rawPlan(int x,int z){
         long key=(x&0xffffffffL)|((long)z<<32);
         synchronized(plans){var found=plans.get(key);if(found!=null)return found;}
         var value=compute(x,z);
