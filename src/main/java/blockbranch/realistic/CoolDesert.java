@@ -39,25 +39,45 @@ public final class CoolDesert {
         return climateSuitable(z,c.sample(x,z,d::sample))&&physicalSupport(x,z,d);
     }
     static boolean physicalSupport(int x,int z,DrainageNetwork d){
+        return physicalSupport(x,z,d,false);
+    }
+    static boolean physicalSupport(int x,int z,DrainageNetwork d,boolean prefilterMarine){
         if(LandVegetation.surfaceReserved(d,x,z))return false;
         var s=d.sample(x,z);if(s.waterLevel()!=DrainageNetwork.DRY)return false;
         double dx=(d.sample(x+32,z).height()-d.sample(x-32,z).height())/64.,dz=(d.sample(x,z+32).height()-d.sample(x,z-32).height())/64.;
         if(Math.hypot(dx,dz)>.30)return false;
         // Support is a geometric proxy, not a soil-type/fertility inference.
         if(!SlopeStability.supportsSoil(x,z,s.height(),dx,dz,(wx,wz)->{var p=d.sample(wx,wz);return new SlopeStability.Site(p.height(),p.waterLevel()==DrainageNetwork.DRY&&!LandVegetation.surfaceReserved(d,wx,wz));}))return false;
-        for(int[] p:new int[][]{{2048,0},{-2048,0},{0,2048},{0,-2048}}){var near=d.sample(x+p[0],z+p[1]);if(d.habitatOceanWater(x+p[0],z+p[1],near))return false;}
+        for(int[] p:new int[][]{{2048,0},{-2048,0},{0,2048},{0,-2048}}){
+            int wx=x+p[0],wz=z+p[1];
+            if(prefilterMarine){
+                // Relief and ice never create sea water: gravel/alpine ice
+                // change dry ground, basin relief retains marine water, and
+                // grounded sheets only remove inland water. A dry/closed
+                // original sample therefore cannot become open sea. Avoid
+                // constructing distant gravel-relief tiles just to prove it.
+                // Possible sea witnesses still use the complete physical
+                // sample and corrected owner, so this is only a negative bound.
+                var original=d.gravelReference().sample(wx,wz);
+                if(original.waterLevel()!=TerrainShape.SEA_LEVEL||original.closed())continue;
+            }
+            var near=d.sample(wx,wz);if(d.habitatOceanWater(wx,wz,near))return false;
+        }
         return true;
     }
     /** Final-fallback quart ownership is intersected with physical support.
      * Immutable seed fields and bounded caches survive concurrent column reads. */
     static BiPredicate<Integer,Integer> domain(DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart){
+        return selectedDomain(selectedQuart,(x,z)->eligible(x,z,d,c));
+    }
+    static BiPredicate<Integer,Integer> selectedDomain(BiPredicate<Integer,Integer> selectedQuart,BiPredicate<Integer,Integer> physical){
         var blocks=new LinkedHashMap<Long,Boolean>(256,.75f,true);var quarts=new LinkedHashMap<Long,Boolean>(256,.75f,true);
         return (x,z)->{
             long key=(x&0xffffffffL)|((long)z<<32);synchronized(blocks){var v=blocks.get(key);if(v!=null)return v;}
             int qx=x>>2,qz=z>>2;long qkey=(qx&0xffffffffL)|((long)qz<<32);Boolean selected;
             synchronized(quarts){selected=quarts.get(qkey);}
             if(selected==null){selected=selectedQuart.test(qx,qz);synchronized(quarts){quarts.put(qkey,selected);if(quarts.size()>2048)quarts.remove(quarts.keySet().iterator().next());}}
-            boolean value=selected&&eligible(x,z,d,c);
+            boolean value=selected&&physical.test(x,z);
             synchronized(blocks){blocks.put(key,value);if(blocks.size()>8192)blocks.remove(blocks.keySet().iterator().next());}return value;
         };
     }

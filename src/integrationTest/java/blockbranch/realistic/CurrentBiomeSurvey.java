@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 267, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 268, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -80,7 +80,7 @@ public final class CurrentBiomeSurvey {
         var aggregateFallbacks = emptyFootprints();
         var fallbackBins = new TreeMap<String, TreeMap<String, Integer>>();
         try (var csv = Files.newBufferedWriter(directory.resolve("samples.csv"), StandardCharsets.UTF_8)) {
-            csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel,continental_ice_depth,permanent_freshwater_lid\n");
+            csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel,continental_ice_depth,permanent_freshwater_lid,atmospheric_supply,annual_model_rain_mm,coldest_model_month_c\n");
             for (long seed : SEEDS) {
                 var drainage = seed == random.seed() ? generator.drainage(random) : new DrainageNetwork(
                     new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1, preset.has("deep_basin_relief_definition") && preset.get("deep_basin_relief_definition").getAsInt() == 1, preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt() == 1, preset.has("continental_ice_definition") && preset.get("continental_ice_definition").getAsInt()==1);
@@ -121,8 +121,9 @@ public final class CurrentBiomeSurvey {
                             bins.merge("moisture:" + (moisture < .12 ? "below_.12" : moisture < .27 ? ".12_to_.27" :
                                 moisture < .55 ? ".27_to_.55" : moisture <= .85 ? ".55_to_.85" : "above_.85"), 1, Integer::sum);
                         }
-                        csv.write(String.format(Locale.ROOT, "%d,%d,%d,%s,%s,%s,%d,%d,%.6f,%.6f,%s,%s,%s,%d,%s%n",
-                            seed, x, z, footprint, id(selected), fallback, site.height(), site.waterLevel(), c.meanTemperatureC(), c.moisture(), ocean, lake, channel, drainage.continentalIceThickness(x,z), drainage.permanentFreshwaterLid(x,z)));
+                        double supply=climate.atmosphericSupply(x,z,drainage::sample);
+                        csv.write(String.format(Locale.ROOT, "%d,%d,%d,%s,%s,%s,%d,%d,%.6f,%.6f,%s,%s,%s,%d,%s,%.9f,%.6f,%.6f%n",
+                            seed, x, z, footprint, id(selected), fallback, site.height(), site.waterLevel(), c.meanTemperatureC(), c.moisture(), ocean, lake, channel, drainage.continentalIceThickness(x,z), drainage.permanentFreshwaterLid(x,z),supply,DrySeasonPolicy.annualModelRain(supply),CoolDesert.season(z,c.meanTemperatureC()).coldestC()));
                         witnesses.putIfAbsent(footprint, new Point(x, z));
                         if (fallback) witnesses.putIfAbsent("fallback", new Point(x, z));
                         else if (id(selected).equals("minecraft:plains")) witnesses.putIfAbsent("intentional_plains", new Point(x, z));
@@ -182,6 +183,7 @@ public final class CurrentBiomeSurvey {
             .withSurfaceOwnership(preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1)
             .withDryForests(preset.has("dry_forest_definition") && preset.get("dry_forest_definition").getAsInt() == 1)
             .withCoolDeserts(preset.has("cool_desert_definition") && preset.get("cool_desert_definition").getAsInt() == 1);
+        source.withWarmXeric(preset.has("warm_xeric_definition") && preset.get("warm_xeric_definition").getAsInt()==1);
         source.withSummerDryWoodlands(preset.has("summer_dry_definition") && preset.get("summer_dry_definition").getAsInt()==1);
         source.withLandIce(preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt()==1).bind(seed, d, c);
         return source;

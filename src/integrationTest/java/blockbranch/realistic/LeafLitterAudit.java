@@ -88,8 +88,9 @@ public final class LeafLitterAudit {
     });}
     /** Saved-schema identity through the real codec for the independent litter and ice opt-ins: exactly (264, neither), (265, ice),
      * (266, litter) and (267, both) are readable and round-trip; every other pairing, including a number under the wrong definitions, is rejected. */
-    private static int gateMatrix(net.minecraft.resources.RegistryOps<JsonElement> ops,RealisticGenerator live){
+    static int gateMatrix(net.minecraft.resources.RegistryOps<JsonElement> ops,RealisticGenerator live){
         var base=RealisticGenerator.CODEC.codec().encodeStart(ops,live).getOrThrow().getAsJsonObject();
+        WarmXericFixtures.published267(base);
         int cases=0;
         // {schema, litter definition (-1 removes the field), ice definition}
         for(int[] c:new int[][]{{264,-1,0},{265,-1,1},{266,1,0},{267,1,1}}){var json=variant(base,c[0],c[1],c[2]);var parsed=RealisticGenerator.CODEC.codec().parse(ops,json);

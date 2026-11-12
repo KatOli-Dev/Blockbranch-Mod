@@ -10,9 +10,11 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.levelgen.structure.*;
-/** Native static cool-desert stony floor and sparse low shrub views; no staged terrain or seasonal weather. */
+/** Native stony-floor and low-shrub views for cool desert or warm xeric QA; no staged terrain or seasonal weather. */
 public final class CoolDesertVisualReview {
-    private static final Path DIR=Path.of(System.getProperty("blockbranch.coolDesertVisualDirectory"));
+    private static final boolean XERIC=Boolean.getBoolean("blockbranch.warmXericVisual");
+    private static final String WORLD=XERIC?"WarmXericVisualReview":"CoolDesertVisualReview";
+    private static final Path DIR=Path.of(System.getProperty(XERIC?"blockbranch.warmXericVisualDirectory":"blockbranch.coolDesertVisualDirectory"));
     private static final boolean REOPEN=Boolean.getBoolean("blockbranch.coolDesertVisualReopen");
     private static final long BEGAN=System.nanoTime();
     private static boolean opened,configured,saving;
@@ -22,11 +24,11 @@ public final class CoolDesertVisualReview {
     private static volatile Throwable failure;
     private static BlockPos edge;
     private static int positionedView=-1;
-    private static final int[][] SCENES={{400000,-1200000},{656000,1264000},{400000,-1200000}};
+    private static final int[][] SCENES=XERIC?new int[][]{{432000,-784000},{1328000,-496000},{399776,-784512},{432000,-784000}}:new int[][]{{400000,-1200000},{656000,1264000},{400000,-1200000}};
     private static int settled;
     private static BlockPos camera;
     private static final List<Object> records=new ArrayList<>();
-    private static final int VIEWS=3;
+    private static final int VIEWS=SCENES.length;
     private static volatile float expectedYaw,expectedPitch;
     private static BoundingBox subject;
 
@@ -41,7 +43,7 @@ public final class CoolDesertVisualReview {
                 level.getGameRules().set(net.minecraft.world.level.gamerules.GameRules.ADVANCE_TIME,false,server);
                 var player=server.getPlayerList().getPlayers().getFirst();
                 var g=(RealisticGenerator)level.getChunkSource().getGenerator();
-                if(view==VIEWS) {Files.writeString(DIR.resolve("result.txt"),"PASS three settled native cool-desert mineral ground/low shrub views");finished=true;return;}
+                if(view==VIEWS) {Files.writeString(DIR.resolve("result.txt"),"PASS settled native mineral ground/low shrub views: "+VIEWS);finished=true;return;}
                 var commands=server.getCommands();var source=server.createCommandSourceStack();
                 commands.performPrefixedCommand(source,"time set noon");commands.performPrefixedCommand(source,"weather clear");
                 var d=g.drainage(level.getChunkSource().randomState());
@@ -54,7 +56,7 @@ public final class CoolDesertVisualReview {
                 int ex=edge.getX(),ey=edge.getY(),ez=edge.getZ();
                 int cameraX=ex-24,cameraZ=ez-30;
                 int cameraY=Math.max(ey+38,d.sample(cameraX,cameraZ).height()+38);
-                if(view==2){
+                if(view==(XERIC?3:2)){
                     outer:for(int dz=-16;dz<=16;dz++)for(int dx=-16;dx<=16;dx++){
                         int wx=ex+dx,wz=ez+dz,h=d.sample(wx,wz).height();var canopy=g.canopy(wx,wz,level.getChunkSource().randomState());
                         if(canopy.state(wx,h+1,wz)==null&&canopy.state(wx,h+2,wz)==null){cameraX=wx;cameraZ=wz;cameraY=h+1;break outer;}
@@ -62,13 +64,13 @@ public final class CoolDesertVisualReview {
                 }
                 camera=new BlockPos(cameraX,cameraY,cameraZ);
                 var aim=new BlockPos(ex,ey,ez);
-                if(view==3)commands.performPrefixedCommand(source,"effect give "+player.getName().getString()+" minecraft:night_vision infinite 0 true");
+                if(view==3&&!XERIC)commands.performPrefixedCommand(source,"effect give "+player.getName().getString()+" minecraft:night_vision infinite 0 true");
                 subject=new BoundingBox(ex-40,ey-16,ez-40,ex+40,Math.max(ey+40,64),ez+40);
                 double cx=camera.getX()+.5,cy=camera.getY()+.2,cz=camera.getZ()+.5,dx=aim.getX()+.5-cx,dz=aim.getZ()+.5-cz,dy=aim.getY()+.5-(cy+player.getEyeHeight());
                 double yaw=Math.toDegrees(Math.atan2(-dx,dz)),pitch=Math.toDegrees(Math.atan2(-dy,Math.hypot(dx,dz)));
                 expectedYaw=(float)yaw;expectedPitch=(float)pitch;
                 commands.performPrefixedCommand(source,"tp "+player.getName().getString()+" "+cx+" "+cy+" "+cz+" "+yaw+" "+pitch);
-                records.add(Map.of("view",view,"camera",List.of(cx,cy,cz),"yaw",yaw,"pitch",pitch,"nightVision",view==3,"target",List.of(ex,ey,ez),"gate",g.coolDesertDefinition()));
+                records.add(Map.of("view",view,"camera",List.of(cx,cy,cz),"yaw",yaw,"pitch",pitch,"nightVision",view==3&&!XERIC,"target",List.of(ex,ey,ez),"gate",XERIC?g.warmXericDefinition():g.coolDesertDefinition()));
                 posed=true;
             }
             catch(Throwable t) {
@@ -91,13 +93,13 @@ public final class CoolDesertVisualReview {
                 var screen=client.gui.screen();
                 if(!opened&&screen instanceof TitleScreen) {
                     opened=true;
-                    if(REOPEN)client.createWorldOpenFlows().openWorld("CoolDesertVisualReview",()->client.gui.setScreen(new TitleScreen()));
+                    if(REOPEN)client.createWorldOpenFlows().openWorld(WORLD,()->client.gui.setScreen(new TitleScreen()));
                     else CreateWorldScreen.openFresh(client,()->client.gui.setScreen(new TitleScreen()));
                     return;
                 }
                 if(!configured&&screen instanceof CreateWorldScreen create) {
                     var state=create.getUiState();
-                    state.setName("CoolDesertVisualReview");
+                    state.setName(WORLD);
                     state.setSeed("424242");
                     state.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE);
                     state.setAllowCommands(true);
@@ -156,7 +158,7 @@ public final class CoolDesertVisualReview {
                 }
                 if(++settled<80)return;
                 saving=true;
-                String file=(REOPEN?"reopen-":"")+"cool-desert-"+view+".png";
+                String file=(REOPEN?"reopen-":"")+(XERIC?"warm-xeric-":"cool-desert-")+view+".png";
                 net.minecraft.client.Screenshot.grab(client.gameDirectory,file,client.gameRenderer.mainRenderTarget(),1,message->client.execute(()-> {
                     if(!Files.exists(DIR.resolve("screenshots/"+file)))failure=new AssertionError("Native capture missing");
                     view++;
