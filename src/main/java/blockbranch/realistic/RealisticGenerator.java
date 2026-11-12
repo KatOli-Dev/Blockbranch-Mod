@@ -969,7 +969,15 @@ public final class RealisticGenerator extends ChunkGenerator {
             int frozen=FrozenSeabed.frozenCover(random.seed(),x,z,drainage,terrain(random).climate(),icebergsEnabled());
             return FrozenSeabed.replacement(MarineShelf.cover(random.seed(),x,z,true,MarineShelf.site(drainage,x,z),terrain(random).climate().sample(x,z,drainage::sample)),frozen);
         }
-        if(RiverChannel.surfaceContains(x,z,drainage)||RoutedRiver.surfaceBankContains(random.seed(),x,z,drainage,terrain(random).climate()))return RoutedRiver.cover(random.seed(),x,z,drainage,terrain(random).climate());
+        if(RiverChannel.surfaceContains(x,z,drainage)||RoutedRiver.surfaceBankContains(random.seed(),x,z,drainage,terrain(random).climate())){
+            int cover=RoutedRiver.cover(random.seed(),x,z,drainage,terrain(random).climate());
+            // Woodland (including windswept soil) already wins the scalar
+            // material path at every depth covered by dry-bank roles13/14.
+            // Drop only this fully shadowed metadata: keeping both rejects the
+            // profile, while changing the winning floor would alter old worlds.
+            // Aquatic roles and every previously valid profile stay untouched.
+            return cover>=13&&woodlandCover(x,z,random)>0?0:cover;
+        }
         if(LakeSediment.surfaceContains(x,z,drainage))return LakeSediment.cover(random.seed(),x,z,true,LakeSediment.site(drainage,x,z),terrain(random).climate().sample(x,z,drainage::sample));
         if(AlpineScree.surfaceContains(x,z,drainage::sample) || InlandLakeReedbed.surfaceContains(x,z,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz))) return 0;
         return GravelRiverMargin.cover(random.seed(),x,z,GravelRiverMargin.surfaceContains(x,z,(wx,wz)->GravelRiverMargin.site(drainage,wx,wz)),GravelRiverMargin.site(drainage,x,z));
