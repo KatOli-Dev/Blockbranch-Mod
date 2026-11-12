@@ -23,7 +23,7 @@ public final class LeafLitterReopen {
             var level=server.overworld();var g=(RealisticGenerator)level.getChunkSource().getGenerator();var d=g.drainage(level.getChunkSource().randomState());
             var json=RealisticGenerator.CODEC.codec().encodeStart(net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess()),g).getOrThrow().getAsJsonObject();
             int ice=json.has("continental_ice_definition")?json.get("continental_ice_definition").getAsInt():0;
-            if(!json.has("leaf_litter_definition")||json.get("leaf_litter_definition").getAsInt()!=1||json.get("shape_version").getAsInt()!=(ice==1?267:266))throw new AssertionError("Litter-gated world expected (267 with ice, 266 litter only; prepare requires the bundled 267): "+json.get("shape_version")+" "+json.get("leaf_litter_definition"));
+            if(!json.has("leaf_litter_definition")||json.get("leaf_litter_definition").getAsInt()!=1||json.get("shape_version").getAsInt()!=(g.warmXericDefinition()==1?268:ice==1?267:266))throw new AssertionError("Litter-gated world expected (267 with ice, 266 litter only; 268 adds xeric shrubs): "+json.get("shape_version")+" "+json.get("leaf_litter_definition"));
             if(mode.equals("prepare")&&ice!=1)throw new AssertionError("Prepare writes the bundled combined world");
             int cx=SITE_X>>4,cz=SITE_Z>>4,x0=(cx-HALF_CHUNKS)*16,z0=(cz-HALF_CHUNKS)*16,size=HALF_CHUNKS*32;
             for(int dz=-HALF_CHUNKS;dz<HALF_CHUNKS;dz++)for(int dx=-HALF_CHUNKS;dx<HALF_CHUNKS;dx++)level.getChunk(cx+dx,cz+dz);

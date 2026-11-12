@@ -113,7 +113,7 @@ public final class LeafLitterCheck {
     private static void preset() throws Exception {
         try(var in=LeafLitterCheck.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")){
             var text=new String(Objects.requireNonNull(in).readAllBytes(),StandardCharsets.UTF_8);
-            require(text.contains("\"shape_version\": 267")&&text.contains("\"leaf_litter_definition\": 1")&&text.contains("\"continental_ice_definition\": 1"),"New-world preset opts in explicitly to both wrapped definitions (schema 267)");
+            require(text.contains("\"shape_version\": 268")&&text.contains("\"warm_xeric_definition\": 1")&&text.contains("\"leaf_litter_definition\": 1")&&text.contains("\"continental_ice_definition\": 1"),"New-world preset opts in explicitly to all wrapped definitions (schema 268)");
         }
     }
 

@@ -21,7 +21,9 @@ public final class ScreeBiomeSource extends BiomeSource {
     private final Holder<Biome> fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean;
     private final int dripstoneDefinition,caveBiomeDefinition;
     private volatile Bound bound;
-    private boolean deepDarkEnabled,landIceEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled,summerDryEnabled;
+    private boolean deepDarkEnabled,landIceEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled,summerDryEnabled,warmXericEnabled;
+    ScreeBiomeSource withWarmXeric(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");warmXericEnabled=enabled;return this;}
+    java.util.function.BiPredicate<Integer,Integer> warmXericSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.warmXeric;}
     ScreeBiomeSource withSummerDryWoodlands(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");summerDryEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> summerDrySurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.summerDry;}
     ScreeBiomeSource withLandIce(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");landIceEnabled=enabled;return this;}
@@ -33,7 +35,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     java.util.function.BiPredicate<Integer,Integer> coldRocklandSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.rockland;}
     ScreeBiomeSource withRedwoodForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");redwoodForestsEnabled=enabled;return this;}
     ScreeBiomeSource withDeepDark(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");deepDarkEnabled=enabled;return this;}
-    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> coolDesert,java.util.function.BiPredicate<Integer,Integer> summerDry){}
+    private record Bound(BiomeResolver surface,BiomeResolver full,DrainageNetwork drainage,long seed,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> coolDesert,java.util.function.BiPredicate<Integer,Integer> summerDry,java.util.function.BiPredicate<Integer,Integer> warmXeric){}
 
     public ScreeBiomeSource(HabitatPalette palette){this(palette,false);}
     public ScreeBiomeSource(HabitatPalette palette,boolean icebergsEnabled) {this(palette,icebergsEnabled,false);}
@@ -68,7 +70,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     void bind(long seed,DrainageNetwork drainage,ClimateField climate,java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.LitCaveLayer> growth) {
         if(caveBiomeDefinition>0&&growth==null)throw new IllegalArgumentException("Cave biomes require a fixed-seed moss planner");
         var ecology=new GroundEcology.Field(drainage::sample,climate);
-        BiomeResolver rawSurface = (x, y, z) -> drainage.continentalIceThickness(x*4,z*4)>0 ? palette.additional(ContinentalIceField.KEY) : drainage.permanentFreshwaterLid(x*4,z*4) ? palette.additional("frozen_river") : landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
+        BiomeResolver legacySurface = (x, y, z) -> drainage.continentalIceThickness(x*4,z*4)>0 ? palette.additional(ContinentalIceField.KEY) : drainage.permanentFreshwaterLid(x*4,z*4) ? palette.additional("frozen_river") : landIceEnabled&&drainage.landIceThickness(x*4,z*4)>0 ? palette.additional(LandIceField.KEY) : StonyShore.contains(x*4,z*4,drainage) ? palette.additional("stony_shore") : InlandLakeReedbed.contains(x*4,z*4,(wx,wz)->InlandLakeReedbed.site(drainage,wx,wz)) ? reedbed
             : LakeSediment.contains(x*4,z*4,drainage) ? lake
             : SnowySlopes.contains(x*4,z*4,drainage,climate) ? palette.additional("snowy_slopes")
             : MountainPeaks.kind(seed,x*4,z*4,drainage,climate)>0 ? palette.additional(MountainPeaks.key(MountainPeaks.kind(seed,x*4,z*4,drainage,climate)))
@@ -122,7 +124,20 @@ public final class ScreeBiomeSource extends BiomeSource {
             : palette.additional().containsKey("savanna") && Savanna.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("savanna")
             : palette.additional().containsKey("jungle")&&Jungle.contains(seed,x*4,z*4,drainage,climate)?palette.additional("jungle")
             : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):surfaceOwnershipEnabled&&ColdRockland.contains(x*4,z*4,drainage,climate)?palette.additional(ColdRockland.KEY):coolDesertEnabled&&CoolDesert.eligible(x*4,z*4,drainage,climate)?palette.additional(CoolDesert.KEY):fallback;
-        BiomeResolver surface=(x,y,z)->MapPreviewSamples.surface(x,y,z,rawSurface);
+        // Restrict this split to existing open dryland owners. Wet/coastal,
+        // forest, savanna, badland and cold specialists keep their precedence.
+        BiomeResolver rawSurface=warmXericEnabled?(x,y,z)->{
+            var prior=legacySurface.getNoiseBiome(x,y,z);
+            return (prior==steppe||prior==desert||prior==palette.additional("desert"))
+                &&WarmXericShrubland.eligible(x*4,z*4,drainage,climate)?palette.additional(WarmXericShrubland.KEY):prior;
+        }:legacySurface;
+        // The new owner adds another full selector consumer in profile/column
+        // paths. Share exact quart answers across those consumers, only for
+        // this saved definition. Results depend on this bind's immutable seed,
+        // drainage and climate, never Y or mutable world/chunk state. A rebind
+        // gets a fresh bounded cache; retained resolvers keep their old graph.
+        BiomeResolver resolved=warmXericEnabled?cachedSurface(rawSurface):rawSurface;
+        BiomeResolver surface=(x,y,z)->MapPreviewSamples.surface(x,y,z,resolved);
         BiomeResolver full=dripstoneDefinition==0?surface:(x,y,z)->{double province=DripstoneHabitat.province(seed,x*4,z*4);return province>.2&&DripstoneHabitat.contains(seed,x*4,y*4,z*4,drainage.bedHeight(x*4,z*4),province)?palette.additional("dripstone_caves"):surface.getNoiseBiome(x,y,z);};
         java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves=null;
         if(caveBiomeDefinition>0){
@@ -147,9 +162,21 @@ public final class ScreeBiomeSource extends BiomeSource {
         java.util.function.BiPredicate<Integer,Integer> dryForest=dryForestEnabled?DryForest.domain(seed,drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(DryForest.KEY)):null;
         java.util.function.BiPredicate<Integer,Integer> coolDesert=coolDesertEnabled?CoolDesert.domain(drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(CoolDesert.KEY)):null;
         var summerDry=summerDryEnabled?SummerDryWoodland.domain(seed,drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(SummerDryWoodland.KEY)):null;
-        bound=new Bound(surface,full,drainage,seed,caves,rockland,dryForest,coolDesert,summerDry);
+        var warmXeric=warmXericEnabled?WarmXericShrubland.domain(drainage,climate,(x,z)->surface.getNoiseBiome(x,0,z)==palette.additional(WarmXericShrubland.KEY)):null;
+        bound=new Bound(surface,full,drainage,seed,caves,rockland,dryForest,coolDesert,summerDry,warmXeric);
+
     }
     public boolean bound(){return bound!=null;}
+    private static BiomeResolver cachedSurface(BiomeResolver source){
+        var samples=new java.util.LinkedHashMap<Long,Holder<Biome>>(256,.75f,true);
+        return (x,y,z)->{
+            long key=(x&0xffffffffL)|((long)z<<32);
+            synchronized(samples){var cached=samples.get(key);if(cached!=null)return cached;}
+            var result=source.getNoiseBiome(x,0,z);
+            synchronized(samples){samples.put(key,result);if(samples.size()>2048)samples.remove(samples.keySet().iterator().next());}
+            return result;
+        };
+    }
     public BiomeResolver surfaceResolver(){var b=bound;if(b==null)throw new IllegalStateException("Unbound surface source");return b.surface;}
     @Override protected MapCodec<? extends BiomeSource> codec() { return CODEC; }
     @Override protected Stream<Holder<Biome>> collectPossibleBiomes() { return Stream.concat(palette.additional().values().stream(),Stream.of(fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean)); }

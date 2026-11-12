@@ -33,3 +33,50 @@ tasks.register('verifyWarmXericReader'){
  }
 }
 tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyWarmXericReader'}
+
+tasks.register('checkWarmXeric',JavaExec){
+ dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.WarmXericCheck';maxHeapSize='2G'
+}
+tasks.named('check'){dependsOn 'checkWarmXeric'}
+
+def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('warmXericDirectory').getOrElse('build/xeric-evidence/native'))
+def nativeReopen=providers.gradleProperty('warmXericReopen').isPresent()
+loom.runs.register('warmXericQualification'){
+ server();runDir(nativeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.warmXericQualification=true');vmArg('-Dblockbranch.warmXericReopen='+nativeReopen)
+ vmArg('-Dblockbranch.warmXericResult='+nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('prepareWarmXericQualification'){doLast{
+ if(nativeReopen)assert nativeDir.file('survey/level.dat').asFile.exists():'Requires closed candidate world.'
+ else assert !nativeDir.file('server.properties').asFile.exists():'Preserve evidence; use a fresh directory.'
+ nativeDir.asFile.mkdirs();nativeDir.file('eula.txt').asFile.text='eula=true\n'
+ nativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25626\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runWarmXericQualification'){dependsOn 'prepareWarmXericQualification';doLast{assert nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('warmXericVisualDirectory').getOrElse('build/xeric-evidence/visual'))
+loom.runs.register('warmXericVisual'){
+ client();runDir(visual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.warmXericVisual=true');vmArg('-Dblockbranch.warmXericVisualDirectory='+visual.asFile.absolutePath)
+ programArgs('--username','XericView','--width','1024','--height','576')
+}
+tasks.register('prepareWarmXericVisual'){doLast{
+ assert !visual.file('options.txt').asFile.exists():'Preserve captures; choose a fresh directory.'
+ visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runWarmXericVisual'){dependsOn 'prepareWarmXericVisual';doLast{assert visual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def cost=layout.projectDirectory.dir(providers.gradleProperty('warmXericCostDirectory').getOrElse('build/xeric-evidence/cost-new'))
+def costBaseline=providers.gradleProperty('warmXericCostBaseline').isPresent()
+loom.runs.register('warmXericCost'){
+ server();runDir(cost.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ if(providers.gradleProperty('warmXericCostJfr').isPresent())vmArg('-XX:StartFlightRecording=filename='+cost.file('generation.jfr').asFile.absolutePath+',settings=profile,dumponexit=true')
+ vmArg('-Dblockbranch.warmXericCost=true');vmArg('-Dblockbranch.warmXericCostDirectory='+cost.asFile.absolutePath)
+}
+tasks.register('prepareWarmXericCost'){doLast{
+ assert !cost.file('server.properties').asFile.exists():'Preserve measurements; choose a fresh directory.'
+ cost.asFile.mkdirs();cost.file('eula.txt').asFile.text='eula=true\n'
+ cost.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25626\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(costBaseline?'blockbranch:warm_xeric_baseline':'blockbranch:realistic')+'\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runWarmXericCost'){dependsOn 'prepareWarmXericCost';doLast{assert cost.file('result.txt').asFile.text.startsWith('PASS')}}
