@@ -16,7 +16,7 @@ abstract class AdmissionWorkMixin {
     @WrapMethod(method="profile")
     private TerrainProfile profile(ChunkAccess chunk, RandomState random, Operation<TerrainProfile> original) {
         var s=AdmissionWorkTrace.beginProfile(chunk,random.seed()); boolean ok=false;
-        try {blockbranch.realistic.AdmissionPreparationChecks.injectFailure(chunk);var value=original.call(chunk,random);ok=true;return value;} finally {AdmissionWorkTrace.end(s,ok);}
+        try {blockbranch.realistic.AdmissionPreparationChecks.injectFailure(chunk);var value=original.call(chunk,random);ok=true;return value;} catch(RuntimeException failure){if(Boolean.getBoolean("blockbranch.published269Snapshot")){try{blockbranch.realistic.Published269CoverAudit.logFailure((RealisticGenerator)(Object)this,chunk,random,failure);}catch(Exception diagnostic){failure.addSuppressed(diagnostic);}}throw failure;} finally {AdmissionWorkTrace.end(s,ok);}
     }
     @WrapMethod(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Z)Lblockbranch/cubic/CanopyLayer;")
     private static CanopyLayer canopy(@Coerce Object state,int x,int z,boolean icebergs,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry,boolean abyssalTraces,Operation<CanopyLayer> original) {

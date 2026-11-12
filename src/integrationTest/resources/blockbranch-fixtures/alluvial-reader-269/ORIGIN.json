@@ -1,0 +1,46 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "a7bea44a4a10baea5ab57559444807789f64b4cc",
+  "productionTrees": {
+    "src/main": "7a54ec18b6f96167ced5815d03a423396569a768",
+    "src/client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+  },
+  "collectors": [
+    {
+      "path": "src/integrationTest/java/blockbranch/realistic/Published269Snapshot.java",
+      "sha256": "c2a7afd2ddc3bc21a40931bafa6901e312bcda0e222a26ab79f13a927c4af6f0"
+    },
+    {
+      "path": "src/integrationTest/java/blockbranch/realistic/Published269CoverAudit.java",
+      "sha256": "4ee1b6ba4f12d37ad993b0dd080334a68634ec1b2b3baef4493581fd3cf41331"
+    },
+    {
+      "path": "src/integrationTest/java/blockbranch/mixin/qa/AdmissionWorkMixin.java",
+      "sha256": "6d707d061ce9179273739fc36ce4b7d7f5b67facb59a0b3869b4f8806f4446fa"
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "baseline-1.json",
+      "sha256": "a83553ac9afed3ad88c1e68d138da2e71575a97ba1c5f7f70dc6f2ec9ff5abd9"
+    },
+    {
+      "path": "baseline-424242.json",
+      "sha256": "c3480d795f6bc5278c8585890e9df2e9641cb226e50464f717e28535a885dd17"
+    },
+    {
+      "path": "cover-1.json",
+      "sha256": "83d1bde701f934b4ec4a49075e716c2a235b720d0b4631cdbcf30e8787e049c3"
+    },
+    {
+      "path": "cover-424242.json",
+      "sha256": "90d53769a9f1556f4b369ba80d1f31383254a9f0567be801d0c6e77f729e6f55"
+    }
+  ],
+  "scope": "Both original JVMs ran complete published269 production before any main/client changes. Original scalar/profile rejection and successful native subset are distinct: seed1 native points4/5 and seed424242 point1 are excluded due to recorded invalid-profile dependencies; point0 retains a real gold edit. Dense scalar states include original rejected columns. Valid direct profiles, three selector/climate grids and successful native/profile hashes are frozen. Native originals use one nonblocking full future/tick with stable QA tickets, random ticks/mob spawning disabled. Failed direct/native attempts remain ignored evidence, never passing fixtures.",
+  "preset": {
+    "path": "src/integrationTest/resources/data/blockbranch/worldgen/world_preset/alluvial_baseline.json",
+    "sha256": "2c51944f5cfd6601e50f7ce4c9c3c616e4303c568bd80c291e92c9013c777b75",
+    "origin": "Byte-identical published a7bea44 realistic preset, QA-only gate-off control."
+  }
+}

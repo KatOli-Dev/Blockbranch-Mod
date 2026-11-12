@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 269, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 270, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -83,7 +83,7 @@ public final class CurrentBiomeSurvey {
             csv.write("seed,x,z,footprint,selected_biome,fallback,height,water,mean_temperature_c,moisture,connected_ocean,terminal_lake,routed_channel,continental_ice_depth,permanent_freshwater_lid,atmospheric_supply,annual_model_rain_mm,coldest_model_month_c\n");
             for (long seed : SEEDS) {
                 var drainage = seed == random.seed() ? generator.drainage(random) : new DrainageNetwork(
-                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1, preset.has("deep_basin_relief_definition") && preset.get("deep_basin_relief_definition").getAsInt() == 1, preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt() == 1, preset.has("continental_ice_definition") && preset.get("continental_ice_definition").getAsInt()==1);
+                    new TerrainShape(seed), seed, true, preset.get("sandy_coasts").getAsBoolean(), preset.get("gravel_relief_definition").getAsInt() == 1, preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1, preset.has("deep_basin_relief_definition") && preset.get("deep_basin_relief_definition").getAsInt() == 1, preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt() == 1, preset.has("continental_ice_definition") && preset.get("continental_ice_definition").getAsInt()==1, preset.has("alluvial_floodplain_definition") && preset.get("alluvial_floodplain_definition").getAsInt()==1);
                 var climate = new ClimateField(seed,preset.has("continental_ice_definition")&&preset.get("continental_ice_definition").getAsInt()==1);
                 var spawnBounds=new SpawnRegions.Bounds(-2097136,-2097136,2097136,2097136).reserve(10);
                 var spawn=SpawnRegions.select(seed,spawnBounds,drainage,climate);require(SpawnRegions.eligible(spawn.x(),spawn.z(),drainage,climate)&&spawnBounds.allows(spawn.x(),spawn.z()),"Current saved climate retains mild dry interior spawn policy");

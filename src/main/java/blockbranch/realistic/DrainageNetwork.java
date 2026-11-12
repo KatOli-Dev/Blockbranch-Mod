@@ -23,7 +23,9 @@ public final class DrainageNetwork {
     private final boolean gravelReliefEnabled;
     private final boolean surfaceOwnership;
     private final DeepBasinRelief deepBasinRelief;
-    private final boolean landIceEnabled,continentalIceEnabled;
+    private final boolean landIceEnabled,continentalIceEnabled,alluvialEnabled;
+    private volatile DrainageNetwork alluvialReference;
+    private volatile AlluvialFloodplain alluvial;
     private volatile ContinentalIceField continentalIce;
     private volatile LandIceField landIce;
     private volatile DrainageNetwork iceReference;
@@ -81,6 +83,10 @@ public final class DrainageNetwork {
         this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,landIceEnabled,false);
     }
     DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled,boolean continentalIceEnabled) {
+        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,landIceEnabled,continentalIceEnabled,false);
+    }
+    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled,boolean continentalIceEnabled,boolean alluvialEnabled) {
+        this.alluvialEnabled=alluvialEnabled;
         this.continentalIceEnabled=continentalIceEnabled;
         this.landIceEnabled=landIceEnabled;
         this.deepBasinRelief=deepBasinRelief?new DeepBasinRelief(shape):null;
@@ -226,8 +232,9 @@ public final class DrainageNetwork {
     /** Immutable preformation view shares the solved graph, never a modified sample cache. */
     private DrainageNetwork(DrainageNetwork owner) {this(owner,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {this(owner,erodedLandforms,false);}
-    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference) {
-        landIceEnabled=false;continentalIceEnabled=false;
+    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference) {this(owner,erodedLandforms,completeReference,false);}
+    private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference,boolean retainIce) {
+        alluvialEnabled=false;landIceEnabled=retainIce&&owner.landIceEnabled;continentalIceEnabled=retainIce&&owner.continentalIceEnabled;
         // Legacy reference views disable this final physical adjustment; apply once,
         // after the complete original surface, retaining its climate references.
         deepBasinRelief=completeReference?owner.deepBasinRelief:null;surfaceOwnership=owner.surfaceOwnership;seed=owner.seed;shape=owner.shape;coastalLandforms=owner.coastalLandforms;sandyCoasts=owner.sandyCoasts;sandyCoast=new SandyCoast(seed,shape,this);this.erodedLandforms=erodedLandforms;headlands=owner.headlands;gravelReliefEnabled=completeReference&&owner.gravelReliefEnabled;
@@ -275,6 +282,18 @@ public final class DrainageNetwork {
         synchronized(this){if(eroded==null)eroded=new ErodedBadlands(seed,preformation());return eroded;}
     }
 
+    /** Complete pre-alluvial physical reference shares the graph and retains
+     * all published ice/relief inputs. Its independent caches cannot feed a
+     * modified height back into eligibility or regional climate. */
+    DrainageNetwork alluvialReference(){
+        if(!alluvialEnabled)return this;var found=alluvialReference;if(found!=null)return found;
+        synchronized(this){if(alluvialReference==null)alluvialReference=new DrainageNetwork(this,erodedLandforms,true,true);return alluvialReference;}
+    }
+    private AlluvialFloodplain alluvial(){var found=alluvial;if(found!=null)return found;synchronized(this){if(alluvial==null)alluvial=new AlluvialFloodplain(alluvialReference());return alluvial;}}
+    AlluvialFloodplain.Plan alluvialPlan(int x,int z){return alluvialEnabled&&!structuralComparison?alluvial().plan(x,z):AlluvialFloodplain.Plan.NONE;}
+    boolean alluvialPotential(int x,int z,int rise){return alluvialEnabled&&!structuralComparison&&alluvial().potential(x,z,rise);}
+    boolean alluvialEnabled(){return alluvialEnabled;}
+
     public Sample sample(int x,int z) {
         long key=(x&0xffffffffL)|((long)z<<32);
         int slot=(int)mix(key)&(sampleCache.length-1);
@@ -298,6 +317,7 @@ public final class DrainageNetwork {
         if(deepBasinRelief!=null&&!structuralComparison)value=deepBasinRelief.apply(this,x,z,value);
         if(continentalIceThickness(x,z)>0)value=continentalIce().apply(x,z,value);
         else if(landIceEnabled&&!structuralComparison)value=landIce().apply(x,z,value);
+        if(alluvialEnabled&&!structuralComparison)value=alluvial().apply(x,z,value);
         sampleCache[slot]=new CachedSample(key,value);
         return value;
     }
@@ -484,6 +504,39 @@ public final class DrainageNetwork {
             }
         return best;
     }
+    /** Wider morphology query only; channelAt retains its exact historical reach. */
+    Channel alluvialReachAt(int x,int z) {
+        int cellX=Math.clamp(Math.floorDiv(x-MIN,STEP),0,SIDE-2),cellZ=Math.clamp(Math.floorDiv(z-MIN,STEP),0,SIDE-2);
+        Channel best=Channel.NONE; double score=Double.POSITIVE_INFINITY;
+        for(int nz=Math.max(0,cellZ-1);nz<=Math.min(SIDE-1,cellZ+2);nz++)
+            for(int nx=Math.max(0,cellX-1);nx<=Math.min(SIDE-1,cellX+2);nx++) {
+                int i=nz*SIDE+nx;
+                // A closed catchment's inflow is a river, but its lake footprint
+                // belongs to the lake habitat even where curves overlap it.
+                if(parent[i]==-1 && !ocean[i]) {
+                    double angle=Math.atan2(z-nodeZ(i),x-nodeX(i));
+                    if(PlanarMath.length(x-nodeX(i),z-nodeZ(i))<lakeRadius(i)*shoreScale(i,angle)) return Channel.NONE;
+                }
+                if(!river(i)) continue;
+                int p=parent[i];
+                // The original maximum curve/width envelope conservatively
+                // bounds the wider, separately capped morphology query.
+                double reach=4.14*Math.max(halfWidth(i),halfWidth(p))+96+1;
+                if(edgeBoxDistanceSquared(i,p,x,z)>=reach*reach)continue;
+                double t=closestT(i,x,z);
+                double baseWidth=lerp(t,halfWidth(i),halfWidth(p));
+
+                double strength=structuralComparison?0:channelFormStrength(i,t);
+                double width=channelWidth(i,t,!structuralComparison,strength),distance=channelDistance(i,t,x,z,!structuralComparison,strength,width);
+                if(distance>Math.min(3*width+48,AlluvialFloodplain.MAX_REACH) || distance/width>=score) continue;
+                int level=(int)Math.floor(lerp(t,water[i],water[p]));
+                if(PlanarMath.length(x-nodeX(i),z-nodeZ(i))<halfWidth(i)*4) level=water[i];
+                if(PlanarMath.length(x-nodeX(p),z-nodeZ(p))<halfWidth(p)*4) level=water[p];
+                score=distance/width;
+                best=new Channel(i,level,width,distance,(water[i]-water[p])/edgeLength(i));
+            }
+        return best;
+    }
     double riverHalfWidth(int i) { return halfWidth(i); }
     private double channelWidth(int i,double t,boolean detailed){return channelWidth(i,t,detailed,detailed?channelFormStrength(i,t):0);}
     private double channelWidth(int i,double t,boolean detailed,double strength){
@@ -495,6 +548,22 @@ public final class DrainageNetwork {
     }
 
     double channelDistance(int i,double t,int x,int z){return channelDistance(i,t,x,z,!structuralComparison);}
+    /** Fixed-edge projection for one alluvial radial trace. Keep subtraction/
+     * addition order identical to channelDistance; only loop-invariant curve,
+     * relief and shift evaluations are hoisted, with no spatial approximation. */
+    record ChannelDistanceFrame(double cx,double cz,double offsetX,double offsetZ,boolean straight){
+        double distance(int x,int z){return straight?PlanarMath.length(x-cx,z-cz):PlanarMath.length(x-cx+offsetX,z-cz-offsetZ);}
+    }
+    ChannelDistanceFrame channelDistanceFrame(int i,double t){
+        boolean detailed=!structuralComparison;double strength=detailed?channelFormStrength(i,t):0;
+        double localWidth=channelWidth(i,t,detailed,strength),cx=edgeX(i,t),cz=edgeZ(i,t);
+        if(!detailed)return new ChannelDistanceFrame(cx,cz,0,0,true);
+        double fade=smooth(Math.min(1,Math.min(t,1-t)*edgeLength(i)/320));
+        if(strength==0||fade==0)return new ChannelDistanceFrame(cx,cz,0,0,true);
+        double dx=edgeX(i,Math.min(1,t+.001))-edgeX(i,Math.max(0,t-.001)),dz=edgeZ(i,Math.min(1,t+.001))-edgeZ(i,Math.max(0,t-.001)),length=PlanarMath.length(dx,dz);
+        double shift=Math.min(48,.5*localWidth)*shape.channelShift(cx,cz)*fade*strength;
+        return new ChannelDistanceFrame(cx,cz,dz/length*shift,dx/length*shift,false);
+    }
     private double channelDistance(int i,double t,int x,int z,boolean detailed){double strength=detailed?channelFormStrength(i,t):0;return channelDistance(i,t,x,z,detailed,strength,channelWidth(i,t,detailed,strength));}
     private double channelDistance(int i,double t,int x,int z,boolean detailed,double strength,double localWidth){
         double cx=edgeX(i,t),cz=edgeZ(i,t);

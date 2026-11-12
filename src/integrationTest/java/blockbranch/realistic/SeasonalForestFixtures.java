@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
  * fixtures. Real old-world reopening always reads its actual saved generator. */
 final class SeasonalForestFixtures {
     static void published268(JsonObject json){
+        AlluvialFixtures.published269(json);
         if(!json.has("seasonal_forest_definition"))return;
         if(json.get("shape_version").getAsInt()!=269||json.get("seasonal_forest_definition").getAsInt()!=1)
             throw new AssertionError("Reviewed complete seasonal-forest wrapper required");

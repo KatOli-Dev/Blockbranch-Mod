@@ -4,7 +4,8 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 269,
+        "shape_version": 270,
+        "alluvial_floodplain_definition": 1,
         "land_ice_definition": 1,
         "summer_dry_definition": 1,
         "continental_ice_definition": 1,
