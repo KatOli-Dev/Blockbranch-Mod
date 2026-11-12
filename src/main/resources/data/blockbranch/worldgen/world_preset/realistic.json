@@ -4,10 +4,11 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 265,
+        "shape_version": 267,
         "land_ice_definition": 1,
         "summer_dry_definition": 1,
         "continental_ice_definition": 1,
+        "leaf_litter_definition": 1,
         "deep_basin_relief_definition": 1,
         "abyssal_trace_definition": 1,
         "cool_desert_definition": 1,

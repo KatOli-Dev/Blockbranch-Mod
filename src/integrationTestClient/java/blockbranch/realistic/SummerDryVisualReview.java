@@ -61,7 +61,7 @@ public final class SummerDryVisualReview {
                     com.google.gson.JsonObject preset;
                     try(var input=new java.io.InputStreamReader(Objects.requireNonNull(SummerDryVisualReview.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),java.nio.charset.StandardCharsets.UTF_8)){preset=com.google.gson.JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
                     preset.remove("type");var ops=net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess());
-                    var candidate=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();preset.remove("summer_dry_definition");preset.addProperty("shape_version",263);preset.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
+                    var candidate=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();preset.remove("leaf_litter_definition");preset.remove("summer_dry_definition");preset.addProperty("shape_version",263);preset.getAsJsonObject("additional_biomes").remove(SummerDryWoodland.KEY);
                     var prior=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();var random=level.getChunkSource().randomState();boolean found=false;
                     search:for(int z=ez-16;z<=ez+16;z++)for(int x=ex-16;x<=ex+16;x++){
                         int h=d.sample(x,z).height();boolean clear=true;

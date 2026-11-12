@@ -14,7 +14,8 @@ import net.minecraft.world.level.levelgen.*;
 /** Natural canopy, clipped queries, old habitats, cross-chunk state and persistent tree edits. */
 public final class WoodlandSmoke {
     public static BlockPos fixture(RealisticGenerator generator,RandomState random) {
-        var p=blockbranch.realistic.OakBirchWoodlandFixtures.fixture(generator.drainage(random),random.seed());
+        var source=generator.getBiomeSource().createUncachedResolver(random);var drainage=generator.drainage(random);
+        var p=blockbranch.realistic.OakBirchWoodlandFixtures.fixture(drainage,random.seed(),(x,z)->source.getNoiseBiome(x>>2,drainage.sample(x,z).height()>>2,z>>2).is(Blockbranch.id("dappled_oak_birch_woodland")));
         return new BlockPos(p.x(),generator.drainage(random).sample(p.x(),p.z()).height(),p.z());
     }
     public static BlockPos testLog(BlockPos bed) { return bed.above(30); }
@@ -59,7 +60,7 @@ public final class WoodlandSmoke {
             }
             for(int oz=0;oz<16;oz+=4) for(int ox=0;ox<16;ox+=4) {
                 int x=cx*16+ox,z=cz*16+oz,h=generator.drainage(random).sample(x,z).height();
-                int cover=generator.woodlandCover(x,z,random);components.add(cover);
+                int cover=LeafLitter.woodlandBase(generator.woodlandCover(x,z,random));components.add(cover);
                 for(int y=h-3;y<=Math.max(h+2,base.canopy().topY(x,z));y++) require(base.state(x,y,z)==generator.surfaceState(x,y,z,random),"Tree and forest-floor query agreement");
                 for(var bounds:new LevelHeightAccessor[]{level,LevelHeightAccessor.create(h-2,2),LevelHeightAccessor.create(h+1,2),LevelHeightAccessor.create(h+7,3),LevelHeightAccessor.create(h+25,2)}) {
                     var column=generator.getBaseColumn(x,z,bounds,random);
@@ -75,7 +76,7 @@ public final class WoodlandSmoke {
             }
         }
         for(int dz=-96;dz<=96&&!(components.contains(4)&&components.contains(5)&&components.contains(7));dz++)for(int dx=-96;dx<=96;dx++){
-            int x=bed.getX()+dx,z=bed.getZ()+dz,cover=generator.woodlandCover(x,z,random);if(cover!=4&&cover!=5&&cover!=7||components.contains(cover))continue;
+            int x=bed.getX()+dx,z=bed.getZ()+dz,cover=LeafLitter.woodlandBase(generator.woodlandCover(x,z,random));if(cover!=4&&cover!=5&&cover!=7||components.contains(cover))continue;
             int h=generator.drainage(random).sample(x,z).height();var actual=level.getChunk(x>>4,z>>4);var profile=((SparseColumn)actual).blockbranch$terrain().base();var plant=new BlockPos(x,h+1,z);
             require(actual.getBlockState(plant)==profile.state(x,h+1,z)&&actual.getBlockState(plant).canSurvive(level,plant),"Actual clustered understory support");components.add(cover);
         }

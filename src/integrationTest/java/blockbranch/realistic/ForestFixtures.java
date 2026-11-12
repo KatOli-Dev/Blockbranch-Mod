@@ -2,10 +2,10 @@ package blockbranch.realistic;
 
 import static blockbranch.realistic.Forest.*;
 
-/** Development-only fixture selection and camera helpers; no production registration. */
+/** Development-only fixture selection and camera helpers; no production registration. The climate follows the drainage network's polar gate so a gated world is searched with the climate it generates. */
 public final class ForestFixtures {
     static Point fixture(DrainageNetwork d,long seed){
-        var c=new ClimateField(seed);
+        var c=new ClimateField(seed,d.polarClimateEnabled());
         for(int z=-1900000;z<=1900000;z+=16000)for(int x=-1900000;x<=1900000;x+=16000){
             if(!contains(seed,x,z,d,c))continue;
             var roots=WoodlandTrees.roots(seed,x-48,z-48,x+48,z+48,d,c);
