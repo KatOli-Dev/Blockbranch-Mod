@@ -41,3 +41,53 @@ tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifySeasonalForestRead
 tasks.named('runPublished268Snapshot'){doFirst{
  if(originalReopen)assert original.file('baseline.json').asFile.bytes==fixture.file('baseline-'+originalSeed+'.json').asFile.bytes:'Requires frozen original oracle.'
 }}
+
+tasks.register('checkSeasonalForest',JavaExec){
+ dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.SeasonalForestCheck';maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn 'checkSeasonalForest'}
+
+def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('seasonalForestDirectory').getOrElse('build/seasonal-forest-evidence/native'))
+def nativeSeed=providers.gradleProperty('seasonalForestSeed').getOrElse('424242')
+def nativeReopen=providers.gradleProperty('seasonalForestReopen').isPresent()
+loom.runs.register('seasonalForestQualification'){
+ server();runDir(nativeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.seasonalForestQualification=true');vmArg('-Dblockbranch.seasonalForestSeed='+nativeSeed);vmArg('-Dblockbranch.seasonalForestReopen='+nativeReopen)
+ vmArg('-Dblockbranch.seasonalForestResult='+nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('prepareSeasonalForestQualification'){doLast{
+ if(nativeReopen)assert nativeDir.file('survey/level.dat').asFile.exists():'Requires closed candidate world.'
+ else assert !nativeDir.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ nativeDir.asFile.mkdirs();nativeDir.file('eula.txt').asFile.text='eula=true\n'
+ nativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+nativeSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runSeasonalForestQualification'){dependsOn 'prepareSeasonalForestQualification';doLast{assert nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+def cost=layout.projectDirectory.dir(providers.gradleProperty('seasonalForestCostDirectory').getOrElse('build/seasonal-forest-evidence/cost269'))
+def costBaseline=providers.gradleProperty('seasonalForestCostBaseline').isPresent()
+loom.runs.register('seasonalForestCost'){
+ server();runDir(cost.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.seasonalForestCost=true');vmArg('-Dblockbranch.seasonalForestCostDirectory='+cost.asFile.absolutePath)
+}
+tasks.register('prepareSeasonalForestCost'){doLast{
+ assert !cost.file('server.properties').asFile.exists():'Preserve measurements; choose a fresh directory.'
+ cost.asFile.mkdirs();cost.file('eula.txt').asFile.text='eula=true\n'
+ cost.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(costBaseline?'blockbranch:seasonal_forest_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runSeasonalForestCost'){dependsOn 'prepareSeasonalForestCost';doLast{assert cost.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('seasonalForestVisualDirectory').getOrElse('build/seasonal-forest-evidence/visual269'))
+def visualReopen=providers.gradleProperty('seasonalForestVisualReopen').isPresent()
+loom.runs.register('seasonalForestVisual'){
+ client();runDir(visual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.seasonalForestVisual=true');vmArg('-Dblockbranch.seasonalForestVisualReopen='+visualReopen)
+ vmArg('-Dblockbranch.seasonalForestVisualDirectory='+visual.asFile.absolutePath)
+ programArgs('--username','SeasonalView','--width','1024','--height','576')
+}
+tasks.register('prepareSeasonalForestVisual'){doLast{
+ assert !visual.file('options.txt').asFile.exists():'Preserve captures; choose a fresh directory.'
+ if(visualReopen)assert visual.file('saves/SeasonalForestVisualReview/level.dat').asFile.exists():'Requires a copied authentic closed world.'
+ visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runSeasonalForestVisual'){dependsOn 'prepareSeasonalForestVisual';doLast{assert visual.file('result.txt').asFile.text.startsWith('PASS')}}

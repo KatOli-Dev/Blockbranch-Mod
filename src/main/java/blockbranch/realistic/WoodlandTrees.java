@@ -166,6 +166,13 @@ public final class WoodlandTrees {
         for(var root:upland)geometry.addAll(SavannaUplands.tree(root));roots.addAll(upland);
         var jungle=JungleTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         jungle.addAll(TropicalVariantTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
+        if((transitions&SeasonalForestExpansion.FLAG)!=0){
+            if(dryForest==null)throw new IllegalArgumentException("Seasonal forest requires its saved owner");
+            // The replacement broadleaf roots were added above. Suppress the
+            // old sparse-jungle roots before rasterization, never erase a
+            // finished mixed crown that may belong to a retained neighbour.
+            jungle.removeIf(root->dryForest.test(root.x(),root.z()));
+        }
         for(var root:jungle)geometry.addAll(JungleTrees.tree(root));roots.addAll(jungle);
         var windswept=WindsweptTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         for(var root:windswept)geometry.addAll(WindsweptTrees.tree(root));roots.addAll(windswept);

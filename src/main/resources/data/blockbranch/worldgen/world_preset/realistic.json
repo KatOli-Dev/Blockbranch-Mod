@@ -4,7 +4,7 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 268,
+        "shape_version": 269,
         "land_ice_definition": 1,
         "summer_dry_definition": 1,
         "continental_ice_definition": 1,
@@ -14,6 +14,7 @@
         "abyssal_trace_definition": 1,
         "cool_desert_definition": 1,
         "dry_forest_definition": 1,
+        "seasonal_forest_definition": 1,
         "surface_ownership_definition": 1,
         "biome_transition_definition": 1,
         "redwood_forest_definition": 1,

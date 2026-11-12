@@ -21,6 +21,7 @@ public final class WarmXericQualification {
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();
             var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
+            SeasonalForestFixtures.published268(fresh);
             require(fresh.get("shape_version").getAsInt()==268&&g.warmXericDefinition()==1,"Actual new-world saved gate");
             var parsed=RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow();
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,parsed).getOrThrow().equals(fresh),"Exact fresh codec roundtrip");
