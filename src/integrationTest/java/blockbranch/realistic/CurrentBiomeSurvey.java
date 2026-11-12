@@ -46,7 +46,7 @@ public final class CurrentBiomeSurvey {
                 .getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();
         }
         // Fail rather than quietly surveying a different generation foundation after a future bump.
-        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 270, "Review survey foundation for new schema");
+        require(preset.get("shape_version").getAsInt() >= 257 && preset.get("shape_version").getAsInt() <= 271, "Review survey foundation for new schema");
         var generator = (RealisticGenerator) level.getChunkSource().getGenerator();
         var random = level.getChunkSource().randomState();
         require(random.seed() == SEEDS[0], "Native witness world must use first survey seed");
@@ -183,6 +183,7 @@ public final class CurrentBiomeSurvey {
             .withSurfaceOwnership(preset.has("surface_ownership_definition") && preset.get("surface_ownership_definition").getAsInt() == 1)
             .withDryForests(preset.has("dry_forest_definition") && preset.get("dry_forest_definition").getAsInt() == 1)
             .withCoolDeserts(preset.has("cool_desert_definition") && preset.get("cool_desert_definition").getAsInt() == 1);
+        source.withMontaneForests(preset.has("montane_forest_definition") && preset.get("montane_forest_definition").getAsInt()==1);
         source.withSeasonalForests(preset.has("seasonal_forest_definition") && preset.get("seasonal_forest_definition").getAsInt()==1);
         source.withWarmXeric(preset.has("warm_xeric_definition") && preset.get("warm_xeric_definition").getAsInt()==1);
         source.withSummerDryWoodlands(preset.has("summer_dry_definition") && preset.get("summer_dry_definition").getAsInt()==1);
