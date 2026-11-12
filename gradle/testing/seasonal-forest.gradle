@@ -1,0 +1,43 @@
+// Optional classification diagnosis; does not change the preset or require Python.
+tasks.register('assessSeasonalForest',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath
+ mainClass='blockbranch.realistic.SeasonalForestAssessment';maxHeapSize='1G'
+ args(providers.gradleProperty('seasonalForestSurvey').getOrElse('build/biome-survey/samples.csv'),
+      providers.gradleProperty('seasonalForestReport').getOrElse('build/next-coverage-evidence/seasonal-forest-assessment.json'))
+}
+
+def original=layout.projectDirectory.dir(providers.gradleProperty('published268Directory').getOrElse('build/seasonal-forest-evidence/published268'))
+def originalSeed=providers.gradleProperty('published268Seed').getOrElse('424242')
+def originalReopen=providers.gradleProperty('published268Reopen').isPresent()
+loom.runs.register('published268Snapshot'){
+ server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.published268Snapshot=true');vmArg('-Dblockbranch.published268Reopen='+originalReopen)
+ vmArg('-Dblockbranch.published268SnapshotResult='+original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished268Snapshot'){doLast{
+ if(originalReopen)assert original.file('survey/level.dat').asFile.exists():'Requires an authentic closed268 world.'
+ else assert !original.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+ original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+originalSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished268Snapshot'){dependsOn 'preparePublished268Snapshot';doLast{assert original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/seasonal-forest-reader-268')
+def collector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published268Snapshot.java')
+def costPreset=layout.projectDirectory.file('src/integrationTest/resources/data/blockbranch/worldgen/world_preset/seasonal_forest_baseline.json')
+tasks.register('verifySeasonalForestReader'){
+ inputs.dir(fixture);inputs.file(collector)
+ inputs.file(costPreset)
+ doLast{
+  def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+  def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+  assert origin.commit=='70a92a4f11b2c5464840cad725c601e2c59abd74'
+  assert hash(collector.asFile)==origin.collectorSha256
+  origin.baselines.each{assert hash(fixture.file(it.path).asFile)==it.sha256}
+  assert hash(costPreset.asFile)==origin.costPreset.sha256
+ }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifySeasonalForestReader'}
+tasks.named('runPublished268Snapshot'){doFirst{
+ if(originalReopen)assert original.file('baseline.json').asFile.bytes==fixture.file('baseline-'+originalSeed+'.json').asFile.bytes:'Requires frozen original oracle.'
+}}
