@@ -1,0 +1,33 @@
+// Boreal slope tolerance: frozen published-270 placement oracle and pure checks.
+def fixture=layout.projectDirectory.dir('src/test/resources/fixtures/boreal-slope-270')
+tasks.register('verifyBorealSlopeOracle'){
+ inputs.dir(fixture)
+ doLast{
+  def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+  def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+  assert origin.commit=='833abc510ec3234ecf409d1a5e083d13a0e9e090'
+  assert hash(fixture.file(origin.oracle.path).asFile)==origin.oracle.sha256
+ }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyBorealSlopeOracle'}
+tasks.register('checkBorealSlope',JavaExec){
+ dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.BorealSlopeCheck';maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn 'checkBorealSlope'}
+
+// Native qualification over the sampled treeless boreal slope (seed 1).
+def slopeDir=layout.projectDirectory.dir(providers.gradleProperty('borealSlopeDirectory').getOrElse('build/boreal-slope-native'))
+def slopeMode=providers.gradleProperty('borealSlopeMode').getOrElse('record270')
+loom.runs.register('borealSlopeQualification'){
+ server();runDir(slopeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.borealSlopeMode='+slopeMode);vmArg('-Dblockbranch.borealSlopeDirectory='+slopeDir.asFile.absolutePath)
+}
+tasks.register('prepareBorealSlopeQualification'){doLast{
+ slopeDir.file('result.txt').asFile.delete()
+ if(slopeMode=='record270')assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert slopeDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ slopeDir.asFile.mkdirs();slopeDir.file('eula.txt').asFile.text='eula=true\n'
+ slopeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25629\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runBorealSlopeQualification'){dependsOn 'prepareBorealSlopeQualification';doLast{assert slopeDir.file('result.txt').asFile.text.startsWith('PASS')}}
