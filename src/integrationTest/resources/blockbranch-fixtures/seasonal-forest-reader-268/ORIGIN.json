@@ -1,0 +1,29 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "70a92a4f11b2c5464840cad725c601e2c59abd74",
+  "productionTrees": {
+    "src/main": "efd5b25f419f1b165bd08cc645748991deb01086",
+    "src/client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+  },
+  "collector": "src/integrationTest/java/blockbranch/realistic/Published268Snapshot.java",
+  "collectorSha256": "2ac350dd1b6869f74eb8d1a4f633078b802288f1f1156918907cf10aedc1ec3f",
+  "baselines": [
+    {
+      "seed": 424242,
+      "path": "baseline-424242.json",
+      "sha256": "1e0230e19608070b0038e2c656402a364a7368807410e470cc7c7058449bdc82"
+    },
+    {
+      "seed": 1,
+      "path": "baseline-1.json",
+      "sha256": "e598a26bd11f648132b836d08af0c96e4cf336df8d9b83937b4c269b81dc1ab9"
+    }
+  ],
+  "recording": "Both JVMs compiled and ran complete published268 production before source changes; git diff --exit-code 70a92a4 -- src/main src/client passed before each recording. Native seed424242 records three selector/terrain/climate grids; seed1 records only additional native/physical/profile witnesses. Both worlds retain a real gold edit.",
+  "scope": "Independent finite observable hashes and minimal test input; no production content or global compatibility proof.",
+  "costPreset": {
+    "path": "src/integrationTest/resources/data/blockbranch/worldgen/world_preset/seasonal_forest_baseline.json",
+    "sha256": "2751caac0b4301701ef48d5fa9793082024fc29fe437876a6a1dad0bd4b62916",
+    "origin": "Byte-identical published268 bundled realistic preset at commit70a92a4; QA resources only."
+  }
+}

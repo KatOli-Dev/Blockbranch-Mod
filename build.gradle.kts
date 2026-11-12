@@ -166,6 +166,7 @@ apply(from = "gradle/testing/summer-dry.gradle")
 apply(from = "gradle/testing/polar-ice.gradle")
 apply(from = "gradle/testing/leaf-litter.gradle")
 apply(from = "gradle/testing/warm-xeric.gradle")
+apply(from = "gradle/testing/seasonal-forest.gradle")
 
 apply(from = "gradle/testing/magnetite.gradle")
 

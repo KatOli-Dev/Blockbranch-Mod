@@ -11,7 +11,7 @@ permission to resave a world with an older build.
 
 | Contract | Current new Realistic world | Source of truth |
 | --- | --- | --- |
-| Generator `shape_version` | Candidate 268 (complete 267 + warm xeric); published 265 ice only, 266 litter only, 267 both | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
+| Generator `shape_version` | 269 (complete 268 + seasonal forest); 265 ice only, 266 litter only, 267 both, 268 warm xeric | [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [codec](../src/main/java/blockbranch/realistic/RealisticGenerator.java) |
 | Base geometry | 82 plus saved gravel/deep-basin relief and land ice 1 | [TerrainShape](../src/main/java/blockbranch/realistic/TerrainShape.java), [GravelReliefSchema](../src/main/java/blockbranch/realistic/GravelReliefSchema.java), [DeepBasinSchema](../src/main/java/blockbranch/realistic/DeepBasinSchema.java) |
 | Terrain profile | 77 for perennial spans (leaf-litter definition 1 adds cover codes inside existing arrays, no new version); 76 for land-ice roles; 75 for appended benthic states; 74 for short reeds; 72 for appended boreal roles; otherwise retained foundation | [TerrainProfile](../src/main/java/blockbranch/cubic/TerrainProfile.java) |
 | Column / terrain-window protocol | 70 / 71 | [ColumnPacket](../src/main/java/blockbranch/cubic/ColumnPacket.java), [TerrainWindowPacket](../src/main/java/blockbranch/cubic/TerrainWindowPacket.java) |
@@ -233,7 +233,8 @@ and the generator/wrapper codecs.
 | 265 | Complete schema 264 plus polar climate/continental-ice definition 1, grounded sheet holder and compatible static spans |
 | 266 | Complete schema 264 plus independent leaf-litter definition 1 (no ice) |
 | 267 | Complete schema 264 plus both continental-ice definition 1 and leaf-litter definition 1; read only under exactly both |
-| 268 | Candidate: complete267 plus warm-xeric definition1 and its holder; absent retains every old schema/placement |
+| 268 | Complete267 plus warm-xeric definition1 and its holder; absent retains every old schema/placement |
+| 269 | Complete268 plus seasonal-forest definition1; existing dry-forest identity/roles, no new holder |
 
 A saved schema number identifies exactly one set of definitions (265 polar only, 266 litter only, 267 both), and `FoundationSchema` reads it only under those definitions. Schemas 122–125, 134–137, 143–159, 164–167, 173–199, 204–207, 214–219,
 224–227, 235–239 and 244–247 are unsupported. The 220–233 groups belong to the pyramid
@@ -313,6 +314,7 @@ automatic migration. Existing arrays/edits remain authoritative in every case.
 | Redwood forest | 256→257 | Maritime redwood/sequoia province |
 | Surface ownership | 257→258 | Basin-owned marine habitats and cold exposed rockland |
 | Dry forest | 258→259 | Idealized precipitation seasonality and a regional broadleaf forest analog |
+| Seasonal forest | 268→269 | Additional source-inspired regional seasonal broadleaf ownership on existing forest domains |
 | Cool desert | 259→260 | Supported cool-arid fallback with static thermal suitability and sparse dwarf shrubs |
 | Abyssal traces | 260→261 | Static waterlogged microrelief on existing fine marine beds |
 | Deep basin relief | 261→262 | Attenuated bank-scale variation on gentle offshore floors |
@@ -356,6 +358,8 @@ Tree-clear definitions 9–16 add the saved dry-forest root bit to 1–8; new pl
 Only profiles with new grounded-body or exposed-freshwater spans wrap their historical base in profile 77 plus `perennial_ice_base_profile_version` and a 256-int `perennial_ice` descriptor. Empty, stray, nested, malformed or future wrappers reject; original readers refuse 77. Grounded spans end at the raised ground and replace buried inland water, while anchoring cave-void and ore geometry to the original rock bed. Decode threads the perennial layer through the foundation recursion so the foundation is validated against the rock datum; a version-77 profile holding a formation outside the rock-datum window is rejected rather than reinterpreted (labels are not stored and are re-derived from the datum). This is not a new underground ecology model. Exposed lids retain water geometry/source water and use the existing frozen-river biome as a compatibility analog. Marine ownership stays with its corrected basin source and the inherited marine-ice policy; no new marine grounding or calving model is implied. Snow blocks/packed ice use existing immutable material behavior and section edits remain authoritative. The window/hello path appends `polar77` so old peers cannot accept new spans; marker 4/catalog 21, global 22/20/22 packing and packet numbers 70/71 stay unchanged. Native full/clipped column/height, mixed-edge, explicit edit/reopen and authentic old-world checks must qualify the final candidate. Global vertical bounds and skipped-level work remain deferred.
 
 Warm-xeric definition 1 wraps complete 267 in schema 268; missing/malformed gates, missing holder, incomplete foundations and future versions reject. Original 264/265/266/267 worlds retain saved and unexplored generation and edits. The new subtype only splits selected steppe/gravel/sandy-desert quarts and physically supported inland dry blocks; intentional/fallback plains and specialists remain owned as before. Existing desert roles 1–7 supply low shrubs, dry grass and mineral/soil cover, so profile/wire catalogs are unchanged. Actual old267 reader rejection of268 has not been exercised; its source bounds schema to267. Frozen output hashes plus authentic267 reopening bound compatibility evidence to recorded inputs.
+
+Seasonal-forest definition1 requires complete268 and writes269. Absence preserves original selection, ground cover and crowns, including untouched chunks. Missing/malformed/future gates and incomplete foundations reject. The existing dry-forest holder gains eligible warm-woodland/sparse-jungle ownership; prior dry forest remains and savanna/specialists are excluded. Reused broadleaf/soil/litter roles leave profile, registry, catalog and wire versions unchanged. Saved clear bit32 creates definitions65–128; definitions1–64 retain their original climate bit16, regional dry-forest owner, roots, boxes and crowns even under a269 generator. New plans suppress former warm/sparse roots before rasterization and clear whole broadleaf footprints. Frozen original268 hashes and two authentic saved-edit world reopens verify recorded grids/native states/profiles; cross-process269 checks retain edits, exact profiles and compressed clear-plan replay. This is finite compatibility evidence; actual original268 reader rejection of269 has not been run (its source bounds268). No migration, phenology or climate/hydrology rewrite occurs.
 
 ## Structure piece contracts
 

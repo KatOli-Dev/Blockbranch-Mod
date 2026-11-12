@@ -1,0 +1,173 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "minecraft:overworld",
+      "generator": {
+        "type": "blockbranch:realistic",
+        "shape_version": 268,
+        "land_ice_definition": 1,
+        "summer_dry_definition": 1,
+        "continental_ice_definition": 1,
+        "leaf_litter_definition": 1,
+        "warm_xeric_definition": 1,
+        "deep_basin_relief_definition": 1,
+        "abyssal_trace_definition": 1,
+        "cool_desert_definition": 1,
+        "dry_forest_definition": 1,
+        "surface_ownership_definition": 1,
+        "biome_transition_definition": 1,
+        "redwood_forest_definition": 1,
+        "mansion_replacement_definition": 1,
+        "sanctuary_replacement_definition": 1,
+        "gravel_relief_definition": 1,
+        "boreal_crown_definition": 1,
+        "pyramid_gallery_definition": 1,
+        "mansion_wing_definition": 1,
+        "structure_definition": 3,
+        "native_overworld_structures": 1,
+        "desert_waygates": {
+          "definition": 1
+        },
+        "cave_biome_definition": 1,
+        "icebergs": true,
+        "underground": true,
+        "cave_approaches": true,
+        "cave_entry_routes": true,
+        "ore_definition": 15,
+        "dripstone_definition": 2,
+        "sandy_coasts": true,
+        "biome": "minecraft:plains",
+        "scree_biome": "blockbranch:alpine_scree_slope",
+        "reedbed_biome": "blockbranch:inland_lake_reedbed",
+        "river_margin_biome": "blockbranch:gravel_bed_river_margin",
+        "sandy_shore_biome": "blockbranch:low_gradient_sandy_shore",
+        "meadow_biome": "blockbranch:rolling_lowland_forb_grass_meadow",
+        "woodland_biome": "blockbranch:dappled_oak_birch_woodland",
+        "steppe_biome": "blockbranch:dry_continental_scrub_steppe",
+        "boreal_biome": "blockbranch:boreal_spruce_birch_woodland",
+        "warm_woodland_biome": "blockbranch:warm_subhumid_oak_pine_woodland",
+        "cold_steppe_biome": "blockbranch:cold_continental_fescue_steppe",
+        "desert_biome": "blockbranch:continental_gravel_desert",
+        "humid_woodland_biome": "blockbranch:humid_subtropical_oak_fern_woodland",
+        "tundra_biome": "blockbranch:cold_dwarf_shrub_tundra",
+        "lake_biome": "blockbranch:open_inland_lake_sediment_bed",
+        "river_channel_biome": "blockbranch:open_routed_river_channel",
+        "marine_shelf_biome": "blockbranch:open_marine_shelf_coastal_sea",
+        "deep_ocean_biome": "blockbranch:deep_open_ocean_basin_bed",
+        "additional_biomes": {
+          "land_ice": "blockbranch:perennial_alpine_icefield",
+          "warm_xeric_shrubland": "blockbranch:warm_xeric_subshrubland",
+          "continental_ice": "blockbranch:polar_grounded_ice_sheet",
+          "summer_dry_woodland": "blockbranch:coastal_winter_rain_oak_woodland",
+          "lush_caves": "minecraft:lush_caves",
+          "deep_dark": "minecraft:deep_dark",
+          "sulfur_caves": "minecraft:sulfur_caves",
+          "cold_ocean": "minecraft:cold_ocean",
+          "deep_cold_ocean": "minecraft:deep_cold_ocean",
+          "ice_spikes": "minecraft:ice_spikes",
+          "savanna": "minecraft:savanna",
+          "jungle": "minecraft:jungle",
+          "desert": "minecraft:desert",
+          "plains": "minecraft:plains",
+          "sunflower_plains": "minecraft:sunflower_plains",
+          "forest": "minecraft:forest",
+          "birch_forest": "minecraft:birch_forest",
+          "swamp": "minecraft:swamp",
+          "mangrove_swamp": "minecraft:mangrove_swamp",
+          "taiga": "minecraft:taiga",
+          "snowy_taiga": "minecraft:snowy_taiga",
+          "ocean": "minecraft:ocean",
+          "deep_ocean": "minecraft:deep_ocean",
+          "snowy_plains": "minecraft:snowy_plains",
+          "snowy_slopes": "minecraft:snowy_slopes",
+          "meadow": "minecraft:meadow",
+          "grove": "minecraft:grove",
+          "river": "minecraft:river",
+          "frozen_river": "minecraft:frozen_river",
+          "beach": "minecraft:beach",
+          "snowy_beach": "minecraft:snowy_beach",
+          "lukewarm_ocean": "minecraft:lukewarm_ocean",
+          "deep_lukewarm_ocean": "minecraft:deep_lukewarm_ocean",
+          "old_growth_pine_taiga": "minecraft:old_growth_pine_taiga",
+          "old_growth_spruce_taiga": "minecraft:old_growth_spruce_taiga",
+          "flower_forest": "minecraft:flower_forest",
+          "old_growth_birch_forest": "minecraft:old_growth_birch_forest",
+          "dark_forest": "minecraft:dark_forest",
+          "redwood_forest": "blockbranch:maritime_redwood_fern_forest",
+          "cold_rockland": "blockbranch:cold_exposed_rockland",
+          "dry_forest": "blockbranch:seasonal_dry_broadleaf_forest",
+          "cool_desert": "blockbranch:cool_continental_stony_desert",
+          "cherry_grove": "minecraft:cherry_grove",
+          "sparse_jungle": "minecraft:sparse_jungle",
+          "bamboo_jungle": "minecraft:bamboo_jungle",
+          "windswept_hills": "minecraft:windswept_hills",
+          "windswept_forest": "minecraft:windswept_forest",
+          "savanna_plateau": "minecraft:savanna_plateau",
+          "windswept_savanna": "minecraft:windswept_savanna",
+          "stony_peaks": "minecraft:stony_peaks",
+          "jagged_peaks": "minecraft:jagged_peaks",
+          "eroded_badlands": "minecraft:eroded_badlands",
+          "badlands": "minecraft:badlands",
+          "wooded_badlands": "minecraft:wooded_badlands",
+          "windswept_gravelly_hills": "minecraft:windswept_gravelly_hills",
+          "frozen_peaks": "minecraft:frozen_peaks",
+          "warm_ocean": "minecraft:warm_ocean",
+          "dappled_forest": "minecraft:dappled_forest",
+          "stony_shore": "minecraft:stony_shore",
+          "frozen_ocean": "minecraft:frozen_ocean",
+          "deep_frozen_ocean": "minecraft:deep_frozen_ocean",
+          "dripstone_caves": "minecraft:dripstone_caves"
+        },
+        "lit_cave_growth_definition": 2,
+        "small_discovery_definition": 1,
+        "wetland_huts": {
+          "definition": 1
+        },
+        "shipwrecks": {
+          "definition": 2
+        },
+        "snow_shelters": {
+          "definition": 1
+        },
+        "deep_cold_ruins": {
+          "definition": 1
+        },
+        "cold_ruins": {
+          "definition": 1
+        },
+        "warm_ruins": {
+          "definition": 1
+        },
+        "deep_warm_ruins": {
+          "definition": 1
+        },
+        "native_hut_igloo": 1,
+        "native_ordinary_structures": 1,
+        "reimagined_layouts": {
+          "definition": 9
+        }
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "preset": "minecraft:nether"
+        },
+        "settings": "minecraft:nether"
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:the_end"
+        },
+        "settings": "minecraft:end"
+      }
+    }
+  }
+}

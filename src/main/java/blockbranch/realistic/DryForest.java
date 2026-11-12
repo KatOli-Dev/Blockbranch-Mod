@@ -3,12 +3,12 @@ package blockbranch.realistic;
 import java.util.LinkedHashMap;
 import java.util.function.BiPredicate;
 
-/** Regional seasonally dry broadleaf forest analog. Only the selector's existing
- * warm-woodland owner can split; climate alone never converts savanna to forest.
- * The precipitation envelope is deliberately narrow: dry forests wetter than
- * 1600 mm/year (e.g. Santa Rosa, doi:10.1002/ecs2.3824) remain unrepresented.
- * Neither terrain retention nor drainage is interpreted as soil fertility.
- * Static growing-season canopy/litter does not simulate deciduous phenology. */
+/** Regional seasonally dry broadleaf forest analog. The regional definition
+ * splits only warm woodland and retains its narrow <1600 mm/year envelope.
+ * The independent seasonal refinement may admit other existing forest owners;
+ * climate alone never converts savanna to forest. Neither terrain retention
+ * nor drainage is interpreted as soil fertility. Static growing-season canopy
+ * and litter do not simulate deciduous phenology. */
 public final class DryForest {
     public static final String KEY="dry_forest";
     public static final int FAMILY=18;
@@ -17,6 +17,9 @@ public final class DryForest {
      * Repeated vertical/material queries must not recompute twelve months.
      * Separate physical and quart keys retain exact block clipping at edges. */
     static BiPredicate<Integer,Integer> domain(long seed,DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart){
+        return domain(seed,d,c,selectedQuart,false);
+    }
+    static BiPredicate<Integer,Integer> domain(long seed,DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart,boolean seasonal){
         var blocks=new LinkedHashMap<Long,Boolean>(256,.75f,true);
         var quarts=new LinkedHashMap<Long,Boolean>(256,.75f,true);
         return (x,z)->{
@@ -25,7 +28,7 @@ public final class DryForest {
             int qx=x>>2,qz=z>>2;long qkey=(qx&0xffffffffL)|((long)qz<<32);Boolean selected;
             synchronized(quarts){selected=quarts.get(qkey);}
             if(selected==null){selected=selectedQuart.test(qx,qz);synchronized(quarts){quarts.put(qkey,selected);if(quarts.size()>2048)quarts.remove(quarts.keySet().iterator().next());}}
-            boolean value=selected&&eligible(seed,x,z,d,c);
+            boolean value=selected&&(eligible(seed,x,z,d,c)||seasonal&&SeasonalForestExpansion.eligible(seed,x,z,d,c));
             synchronized(blocks){blocks.put(key,value);if(blocks.size()>8192)blocks.remove(blocks.keySet().iterator().next());}
             return value;
         };
