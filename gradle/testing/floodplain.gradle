@@ -1,0 +1,103 @@
+// Optional finite diagnosis; no generation changes or Python dependency.
+tasks.register('assessFloodplain',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath
+ mainClass='blockbranch.realistic.FloodplainAssessment';maxHeapSize='3G'
+ args(providers.gradleProperty('floodplainAssessmentReport').getOrElse('build/floodplain-evidence/assessment269.json'))
+}
+
+def original=layout.projectDirectory.dir(providers.gradleProperty('published269Directory').getOrElse('build/floodplain-evidence/published269'))
+def originalSeed=providers.gradleProperty('published269Seed').getOrElse('424242')
+def originalReopen=providers.gradleProperty('published269Reopen').isPresent()
+loom.runs.register('published269Snapshot'){
+ server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.published269Diagnostic='+providers.gradleProperty('published269Diagnostic').isPresent());vmArg('-Dblockbranch.published269Snapshot=true');vmArg('-Dblockbranch.published269Reopen='+originalReopen)
+ vmArg('-Dblockbranch.published269SnapshotResult='+original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished269Snapshot'){doLast{
+ if(originalReopen)assert original.file('survey/level.dat').asFile.exists():'Requires an authentic closed269 world.'
+ else assert !original.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+ original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+originalSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished269Snapshot'){dependsOn 'preparePublished269Snapshot';doLast{assert original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+
+tasks.register('checkAlluvial',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialCheck';maxHeapSize='1G'}
+tasks.named('check'){dependsOn 'checkAlluvial'}
+tasks.register('surveyAlluvialDesign',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialDesignSurvey';maxHeapSize='3G'
+ args(providers.gradleProperty('alluvialSectionInput').getOrElse('build/floodplain-evidence/assessment269-sections.json'),providers.gradleProperty('alluvialDesignReport').getOrElse('build/floodplain-evidence/design270.json'))
+}
+
+def alluvialFixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/alluvial-reader-269')
+def alluvialRoot=layout.projectDirectory
+def alluvialCollectors=['src/integrationTest/java/blockbranch/realistic/Published269Snapshot.java','src/integrationTest/java/blockbranch/realistic/Published269CoverAudit.java','src/integrationTest/java/blockbranch/mixin/qa/AdmissionWorkMixin.java'].collect{alluvialRoot.file(it)}
+tasks.register('verifyAlluvialReader'){
+ inputs.dir(alluvialFixture);inputs.files(alluvialCollectors);inputs.file(alluvialRoot.file("src/integrationTest/resources/data/blockbranch/worldgen/world_preset/alluvial_baseline.json"))
+ doLast{
+  def origin=new groovy.json.JsonSlurper().parse(alluvialFixture.file('ORIGIN.json').asFile)
+  def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+  assert origin.commit=='a7bea44a4a10baea5ab57559444807789f64b4cc'
+  origin.collectors.each{assert hash(alluvialRoot.file(it.path).asFile)==it.sha256}
+  origin.fixtures.each{assert hash(alluvialFixture.file(it.path).asFile)==it.sha256}
+  assert hash(alluvialRoot.file(origin.preset.path).asFile)==origin.preset.sha256
+ }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyAlluvialReader'}
+tasks.named('runPublished269Snapshot'){doFirst{
+ if(originalReopen)assert original.file('baseline.json').asFile.bytes==alluvialFixture.file('baseline-'+originalSeed+'.json').asFile.bytes:'Requires frozen original269 native subset.'
+}}
+tasks.register('verifyAlluvialLegacy',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialLegacyVerify';maxHeapSize='1G'
+ args(providers.gradleProperty('alluvialLegacySeed').getOrElse('1'),providers.gradleProperty('alluvialLegacyAudit').getOrElse('build/floodplain-evidence/legacy269-seed1/reopen-cover-audit.json'),providers.gradleProperty('alluvialLegacyDense').getOrElse('build/floodplain-evidence/native-seed1/legacy-original-scope.json'))
+}
+
+def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('alluvialDirectory').getOrElse('build/floodplain-evidence/native-seed1'))
+def nativeSeed=providers.gradleProperty('alluvialSeed').getOrElse('1')
+def nativeReopen=providers.gradleProperty('alluvialReopen').isPresent()
+loom.runs.register('alluvialQualification'){
+ server();runDir(nativeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.alluvialQualification=true');vmArg('-Dblockbranch.alluvialSeed='+nativeSeed);vmArg('-Dblockbranch.alluvialReopen='+nativeReopen)
+ vmArg('-Dblockbranch.alluvialResult='+nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+ vmArg('-Dblockbranch.alluvialLegacyAudit='+layout.projectDirectory.file(providers.gradleProperty('alluvialLegacyAudit').getOrElse('build/floodplain-evidence/legacy269-seed'+nativeSeed+'/reopen-cover-audit.json')).asFile.absolutePath)
+ vmArg('-Dblockbranch.alluvialDesignInput='+layout.projectDirectory.file(providers.gradleProperty('alluvialDesignInput').getOrElse('build/floodplain-evidence/design270-strict-stages.json')).asFile.absolutePath)
+ vmArg('-Dblockbranch.alluvialSectionInput='+layout.projectDirectory.file(providers.gradleProperty('alluvialSectionInput').getOrElse('build/floodplain-evidence/assessment269-sections.json')).asFile.absolutePath)
+}
+tasks.register('prepareAlluvialQualification'){doLast{
+ if(nativeReopen)assert nativeDir.file('survey/level.dat').asFile.exists():'Requires closed candidate world.'
+ else assert !nativeDir.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ nativeDir.asFile.mkdirs();nativeDir.file('eula.txt').asFile.text='eula=true\n'
+ nativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+nativeSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runAlluvialQualification'){dependsOn 'prepareAlluvialQualification';doLast{assert nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+def cost=layout.projectDirectory.dir(providers.gradleProperty('alluvialCostDirectory').getOrElse('build/floodplain-evidence/cost270'))
+def costBaseline=providers.gradleProperty('alluvialCostBaseline').isPresent()
+loom.runs.register('alluvialCost'){
+ server();runDir(cost.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.alluvialCost=true');vmArg('-Dblockbranch.alluvialCostDirectory='+cost.asFile.absolutePath)
+}
+tasks.register('prepareAlluvialCost'){doLast{
+ assert !cost.file('server.properties').asFile.exists():'Preserve measurements; choose a fresh directory.'
+ cost.asFile.mkdirs();cost.file('eula.txt').asFile.text='eula=true\n'
+ cost.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(costBaseline?'blockbranch:alluvial_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runAlluvialCost'){dependsOn 'prepareAlluvialCost';doLast{assert cost.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('alluvialVisualDirectory').getOrElse('build/floodplain-evidence/visual270'))
+def visualReopen=providers.gradleProperty('alluvialVisualReopen').isPresent()
+loom.runs.register('alluvialVisual'){
+ client();runDir(visual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.alluvialVisual=true');vmArg('-Dblockbranch.alluvialVisualReopen='+visualReopen)
+ vmArg('-Dblockbranch.alluvialVisualDirectory='+visual.asFile.absolutePath)
+ programArgs('--username','AlluvialView','--width','1024','--height','576')
+}
+tasks.register('prepareAlluvialVisual'){doLast{
+ assert !visual.file('options.txt').asFile.exists():'Preserve captures; choose a fresh directory.'
+ if(visualReopen)assert visual.file('saves/AlluvialVisualReview/level.dat').asFile.exists():'Requires a copied authentic closed world.'
+ visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runAlluvialVisual'){dependsOn 'prepareAlluvialVisual';doLast{assert visual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('checkAlluvialSpawn',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialSpawnCheck';maxHeapSize='3G'}
+tasks.named('check'){dependsOn 'checkAlluvialSpawn'}

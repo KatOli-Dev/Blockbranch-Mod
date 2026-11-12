@@ -12,11 +12,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.levelgen.structure.*;
 /** Native forest, stony-floor and shrub views; no staged terrain or seasonal weather. */
 public final class CoolDesertVisualReview {
+    private static final boolean ALLUVIAL=Boolean.getBoolean("blockbranch.alluvialVisual");
     private static final boolean SEASONAL=Boolean.getBoolean("blockbranch.seasonalForestVisual");
     private static final boolean XERIC=Boolean.getBoolean("blockbranch.warmXericVisual");
-    private static final String WORLD=SEASONAL?"SeasonalForestVisualReview":XERIC?"WarmXericVisualReview":"CoolDesertVisualReview";
-    private static final Path DIR=Path.of(System.getProperty(SEASONAL?"blockbranch.seasonalForestVisualDirectory":XERIC?"blockbranch.warmXericVisualDirectory":"blockbranch.coolDesertVisualDirectory"));
-    private static final boolean REOPEN=Boolean.getBoolean(SEASONAL?"blockbranch.seasonalForestVisualReopen":"blockbranch.coolDesertVisualReopen");
+    private static final String WORLD=ALLUVIAL?"AlluvialVisualReview":SEASONAL?"SeasonalForestVisualReview":XERIC?"WarmXericVisualReview":"CoolDesertVisualReview";
+    private static final Path DIR=Path.of(System.getProperty(ALLUVIAL?"blockbranch.alluvialVisualDirectory":SEASONAL?"blockbranch.seasonalForestVisualDirectory":XERIC?"blockbranch.warmXericVisualDirectory":"blockbranch.coolDesertVisualDirectory"));
+    private static final boolean REOPEN=Boolean.getBoolean(ALLUVIAL?"blockbranch.alluvialVisualReopen":SEASONAL?"blockbranch.seasonalForestVisualReopen":"blockbranch.coolDesertVisualReopen");
     private static final long BEGAN=System.nanoTime();
     private static boolean opened,configured,saving;
     private static volatile boolean finished;
@@ -25,7 +26,7 @@ public final class CoolDesertVisualReview {
     private static volatile Throwable failure;
     private static BlockPos edge;
     private static int positionedView=-1;
-    private static final int[][] SCENES=SEASONAL?new int[][]{{1488000,-304000},{1520000,-336000},{1520436,-336512},{1488000,-304000}}:XERIC?new int[][]{{432000,-784000},{1328000,-496000},{399776,-784512},{432000,-784000}}:new int[][]{{400000,-1200000},{656000,1264000},{400000,-1200000}};
+    private static final int[][] SCENES=ALLUVIAL?new int[][]{{1478348,-996764},{1468516,-675537},{1710195,-894731},{1478348,-996764}}:SEASONAL?new int[][]{{1488000,-304000},{1520000,-336000},{1520436,-336512},{1488000,-304000}}:XERIC?new int[][]{{432000,-784000},{1328000,-496000},{399776,-784512},{432000,-784000}}:new int[][]{{400000,-1200000},{656000,1264000},{400000,-1200000}};
     private static int settled;
     private static BlockPos camera;
     private static final List<Object> records=new ArrayList<>();
@@ -57,21 +58,37 @@ public final class CoolDesertVisualReview {
                 int ex=edge.getX(),ey=edge.getY(),ez=edge.getZ();
                 int cameraX=ex-24,cameraZ=ez-30;
                 int cameraY=Math.max(ey+38,d.sample(cameraX,cameraZ).height()+38);
-                if(view==((XERIC||SEASONAL)?3:2)){
+                if(!ALLUVIAL&&view==((XERIC||SEASONAL)?3:2)){
                     outer:for(int dz=-16;dz<=16;dz++)for(int dx=-16;dx<=16;dx++){
                         int wx=ex+dx,wz=ez+dz,h=d.sample(wx,wz).height();var canopy=g.canopy(wx,wz,level.getChunkSource().randomState());
                         if(canopy.state(wx,h+1,wz)==null&&canopy.state(wx,h+2,wz)==null){cameraX=wx;cameraZ=wz;cameraY=h+1;break outer;}
                     }
                 }
+                if(ALLUVIAL){
+                    // Identical camera coordinates in both gate arms, derived from
+                    // original terrain. Only native generated content differs.
+                    var original=g.alluvialDefinition()>0?d.alluvialReference():d;ey=original.sample(ex,ez).height()+1;
+                    if(view<3){cameraY=Math.max(original.sample(ex,ez).height()+39,original.sample(cameraX,cameraZ).height()+39);}
+                    else{
+                        var proposed=new AlluvialFloodplain(original);boolean found=false;
+                        search:for(int dz=-24;dz<=24;dz++)for(int dx=-24;dx<=24;dx++){
+                            int wx=ex+dx,wz=ez+dz;var plan=proposed.plan(wx,wz);if(!plan.changed()||!plan.connectedCore())continue;
+                            int h=original.sample(wx,wz).height();
+                            if(plan.cut()<=2){cameraX=wx;cameraZ=wz;cameraY=h+2;found=true;break search;}
+                        }
+                        if(!found)throw new AssertionError("Bounded dry connected-bench camera");
+                    }
+                }
                 camera=new BlockPos(cameraX,cameraY,cameraZ);
+
                 var aim=new BlockPos(ex,ey,ez);
-                if(view==3&&!XERIC&&!SEASONAL)commands.performPrefixedCommand(source,"effect give "+player.getName().getString()+" minecraft:night_vision infinite 0 true");
+                if(view==3&&!XERIC&&!SEASONAL&&!ALLUVIAL)commands.performPrefixedCommand(source,"effect give "+player.getName().getString()+" minecraft:night_vision infinite 0 true");
                 subject=new BoundingBox(ex-40,ey-16,ez-40,ex+40,Math.max(ey+40,64),ez+40);
                 double cx=camera.getX()+.5,cy=camera.getY()+.2,cz=camera.getZ()+.5,dx=aim.getX()+.5-cx,dz=aim.getZ()+.5-cz,dy=aim.getY()+.5-(cy+player.getEyeHeight());
                 double yaw=Math.toDegrees(Math.atan2(-dx,dz)),pitch=Math.toDegrees(Math.atan2(-dy,Math.hypot(dx,dz)));
                 expectedYaw=(float)yaw;expectedPitch=(float)pitch;
                 commands.performPrefixedCommand(source,"tp "+player.getName().getString()+" "+cx+" "+cy+" "+cz+" "+yaw+" "+pitch);
-                records.add(Map.of("view",view,"camera",List.of(cx,cy,cz),"yaw",yaw,"pitch",pitch,"nightVision",view==3&&!XERIC&&!SEASONAL,"target",List.of(ex,ey,ez),"gate",SEASONAL?g.seasonalForestDefinition():XERIC?g.warmXericDefinition():g.coolDesertDefinition()));
+                records.add(Map.of("view",view,"camera",List.of(cx,cy,cz),"yaw",yaw,"pitch",pitch,"nightVision",view==3&&!XERIC&&!SEASONAL&&!ALLUVIAL,"target",List.of(ex,ey,ez),"gate",ALLUVIAL?g.alluvialDefinition():SEASONAL?g.seasonalForestDefinition():XERIC?g.warmXericDefinition():g.coolDesertDefinition()));
                 posed=true;
             }
             catch(Throwable t) {
@@ -101,7 +118,7 @@ public final class CoolDesertVisualReview {
                 if(!configured&&screen instanceof CreateWorldScreen create) {
                     var state=create.getUiState();
                     state.setName(WORLD);
-                    state.setSeed(SEASONAL?"1":"424242");
+                    state.setSeed((SEASONAL||ALLUVIAL)?"1":"424242");
                     state.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE);
                     state.setAllowCommands(true);
                     state.setWorldType(state.getNormalPresetList().stream().filter(e->e.preset().unwrapKey().orElseThrow().identifier().toString().equals("blockbranch:realistic")).findFirst().orElseThrow());
@@ -159,7 +176,7 @@ public final class CoolDesertVisualReview {
                 }
                 if(++settled<80)return;
                 saving=true;
-                String file=(REOPEN?"reopen-":"")+(SEASONAL?"seasonal-forest-":XERIC?"warm-xeric-":"cool-desert-")+view+".png";
+                String file=(REOPEN?"reopen-":"")+(ALLUVIAL?"alluvial-":SEASONAL?"seasonal-forest-":XERIC?"warm-xeric-":"cool-desert-")+view+".png";
                 net.minecraft.client.Screenshot.grab(client.gameDirectory,file,client.gameRenderer.mainRenderTarget(),1,message->client.execute(()-> {
                     if(!Files.exists(DIR.resolve("screenshots/"+file)))failure=new AssertionError("Native capture missing");
                     view++;

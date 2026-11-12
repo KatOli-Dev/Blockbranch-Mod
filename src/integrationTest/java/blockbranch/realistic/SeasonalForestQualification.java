@@ -27,8 +27,9 @@ public final class SeasonalForestQualification {
             var level=server.overworld();var random=level.getChunkSource().randomState();require(random.seed()==SEED,"Disclosed native seed");
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==269,"Actual saved refinement");
+            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.alluvialDefinition()==1?270:269),"Actual saved refinement");
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Flat exact codec roundtrip");
+            AlluvialFixtures.published269(fresh);
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);
             var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.seasonalForestDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent retains complete268 exactly");
