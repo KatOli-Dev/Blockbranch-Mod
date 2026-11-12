@@ -25,9 +25,23 @@ loom.runs.register('borealSlopeQualification'){
 }
 tasks.register('prepareBorealSlopeQualification'){doLast{
  slopeDir.file('result.txt').asFile.delete()
- if(slopeMode=='record270')assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ if(slopeMode in ['record270','fresh271'])assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert slopeDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  slopeDir.asFile.mkdirs();slopeDir.file('eula.txt').asFile.text='eula=true\n'
  slopeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25629\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=1\nmax-tick-time=0\n'
 }}
 tasks.named('runBorealSlopeQualification'){dependsOn 'prepareBorealSlopeQualification';doLast{assert slopeDir.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Native elevated/ground captures; evidence only, never a check threshold.
+def slopeVisual=layout.projectDirectory.dir(providers.gradleProperty('borealSlopeVisualDirectory').getOrElse('build/boreal-slope-evidence/visual-NEW'))
+loom.runs.register('borealSlopeVisual'){
+ client();runDir(slopeVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.borealSlopeVisual=true');vmArg('-Dblockbranch.borealSlopeVisualDirectory='+slopeVisual.asFile.absolutePath)
+ if(providers.gradleProperty('borealSlopeReferenceViews').isPresent())vmArg('-Dblockbranch.borealSlopeReferenceViews='+layout.projectDirectory.file(providers.gradleProperty('borealSlopeReferenceViews').get()).asFile.absolutePath)
+ programArgs('--username','SlopeView','--width','1024','--height','576')
+}
+tasks.register('prepareBorealSlopeVisual'){doLast{
+ assert !slopeVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ slopeVisual.asFile.mkdirs();slopeVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runBorealSlopeVisual'){dependsOn 'prepareBorealSlopeVisual';doLast{assert slopeVisual.file('result.txt').asFile.text.startsWith('PASS')}}

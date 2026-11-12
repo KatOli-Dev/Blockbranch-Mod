@@ -143,7 +143,7 @@ public final class WoodlandTrees {
         roots.addAll(ColdUplands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
         roots.removeIf(root->Badlands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         roots.addAll(Badlands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
-        var boreal=BorealTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
+        var boreal=BorealTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,BorealSlope.relief(transitions));
         boreal.removeIf(root->ColdUplands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         var geometry=new ArrayList<Voxel>();
         for(var root:roots) geometry.addAll(root.family()==15?TaigaTrees.tree(root):tree(root));
