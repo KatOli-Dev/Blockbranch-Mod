@@ -1,0 +1,35 @@
+// Record against the complete published tree before production edits; reopen a
+// copy under the candidate to compare independent observable hashes and edits.
+def original=layout.projectDirectory.dir(providers.gradleProperty('published267Directory').getOrElse('build/xeric-evidence/published267'))
+def reopen=providers.gradleProperty('published267Reopen').isPresent()
+def frozen267=layout.projectDirectory.file('src/integrationTest/resources/blockbranch-fixtures/warm-xeric-reader-267/baseline.json')
+def snapshot267=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published267Snapshot.java')
+def preset267=layout.projectDirectory.file('src/integrationTest/resources/data/blockbranch/worldgen/world_preset/warm_xeric_baseline.json')
+loom.runs.register('published267Snapshot') {
+ server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.published267Snapshot=true');vmArg('-Dblockbranch.published267Reopen='+reopen)
+ vmArg('-Dblockbranch.published267SnapshotResult='+original.file(reopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished267Snapshot'){doLast{
+ if(reopen)assert original.file('survey/level.dat').asFile.exists():'Requires authentic closed267 world.'
+ else assert !original.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+ original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25626\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished267Snapshot'){dependsOn 'preparePublished267Snapshot';doFirst{
+ if(reopen)assert original.file('baseline.json').asFile.bytes==frozen267.asFile.bytes:'Reopen must use the frozen original oracle.'
+};doLast{assert original.file(reopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('verifyWarmXericReader'){
+ def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/warm-xeric-reader-267')
+ inputs.dir(fixture);inputs.file(snapshot267);inputs.file(preset267)
+ doLast{
+  def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+  def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+  assert origin.commit=='3bb04b3096d4a91c69830e7abd1e3804c8715fb6'
+  assert hash(fixture.file('baseline.json').asFile)==origin.baselineSha256
+  assert hash(snapshot267.asFile)==origin.collectorSha256
+  assert hash(preset267.asFile)==origin.presetSha256
+ }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyWarmXericReader'}

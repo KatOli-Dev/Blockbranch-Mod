@@ -88,6 +88,7 @@ public final class BlockbranchTestMod implements ModInitializer {
         if (Boolean.getBoolean("blockbranch.landIceQualification")) blockbranch.realistic.LandIceQualification.register();
         if (Boolean.getBoolean("blockbranch.published262Snapshot")) blockbranch.realistic.Published262Snapshot.register();
         if (Boolean.getBoolean("blockbranch.published264Snapshot")) blockbranch.realistic.Published264Snapshot.register();
+        if (Boolean.getBoolean("blockbranch.published267Snapshot")) blockbranch.realistic.Published267Snapshot.register();
         if (Boolean.getBoolean("blockbranch.polarCost")) blockbranch.realistic.PolarCostProbe.register();
         if (Boolean.getBoolean("blockbranch.polarQualification")) blockbranch.realistic.ContinentalIceQualification.register();
         if (Boolean.getBoolean("blockbranch.published263Snapshot")) blockbranch.realistic.Published263Snapshot.register();

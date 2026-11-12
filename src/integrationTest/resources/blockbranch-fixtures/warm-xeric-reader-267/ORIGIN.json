@@ -1,0 +1,15 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "3bb04b3096d4a91c69830e7abd1e3804c8715fb6",
+  "productionTrees": {
+    "src/main": "3f5a0a2426ecccc1d7ab121092fbeda14b56cfe6",
+    "src/client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+  },
+  "recording": "runPublished267Snapshot in a JVM compiled before production edits; git diff --exit-code 3bb04b3 -- src/main src/client passed before recording",
+  "collector": "src/integrationTest/java/blockbranch/realistic/Published267Snapshot.java",
+  "collectorSha256": "bf8d9bb8ad77eda306b162dc934ed1e0494e82b08bafaaaff7f75c4dbc7e3f7e",
+  "baselineSha256": "1c4b08480c6dbbc05aad7d02657058107783187bbcfb7876189469b789e3f114",
+  "preset": "src/integrationTest/resources/data/blockbranch/worldgen/world_preset/warm_xeric_baseline.json",
+  "presetSha256": "0085a734909683f0d1cc426616c34f4f72d7730d9b76478714e0b4f240347343",
+  "scope": "Three 14400-point selector/terrain/climate grids; ten fixed native/profile/physical witnesses; a saved gold edit. Finite observable hashes, not global compatibility proof. No production content."
+}
