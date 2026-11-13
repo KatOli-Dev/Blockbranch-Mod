@@ -16,7 +16,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 public final class LakeReedVisualReview {
     private static final Path DIR=Path.of(System.getProperty("blockbranch.lakeReedVisualDirectory","build/lake-reed-evidence/disabled-visual"));
     private static final long BEGAN=System.nanoTime();
-    /** Site of the audited swamp; views 0 and 1 are the audit's views 6 (elevated) and 7 (root level) exactly. */
+    /** Site of the audited swamp; views 0 and 1 are the audit's views 2 (elevated) and 3 (underwater) exactly; view 4 is a close-up of one stacked reed column found by scanning the generated blocks. */
     private static final int SITE_X=464000,SITE_Z=1008000;
     /** camera x,y,z, yaw, pitch, night vision. */
     private static final double[][] POSES={
@@ -24,6 +24,24 @@ public final class LakeReedVisualReview {
         {463984.5,301.2,1007984.5,-45.0,-2.4293971074759013,1},
         {463990.5,304.7,1007990.5,-45.0,0.0,0},
         {463968.5,304.7,1008000.5,-90.0,0.0,0}};
+    private static final int VIEWS=5;
+    private static volatile double[] closeUp;
+    private static double[] pose(int view){return view<POSES.length?POSES[view]:closeUp;}
+    /** First column (scan order) with three stacked reed blocks rooted at y=301 on the mud; with no reed in a three-wide lane of seven blocks to its west, so the view is not blocked; the camera stands on the bed five blocks west, looking east at its middle (underwater, night vision like the audit's view 3). */
+    private static double[] stack(net.minecraft.server.level.ServerLevel level){
+        for(int z=SITE_Z-40;z<=SITE_Z+40;z++)for(int x=SITE_X-40;x<=SITE_X+40;x++){
+            var chunk=level.getChunkSource().getChunkNow(x>>4,z>>4);if(chunk==null)continue;
+            for(int y=301;y<=301;y++){
+                boolean stacked=true;for(int k=0;k<3;k++)stacked&=chunk.getBlockState(new BlockPos(x,y+k,z)).is(ReedbedContent.LAKE_REED);
+                if(!stacked)continue;
+                boolean open=true;for(int k=1;k<=7&&open;k++)for(int dz=-1;dz<=1&&open;dz++){var c=level.getChunkSource().getChunkNow((x-k)>>4,(z+dz)>>4);if(c==null){open=false;break;}for(int dy=0;dy<=3;dy++)if(c.getBlockState(new BlockPos(x-k,y+dy,z+dz)).is(ReedbedContent.LAKE_REED))open=false;}
+                if(!open)continue;
+                double eye=301.0+1.62,dy=y+1.5-eye;
+                return new double[]{x+.5-5,301.0,z+.5,-90.0,Math.toDegrees(Math.atan2(-dy,5.0)),1};
+            }
+        }
+        throw new AssertionError("No three-block reed stack rooted at y=301 in the scene window");
+    }
     private static boolean opened,configured,saving;
     private static volatile boolean finished,posed;
     private static volatile int view;
@@ -42,16 +60,19 @@ public final class LakeReedVisualReview {
                 level.getGameRules().set(net.minecraft.world.level.gamerules.GameRules.ADVANCE_TIME,false,server);
                 if(posed){player.getAbilities().flying=true;player.onUpdateAbilities();player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);return;}
                 var g=(RealisticGenerator)level.getChunkSource().getGenerator();
-                if(view==POSES.length){
+                if(view==VIEWS){
                     int reeds=0;for(int z=SITE_Z-40;z<=SITE_Z+40;z++)for(int x=SITE_X-40;x<=SITE_X+40;x++){var chunk=level.getChunkSource().getChunkNow(x>>4,z>>4);if(chunk==null)continue;for(int y=295;y<=312;y++)if(chunk.getBlockState(new BlockPos(x,y,z)).is(ReedbedContent.LAKE_REED))reeds++;}
-                    Files.writeString(DIR.resolve("result.txt"),"PASS native lake-reed views; "+reeds+" reed blocks in the 81 x 81 m window y295..312; no staged terrain");finished=true;return;}
+                    String biome=level.getBiome(new BlockPos(SITE_X,301,SITE_Z)).unwrapKey().orElseThrow().identifier().toString();
+                    if(reeds==0||!biome.equals("blockbranch:inland_lake_reedbed"))throw new AssertionError("Wrong scene: "+reeds+" reed blocks, biome "+biome);
+                    Files.writeString(DIR.resolve("result.txt"),"PASS native lake-reed views; "+reeds+" reed blocks in the 81 x 81 m window y295..312; target biome "+biome+"; no staged terrain");finished=true;return;}
                 var commands=server.getCommands();var source=server.createCommandSourceStack();
                 commands.performPrefixedCommand(source,"time set noon");commands.performPrefixedCommand(source,"weather clear");
                 if(view==0){
                     for(int cz=(SITE_Z-64)>>4;cz<=(SITE_Z+64)>>4;cz++)for(int cx=(SITE_X-64)>>4;cx<=(SITE_X+64)>>4;cx++)level.setChunkForced(cx,cz,true);
                     Files.writeString(DIR.resolve("generator.json"),RealisticGenerator.CODEC.codec().encodeStart(net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess()),g).getOrThrow().toString());
                 }
-                var p=POSES[view];
+                if(view==4&&closeUp==null)closeUp=stack(level);
+                var p=pose(view);
                 if(p[5]>0)commands.performPrefixedCommand(source,"effect give "+player.getName().getString()+" minecraft:night_vision infinite 0 true");else commands.performPrefixedCommand(source,"effect clear "+player.getName().getString()+" minecraft:night_vision");
                 commands.performPrefixedCommand(source,"tp "+player.getName().getString()+" "+p[0]+" "+p[1]+" "+p[2]+" "+p[3]+" "+p[4]);
                 records.add(Map.of("view",view,"camera",List.of(p[0],p[1],p[2]),"yaw",p[3],"pitch",p[4],"seed",level.getSeed(),"nightVision",p[5]>0,"biome",level.getBiome(new BlockPos(SITE_X,301,SITE_Z)).unwrapKey().orElseThrow().identifier().toString()));
@@ -79,8 +100,8 @@ public final class LakeReedVisualReview {
                     configured=true;press(create,"Create New World");return;
                 }
                 if(screen!=null&&screen.getClass().getSimpleName().equals("ConfirmExperimentalFeaturesScreen")) {press(screen,"Proceed");return;}
-                if(!posed||client.level==null||client.player==null||view>=POSES.length)return;
-                var p=POSES[view];
+                if(!posed||client.level==null||client.player==null||view>=VIEWS)return;
+                var p=pose(view);
                 client.player.getAbilities().flying=true;client.player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
                 if(client.player.position().distanceToSqr(new net.minecraft.world.phys.Vec3(p[0],p[1],p[2]))>.001||Math.abs(net.minecraft.util.Mth.wrapDegrees(client.player.getYRot()-(float)p[3]))>.02||Math.abs(client.player.getXRot()-(float)p[4])>.02) {settled=0;return;}
                 client.options.fov().set(65);client.gui.toastManager().clear();

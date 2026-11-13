@@ -6,7 +6,7 @@
       },
       {
         "model": "blockbranch:block/lake_reed_stem",
-        "y": 90
+        "y": 180
       }
     ],
     "tip=true": [
@@ -15,7 +15,7 @@
       },
       {
         "model": "blockbranch:block/lake_reed_tip",
-        "y": 90
+        "y": 180
       }
     ]
   }

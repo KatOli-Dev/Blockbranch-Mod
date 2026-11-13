@@ -28,19 +28,6 @@ def blank():
     return [['.'] * 16 for _ in range(16)]
 
 
-def put(grid, cells, ch, thick=False):
-    for x, y in cells:
-        if not (0 <= x < 16 and 0 <= y < 16):
-            raise AssertionError(('blade leaves the texture', x, y))
-        free = grid[y][x] == '.'
-        if thick:
-            if free:
-                grid[y][x] = ch
-        else:
-            assert free or grid[y][x] in 'sc', (x, y, grid[y][x])
-            grid[y][x] = ch
-
-
 def strap(grid, cells, below, above=None):
     """Draw a leaf as a filled lens: `cells` is the centre line (base first), `below`/`above` the extra cells under/over it.
 
