@@ -15,7 +15,9 @@ public final class ForestTrees {
         if(birchDominant&&!birch)height=Math.min(height,12);
         return new WoodlandTrees.Root(point.x(),terrain.height()+1,point.z(),birch,height,(int)(v>>>32),birchDominant?2:1);
     }
-    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root){
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root){return tree(root,false);}
+    /** {@code scaffold} selects {@link BroadleafCrowns} for ordinary-forest oaks only; every other caller and family keeps the published crown. */
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold){
         int wood=root.birch()?4:1,h=root.height();long seed=OakBirchWoodland.mix(root.variant()^0x464F52455354464FL);double angle=unit(seed^11)*Math.PI*2;
         byte[] grid=new byte[PLANE*MAX_HEIGHT],distance=new byte[grid.length];Arrays.fill(distance,(byte)7);var crowns=new ArrayList<Crown>();
         int lean=(root.family()==2||root.family()==TemperateForestVariants.BIRCH_FAMILY)?(int)Long.remainderUnsigned(seed,3):1+(int)Long.remainderUnsigned(seed,2),fork=Math.max(2,(int)(h*(root.birch()?.42+.12*unit(seed^19):.30+.20*unit(seed^19))));
@@ -37,6 +39,8 @@ public final class ForestTrees {
             var top=end(stem,angle,.6,h-2);segment(grid,stem,top,wood);int arms=3+(int)Long.remainderUnsigned(seed>>>8,3);
             for(int n=0;n<arms;n++){long v=OakBirchWoodland.mix(seed+n*997);int by=1+(int)((h-4)*(n+.3+.4*unit(v))/arms);var start=attach(grid,by);var tip=end(start,angle+n*2.39996,1.3+unit(v^17)*1.6,Math.min(h-2,by+1+(int)Long.remainderUnsigned(v>>>20,2)));branch(grid,start,tip,wood,v);crowns.add(crown(tip.x()*.8,tip.y()+.4,tip.z()*.8,1.9+unit(v)*.7,1.8+unit(v^37),1.8+unit(v^53),v));}
             crowns.add(crown(top.x(),h-2,top.z(),2.1,2.0,2.2,seed^151));
+        }else if(scaffold&&root.family()==1){
+            scaffoldOak(grid,crowns,stem,h,seed,angle,wood);
         }else{
             // Mature oaks have unequal scaffold limbs; their forks and crowns are not scaled sapling balls.
             var leader=end(stem,angle,.5,h-2);segment(grid,stem,leader,wood);int arms=2+(int)Long.remainderUnsigned(seed>>>8,h<17?2:4);double s=Math.max(1,h/22.0);
@@ -66,6 +70,31 @@ public final class ForestTrees {
         int[] queue=new int[grid.length];int head=0,tail=0;for(int i=0;i<grid.length;i++)if(grid[i]>=1&&grid[i]<=6){distance[i]=0;queue[tail++]=i;}
         while(head<tail){int i=queue[head++],x=i%S-R,z=i/S%S-R,y=i/PLANE;if(distance[i]>=6)continue;for(var step:DIR){int nx=x+step[0],ny=y+step[1],nz=z+step[2];if(Math.abs(nx)>R||Math.abs(nz)>R||ny<0||ny>=MAX_HEIGHT)continue;int next=index(nx,ny,nz);if(grid[next]==19&&distance[next]>distance[i]+1){distance[next]=(byte)(distance[i]+1);queue[tail++]=next;}}}
         var result=new ArrayList<WoodlandTrees.Voxel>();for(int y=0;y<MAX_HEIGHT;y++)for(int z=-R;z<=R;z++)for(int x=-R;x<=R;x++){int i=index(x,y,z),code=grid[i];if(code==19)code=distance[i]>6?0:(root.birch()?12:6)+distance[i];if(code!=0)result.add(new WoodlandTrees.Voxel(root.x()+x,root.y()+y,root.z()+z,code));}return result;
+    }
+    /** Decurrent oak: the trunk divides below the apex into oblique limbs whose tips carry separate lobes.
+     * Crown top, spread bounds and attachment rules match the published oak; only the arrangement differs. */
+    private static void scaffoldOak(byte[] grid,List<Crown> crowns,Node stem,int h,long seed,double angle,int wood){
+        double s=Math.max(1,h/22.0),r=Math.sqrt(s);
+        int floor=Math.max(stem.y()+1,3),leaderTop=Math.max(floor+2,(int)Math.round(h*(.60+.10*unit(seed^307))));
+        var leader=end(stem,angle+.6,.8,leaderTop);segment(grid,stem,leader,wood);
+        int arms=3+(h>=17?1:0)+(int)Long.remainderUnsigned(seed>>>8,h<17?1:3);
+        double lowest=Math.max(floor+2,h*.54);
+        for(int n=0;n<arms;n++){
+            long v=OakBirchWoodland.mix(seed+n*1237);double a=angle+1.2+n*2.39996+(unit(v^13)-.5)*1.1;
+            int tipY=(int)Math.round(lowest+(h-5-lowest)*unit(v^7));
+            double reach=(2.6+unit(v^29)*2.6)*r,rise=reach*(.55+unit(v^31)*1.0);
+            int by=Math.clamp(tipY-(int)Math.round(rise),floor,leaderTop-1);var start=attach(grid,by);
+            var tip=end(start,a,reach,Math.max(by+1,tipY));branch(grid,start,tip,wood,v);
+            double lobe=1.0+.25*unit(v^47);
+            crowns.add(crown(tip.x()*.9,tip.y()+.5,tip.z()*.9,(2.5+unit(v)*.9)*r*lobe,(2.2+unit(v^43)*.8)*r,(2.4+unit(v^79)*1.0)*r*lobe,v));
+            if(reach>=3.7*r&&(v&3)!=0){
+                double b=a+(((v>>>5)&1)==0?1:-1)*(.7+unit(v^53)*.6);var twig=end(tip,b,1.6,Math.min(h-4,tip.y()+((v&8)==0?0:1)));branch(grid,tip,twig,wood,v^277);
+                crowns.add(crown(twig.x()*.9,twig.y()+.4,twig.z()*.9,1.9+unit(v^59)*.5,1.7+unit(v^61)*.4,1.9+unit(v^67)*.5,v^331));
+            }
+        }
+        // The apex rides a short limb off the divided leader, so no straight pole runs through the crown.
+        var apex=end(leader,angle+2.2+unit(seed^313)*2.0,1.0+unit(seed^317)*1.2,h-2);branch(grid,leader,apex,wood,seed^337);
+        crowns.add(crown(apex.x()*.9,h-2.6,apex.z()*.9,(2.7+unit(seed^41)*.7)*r,(2.3+unit(seed^73)*.6)*r,(2.7+unit(seed^101)*.7)*r,seed^151));
     }
     /** Birch-led stands use one asymmetric oval envelope,not a vertical stack of limb-tip balls. */
     private static void birchCrown(byte[] grid,List<Crown> crowns,Node stem,int h,long seed,double angle,int wood){

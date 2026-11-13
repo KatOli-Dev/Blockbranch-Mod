@@ -1,0 +1,33 @@
+// Native views of the audited seed-1 ordinary-forest witnesses: bundled preset (gated oak crowns) versus the same
+// build's gate-absent baseline preset. Evidence only, never a check threshold.
+def rootsVisual=layout.projectDirectory.dir(providers.gradleProperty('broadleafCrownsVisualDirectory').getOrElse('build/broadleaf-crowns-evidence/visual-NEW'))
+def rootsBaseline=providers.gradleProperty('broadleafCrownsVisualBaseline').isPresent()
+loom.runs.register('broadleafCrownsVisual'){
+ client();runDir(rootsVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.broadleafCrownsVisual=true');vmArg('-Dblockbranch.broadleafCrownsVisualBaseline='+rootsBaseline)
+ vmArg('-Dblockbranch.broadleafCrownsVisualDirectory='+rootsVisual.asFile.absolutePath)
+ programArgs('--username','BroadleafView','--width','1024','--height','576')
+}
+tasks.register('prepareBroadleafCrownsVisual'){doLast{
+ assert !rootsVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ rootsVisual.asFile.mkdirs();rootsVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runBroadleafCrownsVisual'){dependsOn 'prepareBroadleafCrownsVisual';doLast{assert rootsVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Native generated-chunk witnesses at the audited forest sites (seed 1); see BroadleafCrownsQualification for the modes.
+def rootsDir=layout.projectDirectory.dir(providers.gradleProperty('broadleafCrownsDirectory').getOrElse('build/broadleaf-crowns-native'))
+def rootsMode=providers.gradleProperty('broadleafCrownsMode').getOrElse('fresh274')
+def rootsBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('broadleafCrownsBaseline').getOrElse('build/broadleaf-crowns-evidence/baseline273/baseline.txt')).asFile.absolutePath
+loom.runs.register('broadleafCrownsQualification'){
+ server();runDir(rootsDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.broadleafCrownsMode='+rootsMode);vmArg('-Dblockbranch.broadleafCrownsDirectory='+rootsDir.asFile.absolutePath);vmArg('-Dblockbranch.broadleafCrownsBaseline='+rootsBaselineDigests)
+}
+tasks.register('prepareBroadleafCrownsQualification'){doLast{
+ assert rootsMode in ['baseline273','fresh274','verify274','legacy273']:'Unknown broadleafCrownsMode '+rootsMode
+ rootsDir.file('result.txt').asFile.delete()
+ if(rootsMode in ['baseline273','fresh274'])assert !rootsDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert rootsDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ rootsDir.asFile.mkdirs();rootsDir.file('eula.txt').asFile.text='eula=true\n'
+ rootsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25641\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(rootsMode=='baseline273'?'blockbranch:broadleaf_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runBroadleafCrownsQualification'){dependsOn 'prepareBroadleafCrownsQualification';doLast{assert rootsDir.file('result.txt').asFile.text.startsWith('PASS')}}

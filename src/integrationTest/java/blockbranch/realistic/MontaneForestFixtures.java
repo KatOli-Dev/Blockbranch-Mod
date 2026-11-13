@@ -1,9 +1,16 @@
 package blockbranch.realistic;
 import com.google.gson.JsonObject;
-/** QA-only explicit prerequisite views (mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
+/** QA-only explicit prerequisite views (broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
 final class MontaneForestFixtures {
-    /** Complete boreal slope 272: removes only the explicit mangrove roots wrapper. */
+    /** Complete mangrove roots 273: removes only the explicit broadleaf crowns wrapper. */
+    static void mangrove273(JsonObject json){
+        if(!json.has("broadleaf_crown_definition"))return;
+        if(json.get("shape_version").getAsInt()!=274||json.get("broadleaf_crown_definition").getAsInt()!=1)throw new AssertionError("Complete broadleaf crowns wrapper required");
+        json.remove("broadleaf_crown_definition");json.addProperty("shape_version",273);
+    }
+    /** Complete boreal slope 272: removes the broadleaf crowns and mangrove roots wrappers. */
     static void boreal272(JsonObject json){
+        mangrove273(json);
         if(!json.has("mangrove_roots_definition"))return;
         if(json.get("shape_version").getAsInt()!=273||json.get("mangrove_roots_definition").getAsInt()!=1)throw new AssertionError("Complete mangrove roots wrapper required");
         json.remove("mangrove_roots_definition");json.addProperty("shape_version",272);

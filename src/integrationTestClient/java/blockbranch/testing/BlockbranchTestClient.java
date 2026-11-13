@@ -10,6 +10,7 @@ public final class BlockbranchTestClient implements ClientModInitializer {
         if(Boolean.getBoolean("blockbranch.polarVisual"))blockbranch.realistic.PolarVisualReview.register();
         if(Boolean.getBoolean("blockbranch.leafLitterVisual"))blockbranch.realistic.LeafLitterVisualReview.register();
         if(Boolean.getBoolean("blockbranch.borealSlopeVisual"))blockbranch.realistic.BorealSlopeVisualReview.register();
+        if(Boolean.getBoolean("blockbranch.broadleafCrownsVisual"))blockbranch.realistic.BroadleafCrownsVisualReview.register();
         if(Boolean.getBoolean("blockbranch.mangroveRootsVisual"))blockbranch.realistic.MangroveRootsVisualReview.register();
         if(Boolean.getBoolean("blockbranch.summerDryVisual"))blockbranch.realistic.SummerDryVisualReview.register();
         if(Boolean.getBoolean("blockbranch.deepBasinVisual"))blockbranch.realistic.DeepBasinVisualReview.register();

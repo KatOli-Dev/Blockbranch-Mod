@@ -52,7 +52,13 @@ public final class WoodlandTrees {
         return DappledForest.contains(seed,x,z,drainage,climate)||DarkCherryWoodland.kind(seed,x,z,drainage,climate)==DarkCherryWoodland.DARK;
     }
     /** Codes 1..6 are oak/birch logs on Y/X/Z; 7..18 are leaves at support distance 1..6. */
-    public static List<Voxel> tree(Root root) { return root.family()==DappledForest.FAMILY?DappledForest.tree(root):root.family()==12||root.family()==13?JungleTrees.tree(root):root.family()==10||root.family()==11?DarkCherryWoodland.tree(root):root.family()==3?SwampTrees.tree(root):root.family()==RedwoodForest.FAMILY?RedwoodTrees.tree(root):root.family()>0?ForestTrees.tree(root):shape(root,false); }
+    /** Roots produced by {@link #roots}; cold-upland and badland oaks share family 1 but are not ordinary forest. */
+    static Set<Root> ordinary(Collection<Root> roots){var set=Collections.newSetFromMap(new IdentityHashMap<Root,Boolean>());set.addAll(roots);return set;}
+    /** The broadleaf-crown bit applies only to roots that {@link #roots} itself produced. */
+    static int flagsFor(Set<Root> ordinary,Root root,int flags){return ordinary.contains(root)?flags:flags&~BroadleafCrowns.FLAG;}
+    public static List<Voxel> tree(Root root) { return tree(root,0); }
+    /** {@code flags} are saved vegetation flags; only {@link BroadleafCrowns#FLAG} changes ordinary-forest oak geometry. */
+    public static List<Voxel> tree(Root root,int flags) { return root.family()==DappledForest.FAMILY?DappledForest.tree(root):root.family()==12||root.family()==13?JungleTrees.tree(root):root.family()==10||root.family()==11?DarkCherryWoodland.tree(root):root.family()==3?SwampTrees.tree(root):root.family()==RedwoodForest.FAMILY?RedwoodTrees.tree(root):root.family()>0?ForestTrees.tree(root,BroadleafCrowns.enabled(flags)):shape(root,false); }
     public static List<Voxel> humidTree(Root root) { return shape(root,true); }
     private static List<Voxel> shape(Root root,boolean humid) {
         int size=RADIUS*2+1,height=humid?HUMID_HEIGHT:MAX_HEIGHT,count=size*size*height;
@@ -142,6 +148,7 @@ public final class WoodlandTrees {
         int minX=chunkX*16,minZ=chunkZ*16,halo=6,width=16+halo*2;
         int startX=minX-halo,startZ=minZ-halo;
         var roots=new ArrayList<>(roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,transitions));
+        var ordinary=ordinary(roots);
         roots.removeIf(root->ColdUplands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         roots.addAll(ColdUplands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
         roots.removeIf(root->Badlands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
@@ -154,7 +161,7 @@ public final class WoodlandTrees {
         var boreal=BorealTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,BorealSlope.relief(transitions));
         boreal.removeIf(root->ColdUplands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         var geometry=new ArrayList<Voxel>();
-        for(var root:roots) geometry.addAll(root.family()==15||root.family()==MontaneForest.FAMILY?TaigaTrees.tree(root):tree(root));
+        for(var root:roots) geometry.addAll(root.family()==15||root.family()==MontaneForest.FAMILY?TaigaTrees.tree(root):tree(root,flagsFor(ordinary,root,transitions)));
         for(var root:boreal) geometry.addAll(whorled?BorealTrees.tree(root):BorealTrees.legacyTree(root));
         roots.addAll(boreal);
         var warm=WarmTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
