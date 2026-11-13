@@ -5,7 +5,13 @@ import java.util.*;
 public final class WoodlandDetails {
     public static int[] logs(long seed,int cx,int cz,DrainageNetwork d,ClimateField c){return logs(seed,cx,cz,d,c,0);}
     public static int[] logs(long seed,int cx,int cz,DrainageNetwork d,ClimateField c,int transitions){
-        var base=SwampCanopy.merge(wetLogs(seed,cx,cz,d,c),temperateLogs(seed,cx,cz,d,c,transitions));
+        return logs(seed,cx,cz,d,c,transitions,null);
+    }
+    public static int[] logs(long seed,int cx,int cz,DrainageNetwork d,ClimateField c,int transitions,java.util.function.BiPredicate<Integer,Integer> montane){
+        if((transitions&MontaneForest.FLAG)!=0&&montane==null)throw new IllegalArgumentException("Montane deadwood requires saved ownership");
+        // Saved vegetation bits own suppression even if a caller supplies a newer owner.
+        if((transitions&MontaneForest.FLAG)==0)montane=null;
+        var base=SwampCanopy.merge(wetLogs(seed,cx,cz,d,c),temperateLogs(seed,cx,cz,d,c,transitions,montane));
         return RedwoodForest.enabled(transitions)?SwampCanopy.merge(base,redwoodLogs(seed,cx,cz,d,c)):base;
     }
     /**
@@ -58,6 +64,9 @@ public final class WoodlandDetails {
         return temperateLogs(seed,cx,cz,d,c,0);
     }
     static int[] temperateLogs(long seed,int cx,int cz,DrainageNetwork d,ClimateField c,int transitions){
+        return temperateLogs(seed,cx,cz,d,c,transitions,null);
+    }
+    private static int[] temperateLogs(long seed,int cx,int cz,DrainageNetwork d,ClimateField c,int transitions,java.util.function.BiPredicate<Integer,Integer> montane){
         var out=new TreeMap<Integer,Integer>();int minX=cx*16,minZ=cz*16,scale=48;
         for(int gz=Math.floorDiv(minZ-8,scale);gz<=Math.floorDiv(minZ+23,scale);gz++)for(int gx=Math.floorDiv(minX-8,scale);gx<=Math.floorDiv(minX+23,scale);gx++){
             long h=OakBirchWoodland.mix(seed^0x46414C4C454E4C4FL^gx*0x9E3779B97F4A7C15L^gz*0xC2B2AE3D27D4EB4FL);if((h>>>11)*0x1.0p-53>.65)continue;
@@ -68,6 +77,11 @@ public final class WoodlandDetails {
             for(int oz=-1;oz<=1;oz++)for(int ox=-1;ox<=1;ox++){if(ox==0&&oz==0)continue;long q=OakBirchWoodland.mix(seed^0x46414C4C454E4C4FL^(gx+ox)*0x9E3779B97F4A7C15L^(gz+oz)*0xC2B2AE3D27D4EB4FL);if((q>>>11)*0x1.0p-53>.65||Long.compareUnsigned(q,h)>=0)continue;int qx=(gx+ox)*scale+(int)Long.remainderUnsigned(q>>>8,scale),qz=(gz+oz)*scale+(int)Long.remainderUnsigned(q>>>16,scale);if(Math.hypot(qx-x,qz-z)<14)crowded=true;}
             if(crowded||!temperate(seed,x,z,d,c))continue;int y=d.sample(x,z).height()+1;boolean valid=true;
             for(int n=0;n<length;n++){int wx=x+(east?n*direction:0),wz=z+(east?0:n*direction);var q=d.sample(wx,wz);if(q.height()+1!=y||q.waterLevel()!=DrainageNetwork.DRY||d.channelAt(wx,wz).edge()>=0||LandVegetation.reserved(d,wx,wz)||!temperate(seed,wx,wz,d,c))valid=false;}
+            // This old hardwood-deadwood sampler knows only old standing roots.
+            // Reject a complete log touching new needleleaf ownership before
+            // chunk clipping, rather than intersect new stems or leave stubs.
+            // Dedicated conifer deadwood remains an unrepresented floor detail.
+            if(montane!=null)for(int n=0;n<length;n++)if(montane.test(x+(east?n*direction:0),z+(east?0:n*direction)))valid=false;
             if(!valid)continue;
             var roots=WoodlandTrees.roots(seed,x-14,z-14,x+14,z+14,d,c,transitions);
             for(var root:roots){for(int n=0;n<length;n++)if(Math.hypot(root.x()-x-(east?n*direction:0),root.z()-z-(east?0:n*direction))<(root.height()<10?6:3.5))valid=false;

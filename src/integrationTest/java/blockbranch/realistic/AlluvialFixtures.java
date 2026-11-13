@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
  * saved worlds always read their actual generator without this QA helper. */
 final class AlluvialFixtures {
     static void published269(JsonObject json){
+        MontaneForestFixtures.published270(json);
         if(!json.has("alluvial_floodplain_definition"))return;
         if(json.get("shape_version").getAsInt()!=270||json.get("alluvial_floodplain_definition").getAsInt()!=1)throw new AssertionError("Complete reviewed alluvial wrapper required");
         json.remove("alluvial_floodplain_definition");json.addProperty("shape_version",269);

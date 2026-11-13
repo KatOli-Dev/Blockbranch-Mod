@@ -1,0 +1,121 @@
+// Optional finite source/model assessment; no production edits or Python.
+tasks.register('assessMontaneForest',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.MontaneForestAssessment';maxHeapSize='1G'
+ args(providers.gradleProperty('montaneForestSurvey').getOrElse('build/conifer-assessment-evidence/current270/samples.csv'),providers.gradleProperty('montaneForestReport').getOrElse('build/conifer-assessment-evidence/montane-assessment.json'))
+}
+
+def original=layout.projectDirectory.dir(providers.gradleProperty('published270Directory').getOrElse('build/conifer-assessment-evidence/published270-seed1'))
+def originalSeed=providers.gradleProperty('published270Seed').getOrElse('1')
+def originalReopen=providers.gradleProperty('published270Reopen').isPresent()
+loom.runs.register('published270Snapshot'){
+ server();runDir(original.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.published270Snapshot=true');vmArg('-Dblockbranch.published270Reopen='+originalReopen)
+ vmArg('-Dblockbranch.published270Result='+original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('preparePublished270Snapshot'){doLast{
+ if(originalReopen)assert original.file('survey/level.dat').asFile.exists():'Requires authentic closed270 world.'
+ else assert !original.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ original.asFile.mkdirs();original.file('eula.txt').asFile.text='eula=true\n'
+ original.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+originalSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runPublished270Snapshot'){dependsOn 'preparePublished270Snapshot';doLast{assert original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('checkMontaneForest',JavaExec){
+ dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MontaneForestCheck';maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn 'checkMontaneForest'}
+def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/montane-forest-reader-270')
+def collector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published270Snapshot.java')
+def baselinePreset=layout.projectDirectory.file('src/integrationTest/resources/data/blockbranch/worldgen/world_preset/montane_forest_baseline.json')
+tasks.register('verifyMontaneForestReader'){
+ inputs.dir(fixture);inputs.file(collector);inputs.file(baselinePreset)
+ doLast{
+  def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+  def hash={f->java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString()}
+  assert origin.commit=='833abc510ec3234ecf409d1a5e083d13a0e9e090'
+  assert hash(collector.asFile)==origin.collectorSha256
+  origin.compactObservables.each{assert hash(fixture.file(it.path).asFile)==it.sha256}
+  assert hash(baselinePreset.asFile)==origin.costPresetSha256
+ }
+}
+tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyMontaneForestReader'}
+tasks.named('runPublished270Snapshot'){doFirst{
+ if(originalReopen){
+  def origin=new groovy.json.JsonSlurper().parse(fixture.file('ORIGIN.json').asFile)
+  def hash=java.security.MessageDigest.getInstance('SHA-256').digest(original.file('baseline.json').asFile.bytes).encodeHex().toString()
+  assert hash==origin.baselines.find{it.seed.toString()==originalSeed}.sha256:'Requires frozen authentic original270 oracle.'
+ }
+}}
+
+def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('montaneForestDirectory').getOrElse('build/montane-forest-evidence/native-seed1'))
+def nativeSeed=providers.gradleProperty('montaneForestSeed').getOrElse('1')
+def nativeReopen=providers.gradleProperty('montaneForestReopen').isPresent()
+loom.runs.register('montaneForestQualification'){
+ server();runDir(nativeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.montaneForestSnapshot=true');vmArg('-Dblockbranch.montaneForestReopen='+nativeReopen)
+ vmArg('-Dblockbranch.montaneForestResult='+nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.absolutePath)
+}
+tasks.register('prepareMontaneForestQualification'){doLast{
+ if(nativeReopen)assert nativeDir.file('survey/level.dat').asFile.exists():'Requires closed candidate world.'
+ else assert !nativeDir.file('server.properties').asFile.exists():'Preserve evidence; choose a fresh directory.'
+ nativeDir.asFile.mkdirs();nativeDir.file('eula.txt').asFile.text='eula=true\n'
+ nativeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+nativeSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runMontaneForestQualification'){dependsOn 'prepareMontaneForestQualification';doLast{assert nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
+// A copied old PASS cannot certify a launch that exits before SERVER_STARTED.
+tasks.named('preparePublished270Snapshot'){doLast{original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.delete()}}
+tasks.named('prepareMontaneForestQualification'){doLast{nativeDir.file(nativeReopen?'reopen-result.txt':'result.txt').asFile.delete()}}
+
+def visual=layout.projectDirectory.dir(providers.gradleProperty('montaneForestVisualDirectory').getOrElse('build/montane-forest-evidence/visual271'))
+def visualBaseline=providers.gradleProperty('montaneForestVisualBaseline').isPresent()
+loom.runs.register('montaneForestVisual'){
+ client();runDir(visual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.montaneForestVisual=true');vmArg('-Dblockbranch.montaneForestVisualBaseline='+visualBaseline)
+ vmArg('-Dblockbranch.montaneForestVisualDirectory='+visual.asFile.absolutePath)
+ programArgs('--username','MontaneView','--width','1024','--height','576')
+}
+tasks.register('prepareMontaneForestVisual'){doLast{
+ assert !visual.file('options.txt').asFile.exists():'Preserve captures; choose a fresh directory.'
+ visual.asFile.mkdirs();visual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runMontaneForestVisual'){dependsOn 'prepareMontaneForestVisual';doLast{assert visual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def cost=layout.projectDirectory.dir(providers.gradleProperty('montaneForestCostDirectory').getOrElse('build/montane-forest-evidence/cost271'))
+def costBaseline=providers.gradleProperty('montaneForestCostBaseline').isPresent()
+loom.runs.register('montaneForestCost'){
+ server();runDir(cost.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.montaneForestCost=true');vmArg('-Dblockbranch.montaneForestCostFocus='+providers.gradleProperty('montaneForestCostFocus').isPresent());vmArg('-Dblockbranch.montaneForestCostDirectory='+cost.asFile.absolutePath)
+}
+tasks.register('prepareMontaneForestCost'){doLast{
+ assert !cost.file('server.properties').asFile.exists():'Preserve measurements; choose a fresh directory.'
+ cost.asFile.mkdirs();cost.file('eula.txt').asFile.text='eula=true\n'
+ cost.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(costBaseline?'blockbranch:montane_forest_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runMontaneForestCost'){dependsOn 'prepareMontaneForestCost';doLast{assert cost.file('result.txt').asFile.text.startsWith('PASS')}}
+
+def comparison=layout.projectDirectory.dir(providers.gradleProperty('existingBiomeComparisonDirectory').getOrElse('build/montane-forest-evidence/existing-comparison'))
+def comparisonWorld=layout.projectDirectory.dir(providers.gradleProperty('existingBiomeComparisonWorld').getOrElse('build/montane-forest-evidence/visual270-reviewed/saves/MontaneForestVisualReview'))
+def comparisonViews=layout.projectDirectory.file(providers.gradleProperty('existingBiomeComparisonViews').getOrElse('build/montane-forest-evidence/visual270-reviewed/views.json'))
+loom.runs.register('existingBiomeComparison'){
+ server();runDir(comparison.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.existingBiomeComparison=true');vmArg('-Dblockbranch.existingBiomeComparisonDirectory='+comparison.asFile.absolutePath)
+ vmArg('-Dblockbranch.existingBiomeComparisonViews='+comparisonViews.asFile.absolutePath)
+}
+tasks.register('prepareExistingBiomeComparison'){doLast{
+ assert !comparison.file('server.properties').asFile.exists():'Preserve dimension evidence; choose fresh directory.'
+ assert comparisonWorld.file('level.dat').asFile.exists():'Requires the closed captured270 world.'
+ def source=comparisonWorld.asFile.toPath(),target=comparison.dir('survey').asFile.toPath()
+ java.nio.file.Files.walk(source).withCloseable{paths->paths.forEach{path->def dest=target.resolve(source.relativize(path));if(java.nio.file.Files.isDirectory(path))java.nio.file.Files.createDirectories(dest);else java.nio.file.Files.copy(path,dest)}}
+ comparison.file('eula.txt').asFile.text='eula=true\n'
+ comparison.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25627\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nmax-tick-time=0\n'
+}}
+tasks.named('runExistingBiomeComparison'){dependsOn 'prepareExistingBiomeComparison';doLast{assert comparison.file('result.txt').asFile.text.startsWith('PASS')}}
+
+tasks.register('checkMontaneDeadwood',JavaExec){
+ dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MontaneDeadwoodCheck';maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn 'checkMontaneDeadwood'}
+// These new analytic checks also belong to the standard test entry point.
+tasks.named('test'){dependsOn 'checkMontaneForest','checkMontaneDeadwood'}

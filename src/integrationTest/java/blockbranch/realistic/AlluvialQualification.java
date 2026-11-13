@@ -44,7 +44,7 @@ public final class AlluvialQualification {
             require(g.alluvialDefinition()==1,"Actual saved alluvial gate");
             level.getGameRules().set(net.minecraft.world.level.gamerules.GameRules.RANDOM_TICK_SPEED,0,level.getServer());level.getGameRules().set(net.minecraft.world.level.gamerules.GameRules.SPAWN_MOBS,false,level.getServer());
             var random=level.getChunkSource().randomState();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(fresh.get("shape_version").getAsInt()==270&&RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Exact current codec roundtrip");
+            require(fresh.get("shape_version").getAsInt()==(g.montaneForestDefinition()==1?271:270)&&RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Exact current codec roundtrip");
             for(int version:new int[]{264,265,266,267,268,269,271}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
             for(int definition:new int[]{-1,0,2}){var bad=fresh.deepCopy();bad.addProperty("alluvial_floodplain_definition",definition);reject(ops,bad);}
             for(String key:new String[]{"alluvial_floodplain_definition","seasonal_forest_definition","gravel_relief_definition","leaf_litter_definition"}){var bad=fresh.deepCopy();bad.remove(key);reject(ops,bad);}
@@ -68,7 +68,7 @@ public final class AlluvialQualification {
             Path saved=dir.resolve("clear-plan.nbt");
             if(reopen)piece=BorealClearSmoke.load(context,NbtIo.readCompressed(saved,NbtAccounter.unlimitedHeap()));
             else{var point=woodedBench();piece=new ReimaginedTreeClearPiece(new BoundingBox(point.getX(),point.getY(),point.getZ(),point.getX(),point.getY(),point.getZ()),seed,g.borealCrownDefinition(),g.vegetationFlags());NbtIo.writeCompressed(piece.createTag(context),saved);}
-            require(piece.createTag(context).getIntOr("ClearDefinition",0)==128,"Saved current vegetation algorithms with immutable270 terrain");clear=BorealClearSmoke.plan(piece,g,random);require(clear.size()>50,"Nontrivial whole-tree clear footprint on changed ground");edited.addAll(clear.keySet());
+            require(piece.createTag(context).getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags(),"Saved current vegetation algorithms with immutable270 terrain");clear=BorealClearSmoke.plan(piece,g,random);require(clear.size()>50,"Nontrivial whole-tree clear footprint on changed ground");edited.addAll(clear.keySet());
             var construction=piece.createTag(context).getIntArray("Construction").orElseThrow();require(d.alluvialPlan(construction[0],construction[2]).changed(),"Construction still lies on affected bench after reopen");
             }else{piece=null;clear=Map.of();report.put("savedClearScope","Affected wooded-bench replay is qualified on seed1; seed424242 qualifies terrain/connectivity/profile and a changed-ground edit only.");}
             var first=scenes.getFirst();BlockPos chosen=null;search:for(int z=first.z-24;z<=first.z+24;z++)for(int x=first.x-24;x<=first.x+24;x++)if(d.alluvialPlan(x,z).changed()){chosen=new BlockPos(x,d.sample(x,z).height()-2,z);break search;}require(chosen!=null,"Saved soil edit uses affected terrain");soilEdit=chosen;edited.add(chosen.asLong());

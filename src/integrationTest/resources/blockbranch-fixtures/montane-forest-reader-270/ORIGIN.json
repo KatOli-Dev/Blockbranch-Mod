@@ -1,0 +1,55 @@
+{
+  "commit": "833abc510ec3234ecf409d1a5e083d13a0e9e090",
+  "collectorSha256": "8f2dc1eb6ff3a52aca79844f2db312742f8bfcf1b65eed9a45f6e06d5adb9a05",
+  "baselines": [
+    {
+      "seed": 1,
+      "sha256": "74cea3849be7f41055b4815779df5298ce8639a1a2b29be3a1ede51fb0430a2a",
+      "fields": [
+        "seed",
+        "generator",
+        "nativeReads",
+        "nativeSHA256",
+        "profileCount",
+        "profileSHA256",
+        "physicalSHA256",
+        "clearCells",
+        "clearDefinition"
+      ]
+    },
+    {
+      "seed": 424242,
+      "sha256": "6c8f2bb757a659730ecfc0e2c702baf5dd65b5072c54830c58ab7967b202d8fb",
+      "fields": [
+        "seed",
+        "generator",
+        "global",
+        "nativeReads",
+        "nativeSHA256",
+        "profileCount",
+        "profileSHA256",
+        "physicalSHA256",
+        "clearCells",
+        "clearDefinition"
+      ]
+    }
+  ],
+  "archive": "/tmp/blockbranch-published270-original-833abc5.tar.gz",
+  "archiveSha256": "06d9fbf0942e2f0f9bccc5d0d2e386d0b65af7d050dab00922960bdc0190c58f",
+  "costPresetSha256": "f118578373f9c19f2dd0ed4d67d3bd70e25a9bb1d49a9701d3597dce6d3ed7af",
+  "compactObservables": [
+    {
+      "path": "observable-1.json",
+      "sha256": "11e598da2224b712d03b7aaf19306165eadb6550ae62bffe66cb845fac83b873"
+    },
+    {
+      "path": "observable-424242.json",
+      "sha256": "7f1b5c68f2e94f38640dd9b021d29cca937ca6a48bd32008f61322a161c697d5"
+    }
+  ],
+  "productionTrees": {
+    "main": "2e88a9cdd46093e267a647665d8cd084d7d538e4",
+    "client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+  },
+  "compactDerivation": "Original baseline fields with generator replaced by SHA256 of Ruby JSON.generate of that parsed field. Runtime comparison remains exact full original JSON and separately checks its frozen raw-file SHA256."
+}
