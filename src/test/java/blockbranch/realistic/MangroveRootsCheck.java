@@ -50,9 +50,10 @@ public final class MangroveRootsCheck {
         for(long seed:new long[]{424242,1,-17}){
             var d=new DrainageNetwork(new TerrainShape(seed),seed);var c=new ClimateField(seed);var p=MangroveSwampFixtures.fixture(d,seed,false);
             var stems=MangroveTrees.roots(seed,p.x()-64,p.z()-64,p.x()+64,p.z()+64,d,c);
-            var old=new Metrics();var arched=new Metrics();
+            var old=new Metrics();var arched=new Metrics();var arches=new Arches();
             for(var stem:stems){
                 var a=MangroveTrees.tree(stem,d,false);var b=MangroveTrees.tree(stem,d,true);
+                if(!b.isEmpty())arches.add(stem,MangroveTrees.archedRootCells(stem,d),d);
                 // Placement is shared; a tree is dropped when fewer than two roots ground, which can differ per shape.
                 if(!a.isEmpty())old.add(stem,a,d);
                 if(!b.isEmpty())arched.add(stem,b,d);
@@ -65,9 +66,43 @@ public final class MangroveRootsCheck {
             require(arched.perTree()<=old.perTree()*1.60&&arched.perTree()>=old.perTree(),"Bounded root volume ("+seed+": "+old.perTree()+" -> "+arched.perTree()+")");
             require(old.maxReach<=5&&arched.maxReach<=6,"Root reach stays inside the six-block halo ("+seed+": "+old.maxReach+" -> "+arched.maxReach+")");
             require(arched.minHeightAboveGround>=1,"Roots stay above the ground ("+seed+")");
+            require(arches.roots>=arches.trees*2,"Every kept tree anchors at least two arched roots ("+seed+")");
+            require(arches.touching()<=.04,"Roots beyond the collar rarely touch another root ("+seed+": "+arches.touching()+")");
+            System.out.printf("MANGROVE_ARCHES seed=%d roots=%d outerCells=%d touchingAnotherRoot=%.3f%n",seed,arches.roots,arches.outer,arches.touching());
             System.out.printf("MANGROVE_ROOTS seed=%d trees=%d->%d rootVoxelsPerTree=%.1f->%.1f bulkShare=%.2f->%.2f plateShare=%.2f->%.2f densestLayerShare=%.2f->%.2f beyond2PerTree=%.1f->%.1f maxReach=%d->%d%n",
                 seed,old.trees,arched.trees,old.perTree(),arched.perTree(),old.bulk(),arched.bulk(),old.plates(),arched.plates(),old.densestLayer(),arched.densestLayer(),old.outer/(double)old.trees,arched.outer/(double)arched.trees,old.maxReach,arched.maxReach);
         }
+    }
+    /** Per-root accounting from the accepted arch paths: face-connected cells from the trunk to a ground foot. */
+    private static final class Arches {
+        int trees,roots;long outer,touching;
+        void add(MangroveTrees.Stem stem,List<List<int[]>> paths,DrainageNetwork d){
+            trees++;var owner=new HashMap<Long,Integer>();int index=0;
+            for(var path:paths){
+                roots++;int[] first=path.getFirst(),last=path.getLast();
+                require(first[0]==stem.x()&&first[2]==stem.z()&&first[1]>=stem.y()&&first[1]<=stem.y()+2,"Each arch leaves the trunk within two blocks of the stem base");
+                require(last[1]==d.sample(last[0],last[2]).height()+1,"Each arch ends on a ground foot");
+                var seen=new HashSet<Long>();seen.add(key(first[0],first[1],first[2]));
+                for(int i=1;i<path.size();i++){
+                    var c=path.get(i);boolean joined=false;
+                    for(var q:DIR)if(seen.contains(key(c[0]+q[0],c[1]+q[1],c[2]+q[2])))joined=true;
+                    require(joined,"Each arch cell touches an earlier cell of its root face to face");seen.add(key(c[0],c[1],c[2]));
+                }
+                for(var cell:path)owner.putIfAbsent(key(cell[0],cell[1],cell[2]),index);
+                index++;
+            }
+            int own=0;
+            for(var path:paths){
+                for(var cell:path){
+                    if(Math.max(Math.abs(cell[0]-stem.x()),Math.abs(cell[2]-stem.z()))<2)continue;
+                    outer++;
+                    if(owner.get(key(cell[0],cell[1],cell[2]))!=own){touching++;continue;}
+                    for(var q:DIR){Integer other=owner.get(key(cell[0]+q[0],cell[1]+q[1],cell[2]+q[2]));if(other!=null&&other!=own){touching++;break;}}
+                }
+                own++;
+            }
+        }
+        double touching(){return outer==0?0:touching/(double)outer;}
     }
     private static final class Metrics {
         int trees,maxReach,minHeightAboveGround=Integer.MAX_VALUE;long roots,bulk,plates,outer;double layerShare;

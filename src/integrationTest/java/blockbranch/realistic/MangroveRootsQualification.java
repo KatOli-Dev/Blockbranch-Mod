@@ -44,6 +44,16 @@ public final class MangroveRootsQualification {
                     if(old)throw new AssertionError("The gate changed nothing at the audited swamp");
                     if(window.roots==0)throw new AssertionError("No arched roots generated: "+window);
                     if(window.bulkShare()>.20)throw new AssertionError("Arched roots still form square mass: "+window);
+                    // Gate and schema must agree in both directions; a mutated saved generator never loads.
+                    var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
+                    for(var mutation:new String[][]{{"mangrove_roots_definition","0"},{"mangrove_roots_definition","2"},{"mangrove_roots_definition","-1"},{"shape_version","272"},{"shape_version","274"},{"boreal_slope_definition","0"}}){
+                        var bad=json.deepCopy();bad.addProperty(mutation[0],Integer.parseInt(mutation[1]));
+                        if(RealisticGenerator.CODEC.codec().parse(ops,bad).result().isPresent())throw new AssertionError("Mismatched schema/definition accepted: "+mutation[0]+"="+mutation[1]);
+                    }
+                    var missing=json.deepCopy();missing.remove("mangrove_roots_definition");
+                    if(RealisticGenerator.CODEC.codec().parse(ops,missing).result().isPresent())throw new AssertionError("Schema 273 without its definition accepted");
+                    var older=json.deepCopy();older.remove("mangrove_roots_definition");older.addProperty("shape_version",272);
+                    if(RealisticGenerator.CODEC.codec().parse(ops,older).result().isEmpty())throw new AssertionError("Complete 272 without the gate must read");
                     level.setBlock(edit,Blocks.GOLD_BLOCK.defaultBlockState(),3);
                     Files.writeString(signature,window.digest());server.saveEverything(false,true,true);
                     Files.writeString(dir.resolve("result.txt"),"PASS fresh273: "+window+" (published window sha256 "+published.sha+" differs), edit "+edit.toShortString()+"\n");

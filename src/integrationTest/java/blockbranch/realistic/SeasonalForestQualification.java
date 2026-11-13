@@ -33,7 +33,7 @@ public final class SeasonalForestQualification {
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);
             var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.seasonalForestDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent retains complete268 exactly");
-            for(int version:new int[]{264,265,266,267,268,270,271,272,273}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
+            for(int version:new int[]{264,265,266,267,268,270,271,272,274}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
             for(int definition:new int[]{-1,0,2}){var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition",definition);reject(ops,bad);}
             for(String key:new String[]{"seasonal_forest_definition","dry_forest_definition","warm_xeric_definition","leaf_litter_definition"}){var bad=fresh.deepCopy();bad.remove(key);reject(ops,bad);}
             var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition","invalid");reject(ops,bad);
