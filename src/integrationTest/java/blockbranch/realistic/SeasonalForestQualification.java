@@ -27,13 +27,13 @@ public final class SeasonalForestQualification {
             var level=server.overworld();var random=level.getChunkSource().randomState();require(random.seed()==SEED,"Disclosed native seed");
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
+            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.mangroveRootsDefinition()==1?273:g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Flat exact codec roundtrip");
             AlluvialFixtures.published269(fresh);
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);
             var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.seasonalForestDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent retains complete268 exactly");
-            for(int version:new int[]{264,265,266,267,268,270,271,272}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
+            for(int version:new int[]{264,265,266,267,268,270,271,272,274}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
             for(int definition:new int[]{-1,0,2}){var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition",definition);reject(ops,bad);}
             for(String key:new String[]{"seasonal_forest_definition","dry_forest_definition","warm_xeric_definition","leaf_litter_definition"}){var bad=fresh.deepCopy();bad.remove(key);reject(ops,bad);}
             var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition","invalid");reject(ops,bad);

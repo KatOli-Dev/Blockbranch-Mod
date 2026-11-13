@@ -18,7 +18,9 @@ public final class MangroveTrees {
             out.add(new Stem(p.x(),y,p.z(),h,v));
         }return out;
     }
-    public static List<WoodlandTrees.Voxel> tree(Stem r,DrainageNetwork d){
+    public static List<WoodlandTrees.Voxel> tree(Stem r,DrainageNetwork d){return tree(r,d,false);}
+    /** {@code arched} selects the gated finer prop roots; false reproduces the published root shapes exactly. */
+    public static List<WoodlandTrees.Voxel> tree(Stem r,DrainageNetwork d,boolean arched){
         var wood=new HashMap<P,Integer>();var roots=new HashMap<P,Integer>();var crowns=new ArrayList<Crown>();long seed=r.variant();double angle=unit(seed^7)*Math.PI*2;
         P base=new P(r.x(),r.y(),r.z()),fork=new P(r.x()+(int)Math.round(Math.cos(angle)*1.5),r.y()+Math.max(3,r.height()/2),r.z()+(int)Math.round(Math.sin(angle)*1.5));
         limb(wood,base,fork,LOG);int arms=2+(int)Long.remainderUnsigned(seed>>>23,r.height()<10?2:4);
@@ -29,8 +31,9 @@ public final class MangroveTrees {
             crowns.add(new Crown(tip.x()-.3*Math.cos(a),tip.y()+.5,tip.z()-.3*Math.sin(a),2.4+unit(v^17)*1.3,1.8+unit(v^19)*1.2,2.3+unit(v^23)*1.4));
         }
         // Each tree chooses its own root count,direction,reach and elbow;no copied radial template.
-        int feet=3+(int)Long.remainderUnsigned(seed>>>33,4),anchored=0;
-        for(int n=0;n<feet;n++){
+        int feet=feet(seed),anchored=0;
+        if(arched){for(var path:archedRoots(r,d,angle,seed,feet)){for(var p:path)roots.put(p,ROOT);anchored++;}}
+        else for(int n=0;n<feet;n++){
             long v=OakBirchWoodland.mix(seed^n*997L);double a=angle+n*2.39996+(unit(v^31)-.5),reach=2+unit(v^37)*3;
             int x=r.x()+(int)Math.round(Math.cos(a)*reach),z=r.z()+(int)Math.round(Math.sin(a)*reach);var s=d.sample(x,z);
             if(d.channelAt(x,z).edge()>=0||s.height()>=r.y()||s.height()<TerrainShape.SEA_LEVEL-4)continue;
@@ -56,9 +59,10 @@ public final class MangroveTrees {
         var occupied=new HashSet<P>();for(var v:out)occupied.add(new P(v.x(),v.y(),v.z()));var additions=new ArrayList<WoodlandTrees.Voxel>();
         for(var v:out)if(v.code()>=LEAF&&v.code()<ROOT){var p=new P(v.x(),v.y()-1,v.z());if(p.y()>TerrainShape.SEA_LEVEL&&!occupied.contains(p)&&unit(seed^p.x()*1297L^p.z()*1237L^p.y()*997L)<.018)additions.add(new WoodlandTrees.Voxel(p.x(),p.y(),p.z(),PROPAGULE+(int)Long.remainderUnsigned(OakBirchWoodland.mix(seed^p.x()^p.z()),5)));}out.addAll(additions);return out;
     }
-    public static int[] column(long seed,int cx,int cz,DrainageNetwork d,ClimateField c){
+    public static int[] column(long seed,int cx,int cz,DrainageNetwork d,ClimateField c){return column(seed,cx,cz,d,c,false);}
+    public static int[] column(long seed,int cx,int cz,DrainageNetwork d,ClimateField c,boolean arched){
         // A six-block halo contains every path for a retained distance<=6 leaf.
-        var merged=new HashMap<P,Integer>();for(var r:roots(seed,cx*16-6,cz*16-6,cx*16+21,cz*16+21,d,c))for(var v:tree(r,d)){
+        var merged=new HashMap<P,Integer>();for(var r:roots(seed,cx*16-6,cz*16-6,cx*16+21,cz*16+21,d,c))for(var v:tree(r,d,arched)){
             if(v.x()<cx*16-6||v.x()>cx*16+21||v.z()<cz*16-6||v.z()>cz*16+21)continue;
             merged.merge(new P(v.x(),v.y(),v.z()),v.code(),(a,b)->priority(a)<=priority(b)?a:b);
         }
@@ -77,6 +81,76 @@ public final class MangroveTrees {
         int tx=(int)Math.round(a.x()+(b.x()-a.x())*n/(double)steps),ty=(int)Math.round(a.y()+(b.y()-a.y())*n/(double)steps),tz=(int)Math.round(a.z()+(b.z()-a.z())*n/(double)steps);
         while(y!=ty){y+=Integer.signum(ty-y);map.putIfAbsent(new P(x,y,z),base);}while(x!=tx){x+=Integer.signum(tx-x);map.putIfAbsent(new P(x,y,z),base==ROOT?ROOT:base+1);}while(z!=tz){z+=Integer.signum(tz-z);map.putIfAbsent(new P(x,y,z),base==ROOT?ROOT:base+2);}
     }}
+    private static int feet(long seed){return 3+(int)Long.remainderUnsigned(seed>>>33,4);}
+    /** Angle offsets, in steps of {@link #DEFLECTION}, tried in order when a root would run against an earlier one. */
+    private static final int[] SHIFTS={0,1,-1,2,-2,3,-3};
+    private static final double DEFLECTION=.3;
+    /**
+     * The arched roots of one tree, in published order. Each is one thin arch (see {@link #arch}); a root whose
+     * published angle is blocked (channel, high or deep ground, buried block) is skipped exactly as before, so the root
+     * count is the published rule's. A root that would run face to face with an earlier root beyond the trunk collar
+     * is turned aside by up to three {@value #DEFLECTION}-radian steps to the first angle that touches none (or the
+     * least touching valid one): neighbouring roots otherwise share their flat apex and read as one wall.
+     */
+    private static List<List<P>> archedRoots(Stem r,DrainageNetwork d,double angle,long seed,int feet){
+        var out=new ArrayList<List<P>>();var taken=new HashSet<P>();
+        for(int n=0;n<feet;n++){
+            long v=OakBirchWoodland.mix(seed^n*997L);double a=angle+n*2.39996+(unit(v^31)-.5),reach=3+unit(v^37)*2.5;
+            List<P> best=null;int fewest=Integer.MAX_VALUE;
+            for(int shift:SHIFTS){
+                var path=archPath(r,d,a+shift*DEFLECTION,reach,v);
+                if(path==null){if(shift==0)break;continue;}
+                int touching=touching(r,path,taken);
+                if(touching<fewest){best=path;fewest=touching;}
+                if(touching==0)break;
+            }
+            if(best!=null){out.add(best);taken.addAll(best);}
+        }
+        return out;
+    }
+    /** Root cells beyond the two-block trunk collar that share or face a cell of an earlier root. */
+    private static int touching(Stem r,List<P> path,Set<P> taken){
+        int count=0;
+        for(var p:path){
+            if(Math.max(Math.abs(p.x()-r.x()),Math.abs(p.z()-r.z()))<COLLAR)continue;
+            if(taken.contains(p)){count++;continue;}
+            for(var q:DIR)if(taken.contains(new P(p.x()+q[0],p.y()+q[1],p.z()+q[2]))){count++;break;}
+        }
+        return count;
+    }
+    private static final int COLLAR=2;
+    /** Package-private for tests: the accepted root cells of each arched root of {@code stem}, as x,y,z triples. */
+    static List<List<int[]>> archedRootCells(Stem stem,DrainageNetwork d){
+        long seed=stem.variant();double angle=unit(seed^7)*Math.PI*2;var out=new ArrayList<List<int[]>>();
+        for(var path:archedRoots(stem,d,angle,seed,feet(seed))){var cells=new ArrayList<int[]>();for(var p:path)cells.add(new int[]{p.x(),p.y(),p.z()});out.add(cells);}
+        return out;
+    }
+    /** One prop root as a thin arch, or null when the published skip rules or the grounded-path test reject it. It
+     * leaves the trunk at its own height (stem base to two blocks up, so a stand's roots do not share one shelf),
+     * swings outward with a small rise, then drops steeply to the ground: a quadratic curve sampled four times per
+     * block and joined face to face. The published roots reached 2 to 5 blocks yet piled against the trunk; these
+     * reach 3 to 5.5 (inside the 8-block stem radius) and end on the same kind of ground foot. */
+    private static List<P> archPath(Stem r,DrainageNetwork d,double angle,double reach,long v){
+        int x=r.x()+(int)Math.round(Math.cos(angle)*reach),z=r.z()+(int)Math.round(Math.sin(angle)*reach);var s=d.sample(x,z);
+        if(d.channelAt(x,z).edge()>=0||s.height()>=r.y()||s.height()<TerrainShape.SEA_LEVEL-4)return null;
+        P foot=new P(x,s.height()+1,z);var cells=new LinkedHashMap<P,Integer>();arch(cells,r,foot,v);
+        for(var p:cells.keySet())if(p.y()<=d.sample(p.x(),p.z()).height())return null;
+        return new ArrayList<>(cells.keySet());
+    }
+    private static void arch(Map<P,Integer> map,Stem r,P foot,long v){
+        int y0=r.y()+(int)Long.remainderUnsigned(v>>>11,3);double lift=.5+unit(v^41)*1.5,out=.45+unit(v^43)*.25;
+        double cx=r.x()+(foot.x()-r.x())*out,cy=y0+lift,cz=r.z()+(foot.z()-r.z())*out;
+        int span=Math.abs(foot.x()-r.x())+Math.abs(foot.y()-y0)+Math.abs(foot.z()-r.z()),samples=Math.max(4,span*4);P prev=new P(r.x(),y0,r.z());map.putIfAbsent(prev,ROOT);
+        for(int i=1;i<=samples;i++){
+            double t=i/(double)samples,u=1-t;
+            P cur=new P((int)Math.round(u*u*r.x()+2*u*t*cx+t*t*foot.x()),(int)Math.round(u*u*y0+2*u*t*cy+t*t*foot.y()),(int)Math.round(u*u*r.z()+2*u*t*cz+t*t*foot.z()));
+            if(cur.equals(prev))continue;
+            // Diagonal samples are bridged y, x then z so every root block touches the previous one by a face.
+            int x=prev.x(),y=prev.y(),z=prev.z();while(y!=cur.y()){y+=Integer.signum(cur.y()-y);map.putIfAbsent(new P(x,y,z),ROOT);}
+            while(x!=cur.x()){x+=Integer.signum(cur.x()-x);map.putIfAbsent(new P(x,y,z),ROOT);}while(z!=cur.z()){z+=Integer.signum(cur.z()-z);map.putIfAbsent(new P(x,y,z),ROOT);}
+            prev=cur;
+        }
+    }
     private static double unit(long v){return(OakBirchWoodland.mix(v)>>>11)*0x1.0p-53;}
     private MangroveTrees(){}
 }

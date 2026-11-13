@@ -1,0 +1,9 @@
+# Published mangrove canopy columns (5 x 5 chunks around each site), frozen from the unmodified
+# published tree (origin/main 858c07b, MangroveTrees identical to schema 270..272) with the five-argument
+# MangroveTrees.column. Columns: kind seed chunkX chunkZ intsInWindow sha256(Arrays.toString per column,
+# x then z order). fixture = MangroveSwampFixtures site on the default terrain; audit = the audited
+# seed-1 swamp (1872000,-144000) on the bundled preset's terrain and climate.
+fixture 424242 13967 -44535 7673 23858e8301df1733a75aea7a637cc3a9a72097125431a9fe00c82403f3323452
+fixture 1 34664 -35857 8219 aae41fe7cc9e5b8305eaa4bd2039dd76b27928905824cfa6cc7542a5f956bb13
+fixture -17 -2564 -43287 12139 1af5caf5b30047b5e85931841268ef65b0eb810a746aadd4329585e6272e2df6
+audit 1 117000 -9000 6489 d87f776e477d20b3bd99321687fe9dd0aeb394b34021790040dede3e8bf8d571
