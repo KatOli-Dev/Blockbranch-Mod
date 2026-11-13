@@ -21,8 +21,10 @@ import com.mojang.serialization.JsonOps;
  * {@code record270} writes a published-270 world window with per-chunk profile hashes (run it on a
  * build before any slope rule exists); {@code verify270} reopens that closed world and requires the
  * saved chunks to read back unchanged and the unexplored remainder of the window to stay treeless.
- * {@code fresh271} writes a fresh schema-271 world (the bundled preset) whose generated chunks, saved
- * clear plan and explicit edit {@code verify271} must read back identically in a second process.
+ * {@code fresh272} writes a fresh schema-272 world (the bundled preset) whose generated chunks, saved
+ * clear plan and explicit edit {@code verify272} must read back identically in a second process.
+ * {@code verifyMontane271} reopens a copy of an authentic montane-271 world (written by that build) and
+ * requires it to stay 271 with the slope definition absent and its saved clear plan to replay unchanged.
  * The window is {@code 2*HALF_CHUNKS} chunks square; the saved core is its central 4 x 4 chunks.
  */
 public final class BorealSlopeQualification {
@@ -57,49 +59,59 @@ public final class BorealSlopeQualification {
                     if(logs!=0)throw new AssertionError("Unexplored chunks of a published 270 world must stay treeless; logs="+logs);
                     Files.writeString(dir.resolve("result.txt"),"PASS verify270: "+saved.size()+" saved chunks identical, "+fresh+" unexplored chunks treeless\n");
                 }
-                case "fresh271"->{
-                    if(shape!=271||slope!=1||(g.vegetationFlags()&BorealSlope.FLAG)==0)throw new AssertionError("Bundled schema 271 preset required: "+shape+" "+slope);
+                case "fresh272"->{
+                    if(shape!=272||slope!=1||(g.vegetationFlags()&BorealSlope.FLAG)==0)throw new AssertionError("Bundled schema 271 preset required: "+shape+" "+slope);
                     var random=level.getChunkSource().randomState();var lines=new ArrayList<String>();long logs=0,leaves=0;int stocked=0;
                     for(int dz=-HALF_CHUNKS;dz<HALF_CHUNKS;dz++)for(int dx=-HALF_CHUNKS;dx<HALF_CHUNKS;dx++){
                         var row=describe(level,cx+dx,cz+dz);var f=row.split(" ");logs+=Long.parseLong(f[3]);leaves+=Long.parseLong(f[4]);if(Long.parseLong(f[3])>0)stocked++;
                         if(dx>=-2&&dx<2&&dz>=-2&&dz<2)lines.add(row);
                     }
-                    if(logs==0||leaves==0||stocked<8)throw new AssertionError("The sampled slope must carry a stand in schema 271: logs="+logs+" leaves="+leaves+" stocked chunks="+stocked);
+                    if(logs==0||leaves==0||stocked<8)throw new AssertionError("The sampled slope must carry a stand in schema 272: logs="+logs+" leaves="+leaves+" stocked chunks="+stocked);
                     var drainage=g.drainage(random);int ground=drainage.sample(SITE_X+3,SITE_Z+3).height();var edit=new BlockPos(SITE_X+3,ground,SITE_Z+3);
                     level.setBlock(edit,Blocks.GOLD_BLOCK.defaultBlockState(),3);
                     var context=StructurePieceSerializationContext.fromLevel(level);var box=new BoundingBox(SITE_X-16,ground,SITE_Z-16,SITE_X+16,ground+32,SITE_Z+16);
                     var tolerant=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),g.vegetationFlags());
-                    if(tolerant.createTag(context).getIntOr("ClearDefinition",0)!=256)throw new AssertionError("Schema 271 plans carry the slope flag");
+                    if(tolerant.createTag(context).getIntOr("ClearDefinition",0)!=512)throw new AssertionError("Schema 272 plans carry the slope flag");
                     var plan=BorealClearSmoke.plan(tolerant,g,random);if(plan.size()<=50)throw new AssertionError("Saved slope plan clears the stand: "+plan.size());
                     var older=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),g.vegetationFlags()&~BorealSlope.FLAG);
-                    if(older.createTag(context).getIntOr("ClearDefinition",0)!=128||!BorealClearSmoke.plan(older,g,random).isEmpty())throw new AssertionError("A plan saved without the flag keeps the published treeless footprint");
-                    // Range and coupling: definitions 129..256 are valid, 0 and 257 are not, and the flag needs its generator definition.
-                    for(int bad:new int[]{128,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..127 accepted: "+bad);}catch(IllegalArgumentException expected){}
-                    new ReimaginedTreeClearPiece(box,1,0,127);
-                    for(int bad:new int[]{0,257}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
+                    if(older.createTag(context).getIntOr("ClearDefinition",0)!=256||!BorealClearSmoke.plan(older,g,random).isEmpty())throw new AssertionError("A plan saved without the flag keeps the published treeless footprint");
+                    // Range and coupling: definitions 257..512 are valid, 0 and 513 are not, and the flag needs its generator definition.
+                    for(int bad:new int[]{256,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..255 accepted: "+bad);}catch(IllegalArgumentException expected){}
+                    new ReimaginedTreeClearPiece(box,1,0,255);
+                    for(int bad:new int[]{0,513}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
                     var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
-                    for(var mutation:new String[][]{{"shape_version","270"},{"shape_version","272"},{"boreal_slope_definition","0"},{"boreal_slope_definition","2"},{"alluvial_floodplain_definition","0"}}){
+                    for(var mutation:new String[][]{{"shape_version","270"},{"shape_version","271"},{"shape_version","273"},{"boreal_slope_definition","0"},{"boreal_slope_definition","2"},{"montane_forest_definition","0"},{"alluvial_floodplain_definition","0"}}){
                         var bad=json.deepCopy();bad.addProperty(mutation[0],Integer.parseInt(mutation[1]));
                         if(RealisticGenerator.CODEC.codec().parse(ops,bad).result().isPresent())throw new AssertionError("Mismatched schema/definition accepted: "+mutation[0]+"="+mutation[1]);
                     }
                     var missing=json.deepCopy();missing.remove("boreal_slope_definition");
-                    if(RealisticGenerator.CODEC.codec().parse(ops,missing).result().isPresent())throw new AssertionError("Schema 271 without its definition accepted");
+                    if(RealisticGenerator.CODEC.codec().parse(ops,missing).result().isPresent())throw new AssertionError("Schema 272 without its definition accepted");
                     NbtIo.writeCompressed(tolerant.createTag(context),dir.resolve("clear-plan.nbt"));
                     Files.writeString(dir.resolve("clear-footprint.txt"),planDigest(plan));Files.write(signature,lines);
                     server.saveEverything(false,true,true);
-                    Files.writeString(dir.resolve("result.txt"),"PASS fresh271: "+logs+" logs, "+leaves+" leaves, "+stocked+" stocked chunks of "+(4*HALF_CHUNKS*HALF_CHUNKS)+", clear plan "+plan.size()+" cells, edit "+edit.toShortString()+"\n");
+                    Files.writeString(dir.resolve("result.txt"),"PASS fresh272: "+logs+" logs, "+leaves+" leaves, "+stocked+" stocked chunks of "+(4*HALF_CHUNKS*HALF_CHUNKS)+", clear plan "+plan.size()+" cells, edit "+edit.toShortString()+"\n");
                 }
-                case "verify271"->{
-                    if(shape!=271||slope!=1)throw new AssertionError("Saved schema 271 world must reopen as 271 with its definition: "+shape+" "+slope);
+                case "verifyMontane271"->{
+                    if(shape!=271||slope!=0||g.montaneForestDefinition()!=1||(g.vegetationFlags()&BorealSlope.FLAG)!=0)throw new AssertionError("Saved montane 271 world must reopen as 271 with the slope definition absent: "+shape+" "+slope);
+                    var context=StructurePieceSerializationContext.fromLevel(level);
+                    var piece=BorealClearSmoke.load(context,NbtIo.readCompressed(dir.resolve("original-clear.nbt"),NbtAccounter.unlimitedHeap()));
+                    if(piece.createTag(context).getIntOr("ClearDefinition",0)!=256)throw new AssertionError("Authentic montane plan keeps its saved definition");
+                    var footprint=new java.util.TreeMap<>(BorealClearSmoke.plan(piece,g,level.getChunkSource().randomState())).toString();
+                    if(!footprint.equals(Files.readString(dir.resolve("clear-footprint.txt"))))throw new AssertionError("Authentic montane saved clear plan replays a different footprint");
+                    Files.writeString(dir.resolve("boreal-slope-result.txt"),"PASS verifyMontane271: shape 271, slope absent, saved plan 256 replays "+footprint.length()+" chars identically\n");
+                    Files.writeString(dir.resolve("result.txt"),"PASS verifyMontane271\n");
+                }
+                case "verify272"->{
+                    if(shape!=272||slope!=1)throw new AssertionError("Saved schema 272 world must reopen as 272 with its definition: "+shape+" "+slope);
                     var saved=Files.readAllLines(signature);int i=0;
-                    for(int dz=-2;dz<2;dz++)for(int dx=-2;dx<2;dx++)if(!describe(level,cx+dx,cz+dz).equals(saved.get(i++)))throw new AssertionError("Saved schema 271 chunk changed on reopen: "+(cx+dx)+","+(cz+dz));
+                    for(int dz=-2;dz<2;dz++)for(int dx=-2;dx<2;dx++)if(!describe(level,cx+dx,cz+dz).equals(saved.get(i++)))throw new AssertionError("Saved schema 272 chunk changed on reopen: "+(cx+dx)+","+(cz+dz));
                     var edit=new BlockPos(SITE_X+3,g.drainage(level.getChunkSource().randomState()).sample(SITE_X+3,SITE_Z+3).height(),SITE_Z+3);
                     if(!level.getBlockState(edit).is(Blocks.GOLD_BLOCK))throw new AssertionError("Explicit edit lost across reopen at "+edit);
                     var context=StructurePieceSerializationContext.fromLevel(level);
                     var piece=BorealClearSmoke.load(context,NbtIo.readCompressed(dir.resolve("clear-plan.nbt"),NbtAccounter.unlimitedHeap()));
-                    if(piece.createTag(context).getIntOr("ClearDefinition",0)!=256)throw new AssertionError("Saved plan keeps the slope flag across processes");
+                    if(piece.createTag(context).getIntOr("ClearDefinition",0)!=512)throw new AssertionError("Saved plan keeps the slope flag across processes");
                     if(!planDigest(BorealClearSmoke.plan(piece,g,level.getChunkSource().randomState())).equals(Files.readString(dir.resolve("clear-footprint.txt"))))throw new AssertionError("Saved clear plan replays a different footprint after reopen");
-                    Files.writeString(dir.resolve("result.txt"),"PASS verify271: "+saved.size()+" chunks identical, edit and clear plan retained\n");
+                    Files.writeString(dir.resolve("result.txt"),"PASS verify272: "+saved.size()+" chunks identical, edit and clear plan retained\n");
                 }
                 default->throw new IllegalArgumentException("Unknown mode "+mode);
             }

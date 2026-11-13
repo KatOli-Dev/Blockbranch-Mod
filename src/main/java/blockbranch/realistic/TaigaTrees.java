@@ -18,6 +18,7 @@ public final class TaigaTrees {
         }
         if(r.family()==7){width=Math.min(5.6,.16*h+.35);skirt=Math.max(3,(int)(h*.45));lean*=.7;}
         if(r.family()==8){width=Math.min(5.8,(.11+.07*unit(seed^0x5749445448L))*h+.4+unit(seed^0x43524F574EL));skirt=(h<15?1:2)+(int)Long.remainderUnsigned(seed,5);lean*=.55+.4*unit(seed^0x4C45414EL);}
+        if(r.family()==MontaneForest.FAMILY){width=Math.min(4.8,.11*h+.6+unit(seed^11));lean*=.6;skirt=h<17?1:3+(int)Long.remainderUnsigned(seed>>>8,5);}
         var wood=new HashMap<P,Integer>();var centers=new ArrayList<P>();var sprays=new ArrayList<P[]>();
         for(int y=0;y<h;y++){double t=y/(double)h;centers.add(new P((int)Math.round(Math.cos(angle)*lean*t*t),y,(int)Math.round(Math.sin(angle)*lean*t*t)));if(y>0&&y<h-2)limb(wood,centers.get(y-1),centers.get(y));else if(y==0)wood.put(centers.getFirst(),WOOD);}
         for(int y=skirt+2,n=0;y<h-2;){long v=OakBirchWoodland.mix(seed+n++*1297L);double f=(h-1-y)/(double)(h-skirt),reach=Math.max(0,width*envelope(r.family(),f,form==1?.65:form==2?1.1:.9)*.52-.45);int count=3+(int)Long.remainderUnsigned(v,4);var center=centers.get(y);

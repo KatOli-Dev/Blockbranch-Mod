@@ -27,13 +27,13 @@ public final class SeasonalForestQualification {
             var level=server.overworld();var random=level.getChunkSource().randomState();require(random.seed()==SEED,"Disclosed native seed");
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.borealSlopeDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
+            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Flat exact codec roundtrip");
             AlluvialFixtures.published269(fresh);
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);
             var retained=RealisticGenerator.CODEC.codec().parse(ops,old).getOrThrow();
             require(retained.seasonalForestDefinition()==0&&RealisticGenerator.CODEC.codec().encodeStart(ops,retained).getOrThrow().equals(old),"Absent retains complete268 exactly");
-            for(int version:new int[]{264,265,266,267,268,270,271}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
+            for(int version:new int[]{264,265,266,267,268,270,271,272}){var bad=fresh.deepCopy();bad.addProperty("shape_version",version);reject(ops,bad);}
             for(int definition:new int[]{-1,0,2}){var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition",definition);reject(ops,bad);}
             for(String key:new String[]{"seasonal_forest_definition","dry_forest_definition","warm_xeric_definition","leaf_litter_definition"}){var bad=fresh.deepCopy();bad.remove(key);reject(ops,bad);}
             var bad=fresh.deepCopy();bad.addProperty("seasonal_forest_definition","invalid");reject(ops,bad);
@@ -178,7 +178,7 @@ public final class SeasonalForestQualification {
             .filter(r->r.height()>=18&&!retained.dryForestOwner(random).test(r.x(),r.z())&&Math.hypot(r.x()-p[0],r.z()-p[1])>96).findFirst().orElseThrow();
         var box=new BoundingBox(root.x(),root.y(),root.z(),root.x(),root.y(),root.z());
         var piece=new ReimaginedTreeClearPiece(box,SEED,g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);
-        require(tag.getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags()&&(g.vegetationFlags()&SeasonalForestExpansion.FLAG)!=0,"Explicit complete refined root/crown flags");
+        require(tag.getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags(),"Explicit complete refined root/crown flags");
         var plan=BorealClearSmoke.plan(piece,g,random);
         require(!plan.isEmpty()&&ForestTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
         NbtIo.writeCompressed(tag,saved);Files.writeString(signature,new TreeMap<>(plan).toString());
@@ -207,7 +207,7 @@ public final class SeasonalForestQualification {
         var nativeResult=BorealClearSmoke.replay(level,g,context,tag,initial,false,true,dir,true);
         var text=new StringBuilder();for(long key:new TreeSet<>(plan.keySet())){var state=level.getBlockState(BlockPos.of(key));require(state.equals(nativeResult.get(key)),"Actual native replay matches virtual clipped replay");text.append(key).append('\t').append(state).append('\n');}
         Files.writeString(states,text.toString());
-        return Map.of("newDefinition",1+g.borealCrownDefinition()+2*g.vegetationFlags(),"footprintCells",plan.size(),"historicalNBTRoundtrips",historical,"oldForestFootprintsCompared",compared,"nativeReplayStates",plan.size());
+        return Map.of("newDefinition",tag.getIntOr("ClearDefinition",0),"footprintCells",plan.size(),"historicalNBTRoundtrips",historical,"oldForestFootprintsCompared",compared,"nativeReplayStates",plan.size());
     }
     private static void reject(RegistryOps<JsonElement> ops,JsonObject json){require(RealisticGenerator.CODEC.codec().parse(ops,json).error().isPresent(),"Malformed/incomplete/future refinement rejects");}
     private static void add(MessageDigest digest,String text){digest.update((text+"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));}

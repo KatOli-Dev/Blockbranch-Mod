@@ -24,15 +24,15 @@ tasks.named('check'){dependsOn 'checkBorealSlope','checkSavedGateRegistry'}
 
 // Native qualification over the sampled treeless boreal slope (seed 1).
 def slopeDir=layout.projectDirectory.dir(providers.gradleProperty('borealSlopeDirectory').getOrElse('build/boreal-slope-native'))
-def slopeMode=providers.gradleProperty('borealSlopeMode').getOrElse('fresh271')
+def slopeMode=providers.gradleProperty('borealSlopeMode').getOrElse('fresh272')
 loom.runs.register('borealSlopeQualification'){
  server();runDir(slopeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
  vmArg('-Dblockbranch.borealSlopeMode='+slopeMode);vmArg('-Dblockbranch.borealSlopeDirectory='+slopeDir.asFile.absolutePath)
 }
 tasks.register('prepareBorealSlopeQualification'){doLast{
- assert slopeMode in ['record270','verify270','fresh271','verify271']:'Unknown borealSlopeMode '+slopeMode
+ assert slopeMode in ['record270','verify270','verifyMontane271','fresh272','verify272']:'Unknown borealSlopeMode '+slopeMode
  slopeDir.file('result.txt').asFile.delete()
- if(slopeMode in ['record270','fresh271'])assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ if(slopeMode in ['record270','fresh272'])assert !slopeDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert slopeDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  slopeDir.asFile.mkdirs();slopeDir.file('eula.txt').asFile.text='eula=true\n'
  slopeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25629\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=1\nmax-tick-time=0\n'

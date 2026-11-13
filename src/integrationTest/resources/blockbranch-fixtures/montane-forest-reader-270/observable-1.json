@@ -1,0 +1,11 @@
+{
+  "seed": 1,
+  "nativeReads": 1131304,
+  "nativeSHA256": "695808f0df7cc27f53376ae215cd5c720655ff206b8d5f0331798a3c42af7f95",
+  "profileCount": 85,
+  "profileSHA256": "911191999130b63f2d44c8ec2e3925cad092f6f93a284d8d8c16e35d70466b11",
+  "physicalSHA256": "942da659bdbe7018a3560cae6490b204f40843cf6beab7fe1762d5188fa9cae2",
+  "clearCells": 215,
+  "clearDefinition": 128,
+  "generatorSHA256": "3e118b4f785cd2594806d339494116c04267d18076a7bdaa301ff53333e884b8"
+}

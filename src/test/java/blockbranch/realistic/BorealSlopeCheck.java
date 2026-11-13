@@ -23,20 +23,20 @@ public final class BorealSlopeCheck {
         schema();flags();tolerance();
         System.out.println("BOREAL_SLOPE_GATED_PASS");
     }
-    /** Saved schema 271 exists only as the complete 270 plus the explicit definition. */
+    /** Saved schema 272 exists only as the complete montane 271 plus the explicit definition. */
     private static void schema(){
-        for(int saved=82;saved<=275;saved++){
+        for(int saved=82;saved<=276;saved++){
             require(BorealSlopeSchema.schema(saved,0)==saved,"Absent definition retains "+saved);
-            require(BorealSlopeSchema.baseSchema(saved,0)==(saved==271?Integer.MAX_VALUE:saved),"Absent definition never reads 271 ("+saved+")");
-            require(BorealSlopeSchema.matches(saved,1)==(saved==271),"Only 271 reads under the definition ("+saved+")");
+            require(BorealSlopeSchema.baseSchema(saved,0)==(saved==272?Integer.MAX_VALUE:saved),"Absent definition never reads 272 ("+saved+")");
+            require(BorealSlopeSchema.matches(saved,1)==(saved==272),"Only 272 reads under the definition ("+saved+")");
             require(!BorealSlopeSchema.matches(saved,2)&&!BorealSlopeSchema.matches(saved,-1),"Unknown definitions never match ("+saved+")");
-            if(saved!=270){boolean threw=false;try{BorealSlopeSchema.schema(saved,1);}catch(IllegalArgumentException e){threw=true;}require(threw,"Only complete 270 is wrapped ("+saved+")");}
+            if(saved!=271){boolean threw=false;try{BorealSlopeSchema.schema(saved,1);}catch(IllegalArgumentException e){threw=true;}require(threw,"Only complete 271 is wrapped ("+saved+")");}
         }
-        require(BorealSlopeSchema.schema(270,1)==271&&BorealSlopeSchema.baseSchema(271,1)==270,"Complete independent wrapper");
+        require(BorealSlopeSchema.schema(271,1)==272&&BorealSlopeSchema.baseSchema(272,1)==271,"Complete independent wrapper");
     }
     /** The saved tree-clear flag, not preset text or a global, selects the relief. */
     private static void flags(){
-        for(int flags=0;flags<128;flags++)require(BorealSlope.relief(flags)==((flags&64)!=0?BorealSlope.RELIEF:BorealSlope.PUBLISHED_RELIEF),"Relief for flags "+flags);
+        for(int flags=0;flags<256;flags++)require(BorealSlope.relief(flags)==((flags&128)!=0?BorealSlope.RELIEF:BorealSlope.PUBLISHED_RELIEF),"Relief for flags "+flags);
         require(BorealSlope.PUBLISHED_RELIEF==3&&BorealSlope.RELIEF==5,"Bounded relief values");
     }
     /** Tolerant roots only add stems on steep ground; flat stands and every published stem stay put. */

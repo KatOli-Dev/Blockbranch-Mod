@@ -4,8 +4,9 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 271,
+        "shape_version": 272,
         "alluvial_floodplain_definition": 1,
+        "montane_forest_definition": 1,
         "boreal_slope_definition": 1,
         "land_ice_definition": 1,
         "summer_dry_definition": 1,
@@ -58,6 +59,7 @@
         "marine_shelf_biome": "blockbranch:open_marine_shelf_coastal_sea",
         "deep_ocean_biome": "blockbranch:deep_open_ocean_basin_bed",
         "additional_biomes": {
+          "montane_needleleaf_forest": "blockbranch:seasonal_montane_needleleaf_forest",
           "land_ice": "blockbranch:perennial_alpine_icefield",
           "warm_xeric_shrubland": "blockbranch:warm_xeric_subshrubland",
           "continental_ice": "blockbranch:polar_grounded_ice_sheet",

@@ -136,6 +136,9 @@ public final class WoodlandTrees {
         return column(seed,chunkX,chunkZ,drainage,climate,whorled,transitions,dryForest,null);
     }
     public static int[] column(long seed,int chunkX,int chunkZ,DrainageNetwork drainage,ClimateField climate,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry) {
+        return column(seed,chunkX,chunkZ,drainage,climate,whorled,transitions,dryForest,summerDry,null);
+    }
+    public static int[] column(long seed,int chunkX,int chunkZ,DrainageNetwork drainage,ClimateField climate,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry,java.util.function.BiPredicate<Integer,Integer> montane) {
         int minX=chunkX*16,minZ=chunkZ*16,halo=6,width=16+halo*2;
         int startX=minX-halo,startZ=minZ-halo;
         var roots=new ArrayList<>(roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,transitions));
@@ -143,10 +146,15 @@ public final class WoodlandTrees {
         roots.addAll(ColdUplands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
         roots.removeIf(root->Badlands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         roots.addAll(Badlands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate));
+        if((transitions&MontaneForest.FLAG)!=0){
+            if(montane==null)throw new IllegalArgumentException("Montane forest requires its saved owner");
+            roots.removeIf(root->montane.test(root.x(),root.z()));
+            roots.addAll(MontaneForestTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,montane));
+        }
         var boreal=BorealTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,BorealSlope.relief(transitions));
         boreal.removeIf(root->ColdUplands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         var geometry=new ArrayList<Voxel>();
-        for(var root:roots) geometry.addAll(root.family()==15?TaigaTrees.tree(root):tree(root));
+        for(var root:roots) geometry.addAll(root.family()==15||root.family()==MontaneForest.FAMILY?TaigaTrees.tree(root):tree(root));
         for(var root:boreal) geometry.addAll(whorled?BorealTrees.tree(root):BorealTrees.legacyTree(root));
         roots.addAll(boreal);
         var warm=WarmTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
@@ -179,7 +187,7 @@ public final class WoodlandTrees {
         var swamp=SwampTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         var swampTrees=new LinkedHashMap<Root,List<Voxel>>();var swampGeometry=new ArrayList<Voxel>();
         for(var root:swamp){var voxels=SwampTrees.tree(root);swampTrees.put(root,voxels);swampGeometry.addAll(voxels);}roots.addAll(swamp);
-        if(roots.isEmpty()) return SwampCanopy.merge(SwampCanopy.decorate(seed,chunkX,chunkZ,swampTrees,(x,y,z)->0,drainage,climate),WoodlandDetails.logs(seed,chunkX,chunkZ,drainage,climate,transitions));
+        if(roots.isEmpty()) return SwampCanopy.merge(SwampCanopy.decorate(seed,chunkX,chunkZ,swampTrees,(x,y,z)->0,drainage,climate),WoodlandDetails.logs(seed,chunkX,chunkZ,drainage,climate,transitions,montane));
         int structuralHeight=jungle.isEmpty()?MAX_HEIGHT:JungleTrees.MAX_HEIGHT;if(roots.stream().anyMatch(r->r.family()>0))structuralHeight=Math.max(structuralHeight,ForestTrees.MAX_HEIGHT);
         if(!humid.isEmpty())structuralHeight=Math.max(structuralHeight,HUMID_HEIGHT);
         if(!redwoods.isEmpty())structuralHeight=Math.max(structuralHeight,RedwoodTrees.MAX_HEIGHT);
@@ -232,7 +240,7 @@ public final class WoodlandTrees {
             int x=wx-startX,z=wz-startZ,y=wy-minY;if(x<0||x>=width||z<0||z>=width||y<0||y>=height)return 0;
             int i=y*plane+z*width+x,code=grid[i];return code==0?0:logCode(code)?code:distance[i]>6?0:leafBase(code)+distance[i];
         },drainage,climate);
-        return SwampCanopy.merge(SwampCanopy.merge(result.stream().mapToInt(Integer::intValue).toArray(),decor),WoodlandDetails.logs(seed,chunkX,chunkZ,drainage,climate,transitions));
+        return SwampCanopy.merge(SwampCanopy.merge(result.stream().mapToInt(Integer::intValue).toArray(),decor),WoodlandDetails.logs(seed,chunkX,chunkZ,drainage,climate,transitions,montane));
     }
     public static boolean logCode(int code) { return code==blockbranch.cubic.CanopyLayer.ACACIA_WOOD_CODE || (code>=1 && code<=6) || (code>=19 && code<=21) || (code>=28 && code<=30) || (code>=37 && code<=39) || (code>=78&&code<=80) || (code>=92&&code<=94) || (code>=101&&code<=103) || (code>=128&&code<=130) || RedwoodTrees.woodCode(code) || DarkOakBranches.branch(code); }
     public static int leafBase(int code) { return code>=131&&code<=148 ? 130+(code-131)/6*6 : code>=104 ? 103 : code>=95 ? 94 : code<=12 ? 6 : code<=18 ? 12 : code<=27 ? 21 : code<=36 ? 30 : 39; }

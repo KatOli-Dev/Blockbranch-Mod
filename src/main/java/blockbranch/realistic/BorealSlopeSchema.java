@@ -1,13 +1,13 @@
 package blockbranch.realistic;
 
 /** Independent new-world boreal slope tolerance; no promotion or migration.
- * It wraps the complete published270 alluvial generator. Absence keeps every
+ * It wraps the complete montane 271 generator. Absence keeps every
  * earlier definition, including unexplored terrain in older saves. */
 public final class BorealSlopeSchema {
-    public static final int BASE=270,VERSION=271;
+    public static final int BASE=271,VERSION=272;
     public static int schema(int base,int definition){
         if(definition==0)return base;
-        if(definition!=1||base!=BASE)throw new IllegalArgumentException("Boreal slope tolerance requires complete270");
+        if(definition!=1||base!=BASE)throw new IllegalArgumentException("Boreal slope tolerance requires complete271");
         return VERSION;
     }
     public static int baseSchema(int saved,int definition){

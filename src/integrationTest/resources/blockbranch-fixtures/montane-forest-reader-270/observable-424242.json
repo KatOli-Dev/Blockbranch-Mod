@@ -1,0 +1,36 @@
+{
+  "seed": 424242,
+  "global": {
+    "grids": [
+      {
+        "seed": 424242,
+        "samples": 14400,
+        "fallback": 184,
+        "physicalClimateSHA256": "0bb3a71fa7c86e911b14a28a94f613e06a8e118a44ba0c73c2b5cc7d0c9c9134",
+        "selectorSHA256": "060e06076fd8d1acf10c971728e25731e22f14277d3af47da0b35bc4e2ec7d95"
+      },
+      {
+        "seed": 1,
+        "samples": 14400,
+        "fallback": 150,
+        "physicalClimateSHA256": "567304e41684251edc6c77ed3ff2be3b57d0c42508402847ffb24d881d2ccf00",
+        "selectorSHA256": "3d8efcfaab59108332d79f705e253c86bdfe1040bc83b5251f623795bf749b94"
+      },
+      {
+        "seed": -17,
+        "samples": 14400,
+        "fallback": 133,
+        "physicalClimateSHA256": "4e1521f80a3efbc8c160e902ac0947b466c6baf8ac71c5094ff1df473d8e1f73",
+        "selectorSHA256": "5b8642c65a31343f3e1d512e21da29bc1bfcdea4f4cbdf64fd886c77b18e639c"
+      }
+    ]
+  },
+  "nativeReads": 1104624,
+  "nativeSHA256": "b085cb4018778c687d4d7cd593fd0cd854eb2ac081f3c431c70a4f06a6255b1e",
+  "profileCount": 83,
+  "profileSHA256": "ceed9662a5f5ca14a9a374ab5e1353d421ad562148b309de0c2c43554437423a",
+  "physicalSHA256": "74a89e84003d34e6b54f1ff8f48f5fd8dd9fbae85beeea331aeabd85b2736f56",
+  "clearCells": 271,
+  "clearDefinition": 128,
+  "generatorSHA256": "cbe567a6b8ef30affae10d0b7c9d00f9a88c4e6b31f74c95bc6be4476c986435"
+}

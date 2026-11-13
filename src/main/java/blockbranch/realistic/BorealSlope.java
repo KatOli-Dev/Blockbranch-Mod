@@ -9,7 +9,7 @@ package blockbranch.realistic;
  * domain's own cap over the 8 m footprint diagonal. Footprint, water and
  * channel rules are unchanged, so stems still need dry, unrouted ground. */
 public final class BorealSlope {
-    public static final int FLAG=64;
+    public static final int FLAG=128;
     public static final int PUBLISHED_RELIEF=3;
     /** {@code ceil(0.40*8*sqrt2)}; measured to leave every crown voxel above terrain. */
     public static final int RELIEF=5;

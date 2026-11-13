@@ -3,6 +3,7 @@ import net.fabricmc.api.ClientModInitializer;
 import blockbranch.client.wildlife.*;
 public final class BlockbranchTestClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        if(Boolean.getBoolean("blockbranch.montaneForestVisual"))blockbranch.realistic.MontaneForestVisualReview.register();
         if(Boolean.getBoolean("blockbranch.forestGrasslandVisual"))blockbranch.client.realistic.ForestGrasslandVisualReview.register();
         if(Boolean.getBoolean("blockbranch.surfaceOwnershipVisual"))blockbranch.realistic.SurfaceOwnershipVisualReview.register();
         if(Boolean.getBoolean("blockbranch.landIceVisual"))blockbranch.realistic.LandIceVisualReview.register();

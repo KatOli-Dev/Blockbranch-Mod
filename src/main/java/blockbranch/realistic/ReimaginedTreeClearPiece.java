@@ -25,13 +25,13 @@ public final class ReimaginedTreeClearPiece extends StructurePiece {
  // Saved plans retain both root selection and crown footprints across partial
  // generation: 1/2 historical roots, 3/4 transitions, 5..8 redwoods,
  // 9..16 independently add dry forest; 17..32 add summer-dry woodland;
- // 33..64 add saved polar climate; 65..128 add seasonal forest refinement;
- // 129..256 add boreal slope tolerance.
+ // 33..64 add saved polar climate; 65..128 add seasonal forest;129..256 add montane needleleaf roots;
+ // 257..512 add boreal slope tolerance.
  // Odd/even selects legacy/whorled crowns; every bit retains its own meaning.
  private final BoundingBox construction;private final long seed;private final int clearDefinition;private volatile Map<Long,Integer> replacements;
  public ReimaginedTreeClearPiece(BoundingBox construction,long seed,int crownDefinition){this(construction,seed,crownDefinition,0);}
- public ReimaginedTreeClearPiece(BoundingBox construction,long seed,int crownDefinition,int transitions){super(TYPE,0,expanded(construction,crownDefinition+1+2*transitions));if(transitions<0||transitions>127)throw new IllegalArgumentException("Unknown vegetation definition");if(crownDefinition!=0&&crownDefinition!=1)throw new IllegalArgumentException("Unknown boreal crown definition");this.construction=construction;this.seed=seed;this.clearDefinition=crownDefinition+1+2*transitions;}
- private ReimaginedTreeClearPiece(StructurePieceSerializationContext c,CompoundTag t){super(TYPE,t);int[] a=t.getIntArray("Construction").orElseThrow();clearDefinition=t.getIntOr("ClearDefinition",0);if((clearDefinition<1||clearDefinition>256)||a.length!=6)throw new IllegalArgumentException("Unknown tree-clear geometry");construction=new BoundingBox(a[0],a[1],a[2],a[3],a[4],a[5]);seed=t.getLongOr("Seed",0);if(construction.getXSpan()>240||construction.getZSpan()>240||!getBoundingBox().equals(expanded(construction,clearDefinition)))throw new IllegalArgumentException("Invalid tree-clear bounds");}
+ public ReimaginedTreeClearPiece(BoundingBox construction,long seed,int crownDefinition,int transitions){super(TYPE,0,expanded(construction,crownDefinition+1+2*transitions));if(transitions<0||transitions>255)throw new IllegalArgumentException("Unknown vegetation definition");if(crownDefinition!=0&&crownDefinition!=1)throw new IllegalArgumentException("Unknown boreal crown definition");this.construction=construction;this.seed=seed;this.clearDefinition=crownDefinition+1+2*transitions;}
+ private ReimaginedTreeClearPiece(StructurePieceSerializationContext c,CompoundTag t){super(TYPE,t);int[] a=t.getIntArray("Construction").orElseThrow();clearDefinition=t.getIntOr("ClearDefinition",0);if((clearDefinition<1||clearDefinition>512)||a.length!=6)throw new IllegalArgumentException("Unknown tree-clear geometry");construction=new BoundingBox(a[0],a[1],a[2],a[3],a[4],a[5]);seed=t.getLongOr("Seed",0);if(construction.getXSpan()>240||construction.getZSpan()>240||!getBoundingBox().equals(expanded(construction,clearDefinition)))throw new IllegalArgumentException("Invalid tree-clear bounds");}
  // Only redwood-bearing plans reserve the taller halo; definitions 1..8 keep exact boxes.
  private static BoundingBox expanded(BoundingBox b,int definition){return new BoundingBox(b.minX()-32,b.minY()-32,b.minZ()-32,b.maxX()+32,b.maxY()+((((definition-1)/2)&RedwoodForest.FLAG)!=0?144:80),b.maxZ()+32);}
  @Override protected void addAdditionalSaveData(StructurePieceSerializationContext c,CompoundTag t){t.putInt("ClearDefinition",clearDefinition);t.putIntArray("Construction",new int[]{construction.minX(),construction.minY(),construction.minZ(),construction.maxX(),construction.maxY(),construction.maxZ()});t.putLong("Seed",seed);}
@@ -39,10 +39,14 @@ public final class ReimaginedTreeClearPiece extends StructurePiece {
   if(replacements!=null)return replacements;
   int flags=(clearDefinition-1)/2;boolean seasonal=(flags&SeasonalForestExpansion.FLAG)!=0;
   if(seasonal&&g.seasonalForestDefinition()!=1)throw new IllegalStateException("Saved seasonal-forest plan requires its generation definition");
-  if((flags&BorealSlope.FLAG)!=0&&g.borealSlopeDefinition()!=1)throw new IllegalStateException("Saved boreal-slope plan requires its generation definition");
   var terrain=g.hutPlanningTerrain(random);var d=terrain.drainage();var climate=new ClimateField(seed,(flags&16)!=0);int x=construction.minX()-24,z=construction.minZ()-24,mx=construction.maxX()+24,mz=construction.maxZ()+24;
+  boolean montane=(flags&MontaneForest.FLAG)!=0;
+  if((flags&BorealSlope.FLAG)!=0&&g.borealSlopeDefinition()!=1)throw new IllegalStateException("Saved boreal-slope plan requires its generation definition");
+  if(montane&&g.montaneForestDefinition()!=1)throw new IllegalStateException("Saved montane plan requires its generation definition");
+  var montaneOwner=montane?g.montaneForestOwner(random):null;
   var trees=new ArrayList<List<WoodlandTrees.Voxel>>();
-  var temperate=new ArrayList<>(WoodlandTrees.roots(seed,x,z,mx,mz,d,climate,(clearDefinition-1)/2));temperate.removeIf(r->ColdUplands.surfaceKind(seed,r.x(),r.z(),d,climate)>0);temperate.addAll(ColdUplands.roots(seed,x,z,mx,mz,d,climate));temperate.removeIf(r->Badlands.surfaceKind(seed,r.x(),r.z(),d,climate)>0);temperate.addAll(Badlands.roots(seed,x,z,mx,mz,d,climate));add(trees,temperate,r->r.family()==15?TaigaTrees.tree(r):WoodlandTrees.tree(r));
+  var temperate=new ArrayList<>(WoodlandTrees.roots(seed,x,z,mx,mz,d,climate,(clearDefinition-1)/2));temperate.removeIf(r->ColdUplands.surfaceKind(seed,r.x(),r.z(),d,climate)>0);temperate.addAll(ColdUplands.roots(seed,x,z,mx,mz,d,climate));temperate.removeIf(r->Badlands.surfaceKind(seed,r.x(),r.z(),d,climate)>0);temperate.addAll(Badlands.roots(seed,x,z,mx,mz,d,climate));if(montane)temperate.removeIf(r->montaneOwner.test(r.x(),r.z()));add(trees,temperate,r->r.family()==15?TaigaTrees.tree(r):WoodlandTrees.tree(r));
+  if(montane)add(trees,MontaneForestTrees.roots(seed,x,z,mx,mz,d,climate,montaneOwner),TaigaTrees::tree);
   if(RedwoodForest.enabled((clearDefinition-1)/2))add(trees,RedwoodTrees.roots(seed,x,z,mx,mz,d,climate),RedwoodTrees::tree);
   var boreal=BorealTrees.roots(seed,x,z,mx,mz,d,climate,BorealSlope.relief(flags));boreal.removeIf(r->ColdUplands.surfaceKind(seed,r.x(),r.z(),d,climate)>0);add(trees,boreal,(clearDefinition&1)==1?BorealTrees::legacyTree:BorealTrees::tree);
   var dryForest=(flags&DryForest.FLAG)!=0||seasonal?g.dryForestOwner(random,seasonal):null;
