@@ -57,20 +57,17 @@ public final class TaigaTrees {
      */
     private static HashMap<P,Integer> pineCrown(Map<P,Integer> wood,List<P> centers,long seed,double angle,int h,int skirt){
         int limbs=6+(h-PineCrowns.MATURE_HEIGHT+1)/2+(int)Long.remainderUnsigned(seed>>>12,2);double scale=1+.025*(h-PineCrowns.MATURE_HEIGHT),rmax=Math.min(3.6,.09*h+1.1),phase=unit(seed^0x50494E45L)*Math.PI*2;
-        double low=skirt-1,high=h-5;
+        double low=skirt-1,high=h-5;P[] ends=new P[limbs],starts=new P[limbs];double[] reaches=new double[limbs];long[] seeds=new long[limbs];double[] azimuth=new double[limbs];
         for(int n=0;n<limbs;n++){
             long v=OakBirchWoodland.mix(seed^0x50494E4543524F57L+n*1301L);double f=(n+.25+.6*unit(v^3))/limbs,a=angle+n*2.39996+(unit(v^5)-.5)*.9;
             int by=(int)Math.max(skirt-1,Math.min(h-5,Math.round(low+(high-low)*f)));var c=centers.get(by);
             double profile=Math.max(.35,Math.sin(Math.PI*(.1+.8*(1-f)))),reach=rmax*profile*(.8+.4*unit(v^7));
             P end=new P(clamp(c.x()+(int)Math.round(Math.cos(a)*reach),5),Math.min(h-3,by+1+(int)(reach*.4*unit(v^9))),clamp(c.z()+(int)Math.round(Math.sin(a)*reach),5));
-            limb(wood,c,end);
+            limb(wood,c,end);starts[n]=c;ends[n]=end;reaches[n]=reach;seeds[n]=v;azimuth[n]=a;
         }
         var raw=new HashMap<P,Integer>(wood);
         for(int n=0;n<limbs;n++){
-            long v=OakBirchWoodland.mix(seed^0x50494E4543524F57L+n*1301L);double f=(n+.25+.6*unit(v^3))/limbs,a=angle+n*2.39996+(unit(v^5)-.5)*.9;
-            int by=(int)Math.max(skirt-1,Math.min(h-5,Math.round(low+(high-low)*f)));var c=centers.get(by);
-            double profile=Math.max(.35,Math.sin(Math.PI*(.1+.8*(1-f)))),reach=rmax*profile*(.8+.4*unit(v^7));
-            P end=new P(clamp(c.x()+(int)Math.round(Math.cos(a)*reach),5),Math.min(h-3,by+1+(int)(reach*.4*unit(v^9))),clamp(c.z()+(int)Math.round(Math.sin(a)*reach),5));
+            long v=seeds[n];P c=starts[n],end=ends[n];double a=azimuth[n],reach=reaches[n];
             double pad=scale*(2+1.2*unit(v^11));pad(raw,end,pad,scale*(1.3+.7*unit(v^13)),v,phase);
             if(reach>=2.2){P mid=new P(clamp((c.x()+end.x())/2+(int)Math.round(Math.cos(a+1.57)*1.2),5),Math.min(h-3,(c.y()+end.y())/2+1),clamp((c.z()+end.z())/2+(int)Math.round(Math.sin(a+1.57)*1.2),5));pad(raw,mid,pad*.65,scale*1.2,v^15,phase);}
         }

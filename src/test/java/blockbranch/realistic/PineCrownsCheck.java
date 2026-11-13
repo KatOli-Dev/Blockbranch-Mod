@@ -158,7 +158,20 @@ public final class PineCrownsCheck {
         require(median(ratioNew)<median(ratioOld),"Crowns are less column-like (depth over width): "+median(ratioOld)+" -> "+median(ratioNew));
         require(median(sectorNew)<median(sectorOld),"Crowns leave more azimuth gaps per layer: "+median(sectorOld)+" -> "+median(sectorNew));
         require(Math.abs(median(lowNew)-median(lowOld))<=.06,"The crown base stays near its published height fraction: "+median(lowOld)+" -> "+median(lowNew));
+        int capped=0;for(double r:reach)if(r>=6)capped++;
+        System.out.printf("PINE_CROWNS_CAP gated stems reaching the 6-block halo plane: %d of %d (their outer pad faces are cut flat there)%n",capped,n);
+        cost();
         System.out.printf("PINE_CROWNS_MORPHOLOGY stems=%d leaves median %.0f->%.0f (ratio %.3f) logs median %.0f->%.0f (ratio %.3f) width %.0f->%.0f depth/width %.2f->%.2f boxFill %.3f->%.3f sectorFill %.3f->%.3f lowestLeaf/h %.2f->%.2f (lower base on %d stems) maxReach median %.0f->%.0f max %.0f->%.0f woodReach max %.0f%n",n,median(leafOldN),median(leafNewN),leafMedian,median(logOldN),median(logNewN),logMedian,median(widthOld),median(widthNew),median(ratioOld),median(ratioNew),median(fillOld),median(fillNew),median(sectorOld),median(sectorNew),median(lowOld),median(lowNew),lowerBase,median(reachOld),median(reach),Collections.max(reachOld),Collections.max(reach),Collections.max(woodReach));
+    }
+    /** Diagnostic only (never asserted): warm-JIT construction time per mature real stem, published versus gated, median of five passes. */
+    private static void cost(){
+        var stems=new ArrayList<WoodlandTrees.Root>();for(var r:stems())if(r.height()>=PineCrowns.MATURE_HEIGHT)stems.add(r);
+        long sink=0;for(int w=0;w<3;w++)for(var r:stems)sink+=TaigaTrees.tree(r,false).size()+TaigaTrees.tree(r,true).size();
+        double[] medians=new double[2];
+        for(int variant=0;variant<2;variant++){var t=new double[5];
+            for(int k=0;k<5;k++){long begin=System.nanoTime();for(var r:stems)sink+=TaigaTrees.tree(r,variant==1).size();t[k]=(System.nanoTime()-begin)/1e3/stems.size();}
+            Arrays.sort(t);medians[variant]=t[2];}
+        System.out.printf("PINE_CROWNS_COST us/stem published %.0f gated %.0f over %d mature stems (warm JIT, median of 5; diagnostic only, no frame-rate claim) %d%n",medians[0],medians[1],stems.size(),sink&1);
     }
     private record Metrics(int top,int leaves,int logs,int width,int lowestLeaf,int depth,double maxExtent,double woodExtent,int box,double sector,boolean attached){}
     private static boolean log(int code){return code>=TaigaTrees.WOOD&&code<=TaigaTrees.WOOD+2;}
