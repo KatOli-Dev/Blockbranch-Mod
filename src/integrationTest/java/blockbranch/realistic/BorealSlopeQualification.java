@@ -76,17 +76,19 @@ public final class BorealSlopeQualification {
                     var drainage=g.drainage(random);int ground=drainage.sample(SITE_X+3,SITE_Z+3).height();var edit=new BlockPos(SITE_X+3,ground,SITE_Z+3);
                     level.setBlock(edit,Blocks.GOLD_BLOCK.defaultBlockState(),3);
                     var context=StructurePieceSerializationContext.fromLevel(level);var box=new BoundingBox(SITE_X-16,ground,SITE_Z-16,SITE_X+16,ground+32,SITE_Z+16);
-                    var tolerant=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),g.vegetationFlags());
+                    // Saved plans here pin the slope contract (definitions 257..512); the later broadleaf bit 256 is outside it and has its own qualification.
+                    int slopeFlags=g.vegetationFlags()&~BroadleafCrowns.FLAG;
+                    var tolerant=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),slopeFlags);
                     if(tolerant.createTag(context).getIntOr("ClearDefinition",0)!=512)throw new AssertionError("Schema 272 plans carry the slope flag");
                     var plan=BorealClearSmoke.plan(tolerant,g,random);if(plan.size()<=50)throw new AssertionError("Saved slope plan clears the stand: "+plan.size());
-                    var older=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),g.vegetationFlags()&~BorealSlope.FLAG);
+                    var older=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),slopeFlags&~BorealSlope.FLAG);
                     if(older.createTag(context).getIntOr("ClearDefinition",0)!=256||!BorealClearSmoke.plan(older,g,random).isEmpty())throw new AssertionError("A plan saved without the flag keeps the published treeless footprint");
-                    // Range and coupling: definitions 257..512 are valid, 0 and 513 are not, and the flag needs its generator definition.
-                    for(int bad:new int[]{256,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..255 accepted: "+bad);}catch(IllegalArgumentException expected){}
-                    new ReimaginedTreeClearPiece(box,1,0,255);
-                    for(int bad:new int[]{0,513}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
+                    // Range and coupling: definitions 257..512 are valid (513..1024 belong to the broadleaf bit), 0 and 1025 are not, and the flag needs its generator definition.
+                    for(int bad:new int[]{512,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..511 accepted: "+bad);}catch(IllegalArgumentException expected){}
+                    new ReimaginedTreeClearPiece(box,1,0,511);
+                    for(int bad:new int[]{0,1025}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
                     var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
-                    var without=json.deepCopy();without.remove("mangrove_roots_definition");without.remove("boreal_slope_definition");without.addProperty("shape_version",271);
+                    var without=json.deepCopy();without.remove("broadleaf_crown_definition");without.remove("mangrove_roots_definition");without.remove("boreal_slope_definition");without.addProperty("shape_version",271);
                     var gateless=RealisticGenerator.CODEC.codec().parse(ops,without).getOrThrow();
                     try{BorealClearSmoke.plan(BorealClearSmoke.load(context,tolerant.createTag(context).copy()),gateless,random);throw new AssertionError("A bit-128 plan replayed under a generator without the definition");}catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalStateException))throw expected;}
                     for(var mutation:new String[][]{{"shape_version","270"},{"shape_version","271"},{"shape_version",current==274?"275":"274"},{"shape_version",current==273?"272":"273"},{"boreal_slope_definition","0"},{"boreal_slope_definition","2"},{"montane_forest_definition","0"},{"alluvial_floodplain_definition","0"}}){

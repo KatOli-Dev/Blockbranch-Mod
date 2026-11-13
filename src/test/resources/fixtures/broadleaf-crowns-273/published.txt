@@ -3,7 +3,7 @@
 # gated change, with the ten-argument WoodlandTrees.column on the seed-1 BorealSlopeOracle terrain and the
 # polar-capable climate. Columns: site seed chunkX chunkZ vegetationFlags intsInWindow sha256(Arrays.toString
 # per column, x then z order). Flags 0, 1 (transitions) and 3 (transitions + redwood) never include the
-# broadleaf bit. Sites: ordinary forest (two), birch forest, dappled oak-birch woodland (audited witnesses).
+# broadleaf bit. Sites: forest-a (audited), forest-b and forest-c (audited scene, montane under the bundled preset but ordinary forest at these flags), birch forest and dappled oak-birch woodland (audited witnesses).
 forest-a 1 2998 -19007 0 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
 forest-a 1 2998 -19007 1 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
 forest-a 1 2998 -19007 3 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2

@@ -149,7 +149,7 @@ public final class RealisticGenerator extends ChunkGenerator {
     public int surfaceOwnershipDefinition(){return surfaceOwnershipDefinition;}
     private RealisticGenerator withRedwoodForests(int definition){redwoodForestDefinition=definition;((ScreeBiomeSource)biomeSource).withRedwoodForests(definition>0);return this;}
     public int redwoodForestDefinition(){return redwoodForestDefinition;}
-    /** Bits 0..7 retain transitions/redwoods/dry forest/summer-dry woodland/polar climate/seasonal forest/montane needleleaf/boreal slope tolerance in saved tree-clear plans. */
+    /** Bits 0..8 retain transitions/redwoods/dry forest/summer-dry woodland/polar climate/seasonal forest/montane needleleaf/boreal slope tolerance/broadleaf oak crowns in saved tree-clear plans. */
     public int vegetationFlags(){return biomeTransitionDefinition|(redwoodForestDefinition>0?RedwoodForest.FLAG:0)|(dryForestDefinition>0?DryForest.FLAG:0)|(summerDryDefinition>0?SummerDryWoodland.FLAG:0)|(continentalIceDefinition>0?16:0)|(seasonalForestDefinition>0?SeasonalForestExpansion.FLAG:0)|(montaneForestDefinition>0?MontaneForest.FLAG:0)|(borealSlopeDefinition>0?BorealSlope.FLAG:0)|(broadleafCrownDefinition>0?BroadleafCrowns.FLAG:0);}
     private RealisticGenerator withBiomeTransitions(int definition){biomeTransitionDefinition=definition;return this;}
     public int biomeTransitionDefinition(){return biomeTransitionDefinition;}

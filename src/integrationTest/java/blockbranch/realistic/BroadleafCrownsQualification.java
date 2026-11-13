@@ -52,6 +52,7 @@ public final class BroadleafCrownsQualification {
                     if(shape!=274||gate!=1||json.get("broadleaf_crown_definition").getAsInt()!=1||(g.vegetationFlags()&BroadleafCrowns.FLAG)==0||g.mangroveRootsDefinition()!=1)throw new AssertionError("Bundled schema 274 preset required: "+shape+" "+gate);
                     var base=baseline();
                     for(int i=0;i<3;i++)if(windows.get(i).digest().equals(base.get(i)))throw new AssertionError("The gate changed nothing in "+NAMES[i]);
+                    if(!windows.get(3).digest().equals(base.get(3)))throw new AssertionError("The gate changed the dappled control window");
                     // A log cell is also lost where a neighbouring tree's leaf merges over it; the published stand already has such cells.
                     for(int i=0;i<windows.size();i++)if(windows.get(i).isolated()>4)throw new AssertionError("Orphan log cells in "+NAMES[i]+": "+windows.get(i));
                     for(var mutation:new String[][]{{"broadleaf_crown_definition","0"},{"broadleaf_crown_definition","2"},{"broadleaf_crown_definition","-1"},{"shape_version","273"},{"shape_version","275"},{"mangrove_roots_definition","0"}}){

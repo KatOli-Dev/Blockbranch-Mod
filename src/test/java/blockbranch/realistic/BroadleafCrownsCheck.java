@@ -17,6 +17,7 @@ public final class BroadleafCrownsCheck {
         schema();
         published();
         otherFamilies();
+        badlandOaks();
         morphology();
         deadwoodClear();
         System.out.println("BROADLEAF_CROWNS_GATED_PASS");
@@ -74,6 +75,14 @@ public final class BroadleafCrownsCheck {
             var root=new WoodlandTrees.Root(0,0,0,false,24,1234567,family);
             if(family!=0)require(ForestTrees.tree(root,true).equals(ForestTrees.tree(root,false)),"ForestTrees scaffold ignores family "+family);
         }
+    }
+    /** Badland oaks are family 1 too but are not ordinary forest: their canopy columns must not change under the gate. */
+    private static void badlandOaks()throws Exception{
+        var d=BorealSlopeOracle.terrain(1);var c=new ClimateField(1,true);int x=96000,z=-180000,badland=0;
+        for(var root:Badlands.roots(1,x-48,z-48,x+48,z+48,d,c))if(root.family()==1&&!root.birch()&&root.height()>=11)badland++;
+        require(badland>=5,"Badland family-1 oaks exist at the witness: "+badland);
+        int cx=Math.floorDiv(x,16),cz=Math.floorDiv(z,16);
+        require(window(1,cx,cz,0).equals(window(1,cx,cz,BroadleafCrowns.FLAG)),"The gate leaves badland oak columns unchanged");
     }
     /** Same stems: crown top and leaf mass stay comparable, limbs attach, extents stay inside the shared grid. */
     private static void morphology(){
