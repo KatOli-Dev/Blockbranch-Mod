@@ -12,6 +12,6 @@ tasks.register('prepareSeasonalCrownsQualification'){doLast{
  if(rootsMode in ['baseline274','fresh275'])assert !rootsDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert rootsDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  rootsDir.asFile.mkdirs();rootsDir.file('eula.txt').asFile.text='eula=true\n'
- rootsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25643\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(rootsMode=='baseline274'?'blockbranch:seasonal_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+ rootsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25643\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(rootsMode=='baseline274'?'blockbranch:seasonal_crowns_baseline':rootsMode in ['fresh275','verify275']?'blockbranch:birch_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
 }}
 tasks.named('runSeasonalCrownsQualification'){dependsOn 'prepareSeasonalCrownsQualification';doLast{assert rootsDir.file('result.txt').asFile.text.startsWith('PASS')}}

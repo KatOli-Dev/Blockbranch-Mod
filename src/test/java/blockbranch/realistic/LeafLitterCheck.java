@@ -113,7 +113,7 @@ public final class LeafLitterCheck {
     private static void preset() throws Exception {
         try(var in=LeafLitterCheck.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")){
             var text=new String(Objects.requireNonNull(in).readAllBytes(),StandardCharsets.UTF_8);
-            require(text.contains("\"shape_version\": 275")&&text.contains("\"seasonal_crown_definition\": 1")&&text.contains("\"broadleaf_crown_definition\": 1")&&text.contains("\"mangrove_roots_definition\": 1")&&text.contains("\"boreal_slope_definition\": 1")&&text.contains("\"alluvial_floodplain_definition\": 1")&&text.contains("\"seasonal_forest_definition\": 1")&&text.contains("\"warm_xeric_definition\": 1")&&text.contains("\"leaf_litter_definition\": 1")&&text.contains("\"continental_ice_definition\": 1"),"New-world preset opts in explicitly to all wrapped definitions (schema 275)");
+            require(text.contains("\"shape_version\": 276")&&text.contains("\"birch_crown_definition\": 1")&&text.contains("\"seasonal_crown_definition\": 1")&&text.contains("\"broadleaf_crown_definition\": 1")&&text.contains("\"mangrove_roots_definition\": 1")&&text.contains("\"boreal_slope_definition\": 1")&&text.contains("\"alluvial_floodplain_definition\": 1")&&text.contains("\"seasonal_forest_definition\": 1")&&text.contains("\"warm_xeric_definition\": 1")&&text.contains("\"leaf_litter_definition\": 1")&&text.contains("\"continental_ice_definition\": 1"),"New-world preset opts in explicitly to all wrapped definitions (schema 276)");
         }
     }
 

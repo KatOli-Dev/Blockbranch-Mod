@@ -19,14 +19,17 @@ public final class ForestTrees {
     public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold){return tree(root,scaffold,false);}
     /** {@code scaffold} selects {@link BroadleafCrowns} for ordinary-forest oaks and {@code seasonal} selects {@link SeasonalCrowns} for
      * dry-forest stems only; every other caller and family keeps the published crown. */
-    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal){
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal){return tree(root,scaffold,seasonal,false);}
+    /** {@code birch} selects {@link BirchCrowns} for mature old-growth-birch stems ({@link TemperateForestVariants#BIRCH_FAMILY}) only. */
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal,boolean birch){
         int wood=root.birch()?4:1,h=root.height();long seed=OakBirchWoodland.mix(root.variant()^0x464F52455354464FL);double angle=unit(seed^11)*Math.PI*2;
         byte[] grid=new byte[PLANE*MAX_HEIGHT],distance=new byte[grid.length];Arrays.fill(distance,(byte)7);var crowns=new ArrayList<Crown>();
         int lean=(root.family()==2||root.family()==TemperateForestVariants.BIRCH_FAMILY)?(int)Long.remainderUnsigned(seed,3):1+(int)Long.remainderUnsigned(seed,2),fork=Math.max(2,(int)(h*(root.birch()?.42+.12*unit(seed^19):.30+.20*unit(seed^19))));
         var stem=new Node((int)Math.round(Math.cos(angle)*lean),fork,(int)Math.round(Math.sin(angle)*lean));
         segment(grid,new Node(0,0,0),new Node(0,Math.min(3,fork),0),wood);segment(grid,new Node(0,Math.min(3,fork),0),stem,wood);
         if((root.family()==2||root.family()==TemperateForestVariants.BIRCH_FAMILY)&&root.birch()){
-            birchCrown(grid,crowns,stem,h,seed,angle,wood);
+            if(birch&&root.family()==TemperateForestVariants.BIRCH_FAMILY&&h>=BirchCrowns.MATURE_HEIGHT)birchScaffold(grid,crowns,stem,h,seed,angle,wood);
+            else birchCrown(grid,crowns,stem,h,seed,angle,wood);
         }else if(root.birch()){
             var top=end(stem,angle,.7,h-2);segment(grid,stem,top,wood);
             int arms=h<11?4:4+(int)Long.remainderUnsigned(seed>>>8,3);
@@ -122,6 +125,30 @@ public final class ForestTrees {
             // Upper branch tips carry overlapping foliage,so each crown follows its scaffold.
             crowns.add(crown(tip.x()*.88,tip.y()+.4,tip.z()*.88,1.9+unit(v^281),2.4+unit(v^283)*1.1,1.8+unit(v^293)*.9,v^307));
             if(h>=15&&(v&1)==0){var twig=end(tip,a+.7+(unit(v^271)-.5),1.2,Math.min(h-2,tip.y()+1));branch(grid,tip,twig,wood,v^277);}
+        }
+    }
+    /** Mature old-growth birch: the upright bole keeps its leader, while ascending limbs of graded reach carry separate, flatter lobes
+     * whose spread peaks in the upper-middle crown, plus a second top on most stems. Same height, trunk, tip clothing and window
+     * as {@link #birchCrown}; only the limb and lobe arrangement differs. */
+    private static void birchScaffold(byte[] grid,List<Crown> crowns,Node stem,int h,long seed,double angle,int wood){
+        double lowest=h*(.40+.08*unit(seed^401)),reachTop=h*.78;
+        var leader=end(stem,angle,.6,h-2);segment(grid,stem,leader,wood);
+        int arms=5+(h>=24?1:0)+(int)Long.remainderUnsigned(seed>>>8,2);
+        for(int n=0;n<arms;n++){
+            long v=OakBirchWoodland.mix(seed+n*1471);double f=(n+.3+.5*unit(v^409))/arms;
+            int by=Math.clamp((int)Math.round(lowest+(reachTop-lowest)*f),2,h-4);var start=attach(grid,by);
+            double a=angle+.9+n*2.39996+(unit(v^419)-.5)*.9,reach=(2.3+2.6*Math.sin(Math.PI*(.12+.8*f)))*(.88+.24*unit(v^421));
+            int tipY=Math.min(h-3,by+1+(int)Math.round(reach*(.45+.5*unit(v^431))));
+            var tip=end(start,a,reach,tipY);branch(grid,start,tip,wood,v);
+            crowns.add(crown(tip.x()*.92,tip.y()+.4,tip.z()*.92,1.95+unit(v^433)*.8,1.6+unit(v^439)*.6,1.9+unit(v^443)*.8,v^449));
+            if(reach>=3.6&&(v&1)==0){var twig=end(tip,a+(((v>>>3)&1)==0?.9:-.9),1.5,Math.min(h-3,tip.y()+1));branch(grid,tip,twig,wood,v^277);
+                crowns.add(crown(twig.x()*.92,twig.y()+.3,twig.z()*.92,1.5+unit(v^457)*.5,1.4+unit(v^461)*.4,1.5+unit(v^463)*.5,v^467));}
+        }
+        crowns.add(crown(leader.x()*.8,h-2.6,leader.z()*.8,2.3+unit(seed^41)*.6,1.9+unit(seed^73)*.4,2.3+unit(seed^101)*.6,seed^151));
+        if((seed>>>4&3)!=0){
+            int by=Math.clamp((int)Math.round(h*(.64+.08*unit(seed^479))),2,h-5);var start=attach(grid,by);double a=angle+2.4+unit(seed^487)*1.6;
+            var top=end(start,a,2.2+unit(seed^491),h-4);branch(grid,start,top,wood,seed^493);
+            crowns.add(crown(top.x()*.92,top.y()+.2,top.z()*.92,2.1+unit(seed^499)*.6,1.7+unit(seed^503)*.4,2.1+unit(seed^509)*.6,seed^521));
         }
     }
     /** Small terminal twig envelopes cover live cut ends;the main crown/scaffold is unchanged. */
