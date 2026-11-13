@@ -159,7 +159,7 @@ public final class PineCrownsCheck {
         require(median(sectorNew)<median(sectorOld),"Crowns leave more azimuth gaps per layer: "+median(sectorOld)+" -> "+median(sectorNew));
         require(Math.abs(median(lowNew)-median(lowOld))<=.06,"The crown base stays near its published height fraction: "+median(lowOld)+" -> "+median(lowNew));
         int capped=0;for(double r:reach)if(r>=6)capped++;
-        System.out.printf("PINE_CROWNS_CAP gated stems reaching the 6-block halo plane: %d of %d (their outer pad faces are cut flat there)%n",capped,n);
+        System.out.printf("PINE_CROWNS_CAP boundary-touch fraction: %d of %d gated stems have a voxel on the 6-block halo plane (a touch count, not the number of clipped cells)%n",capped,n);
         cost();
         System.out.printf("PINE_CROWNS_MORPHOLOGY stems=%d leaves median %.0f->%.0f (ratio %.3f) logs median %.0f->%.0f (ratio %.3f) width %.0f->%.0f depth/width %.2f->%.2f boxFill %.3f->%.3f sectorFill %.3f->%.3f lowestLeaf/h %.2f->%.2f (lower base on %d stems) maxReach median %.0f->%.0f max %.0f->%.0f woodReach max %.0f%n",n,median(leafOldN),median(leafNewN),leafMedian,median(logOldN),median(logNewN),logMedian,median(widthOld),median(widthNew),median(ratioOld),median(ratioNew),median(fillOld),median(fillNew),median(sectorOld),median(sectorNew),median(lowOld),median(lowNew),lowerBase,median(reachOld),median(reach),Collections.max(reachOld),Collections.max(reach),Collections.max(woodReach));
     }
