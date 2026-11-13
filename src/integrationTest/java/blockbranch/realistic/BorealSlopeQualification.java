@@ -76,17 +76,17 @@ public final class BorealSlopeQualification {
                     var drainage=g.drainage(random);int ground=drainage.sample(SITE_X+3,SITE_Z+3).height();var edit=new BlockPos(SITE_X+3,ground,SITE_Z+3);
                     level.setBlock(edit,Blocks.GOLD_BLOCK.defaultBlockState(),3);
                     var context=StructurePieceSerializationContext.fromLevel(level);var box=new BoundingBox(SITE_X-16,ground,SITE_Z-16,SITE_X+16,ground+32,SITE_Z+16);
-                    // Saved plans here pin the slope contract (definitions 257..512); the later broadleaf bit 256 and seasonal bit 512 are outside it and have their own qualifications.
-                    int slopeFlags=g.vegetationFlags()&~(BroadleafCrowns.FLAG|SeasonalCrowns.FLAG);
+                    // Saved plans here pin the slope contract (definitions 257..512); the later broadleaf bit 256, seasonal bit 512 and birch bit 1024 are outside it and have their own qualifications.
+                    int slopeFlags=g.vegetationFlags()&~(BroadleafCrowns.FLAG|SeasonalCrowns.FLAG|BirchCrowns.FLAG);
                     var tolerant=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),slopeFlags);
                     if(tolerant.createTag(context).getIntOr("ClearDefinition",0)!=512)throw new AssertionError("Schema 272 plans carry the slope flag");
                     var plan=BorealClearSmoke.plan(tolerant,g,random);if(plan.size()<=50)throw new AssertionError("Saved slope plan clears the stand: "+plan.size());
                     var older=new ReimaginedTreeClearPiece(box,1,g.borealCrownDefinition(),slopeFlags&~BorealSlope.FLAG);
                     if(older.createTag(context).getIntOr("ClearDefinition",0)!=256||!BorealClearSmoke.plan(older,g,random).isEmpty())throw new AssertionError("A plan saved without the flag keeps the published treeless footprint");
-                    // Range and coupling: definitions 257..512 are valid (513..1024 belong to the broadleaf bit, 1025..2048 to the seasonal bit), flags above 1023 and definitions 0 and 2049 are rejected, and the flag needs its generator definition.
-                    for(int bad:new int[]{1024,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..1023 accepted: "+bad);}catch(IllegalArgumentException expected){}
-                    new ReimaginedTreeClearPiece(box,1,0,1023);
-                    for(int bad:new int[]{0,2049}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
+                    // Range and coupling: definitions 257..512 are valid (513..1024 belong to the broadleaf bit, 1025..2048 to the seasonal bit, 2049..4096 to the birch bit), flags above 2047 and definitions 0 and 4097 are rejected, and the flag needs its generator definition.
+                    for(int bad:new int[]{2048,-1})try{new ReimaginedTreeClearPiece(box,1,0,bad);throw new AssertionError("Vegetation flags outside 0..2047 accepted: "+bad);}catch(IllegalArgumentException expected){}
+                    new ReimaginedTreeClearPiece(box,1,0,2047);
+                    for(int bad:new int[]{0,4097}){var tag=tolerant.createTag(context).copy();tag.putInt("ClearDefinition",bad);try{BorealClearSmoke.load(context,tag);throw new AssertionError("Clear definition accepted: "+bad);}catch(IllegalArgumentException expected){}}
                     var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
                     var without=json.deepCopy();without.remove("birch_crown_definition");without.remove("seasonal_crown_definition");without.remove("broadleaf_crown_definition");without.remove("mangrove_roots_definition");without.remove("boreal_slope_definition");without.addProperty("shape_version",271);
                     var gateless=RealisticGenerator.CODEC.codec().parse(ops,without).getOrThrow();
