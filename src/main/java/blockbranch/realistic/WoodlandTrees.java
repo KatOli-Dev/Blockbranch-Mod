@@ -162,7 +162,7 @@ public final class WoodlandTrees {
         boreal.removeIf(root->ColdUplands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
         var geometry=new ArrayList<Voxel>();
         for(var root:roots) geometry.addAll(root.family()==15||root.family()==MontaneForest.FAMILY?TaigaTrees.tree(root):tree(root,flagsFor(ordinary,root,transitions)));
-        for(var root:boreal) geometry.addAll(whorled?BorealTrees.tree(root):BorealTrees.legacyTree(root));
+        for(var root:boreal) geometry.addAll(whorled?BorealTrees.tree(root,PineCrowns.enabled(transitions)):BorealTrees.legacyTree(root));
         roots.addAll(boreal);
         var warm=WarmTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         warm.removeIf(root->Badlands.surfaceKind(seed,root.x(),root.z(),drainage,climate)>0);
