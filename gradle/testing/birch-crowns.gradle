@@ -1,0 +1,34 @@
+// Native views of the audited seed-424242 old-growth-birch scene at fixed poses: the bundled preset versus any gate-absent preset
+// passed by -PbirchCrownsVisualPreset/-PbirchCrownsVisualGate. Evidence only, never a check threshold.
+def birchVisual=layout.projectDirectory.dir(providers.gradleProperty('birchCrownsVisualDirectory').getOrElse('build/birch-crowns-evidence/visual-NEW'))
+def birchPreset=providers.gradleProperty('birchCrownsVisualPreset').getOrElse('blockbranch:realistic')
+def birchGate=providers.gradleProperty('birchCrownsVisualGate').getOrElse('any')
+loom.runs.register('birchCrownsVisual'){
+ client();runDir(birchVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.birchCrownsVisual=true');vmArg('-Dblockbranch.birchCrownsVisualPreset='+birchPreset);vmArg('-Dblockbranch.birchCrownsVisualGate='+birchGate)
+ vmArg('-Dblockbranch.birchCrownsVisualDirectory='+birchVisual.asFile.absolutePath)
+ programArgs('--username','BirchView','--width','1024','--height','576')
+}
+tasks.register('prepareBirchCrownsVisual'){doLast{
+ assert !birchVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ birchVisual.asFile.mkdirs();birchVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runBirchCrownsVisual'){dependsOn 'prepareBirchCrownsVisual';doLast{assert birchVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Native generated-chunk witnesses at two old-growth-birch windows and three controls (seed 1); see BirchCrownsQualification for the modes.
+def birchDir=layout.projectDirectory.dir(providers.gradleProperty('birchCrownsDirectory').getOrElse('build/birch-crowns-native'))
+def birchMode=providers.gradleProperty('birchCrownsMode').getOrElse('fresh276')
+def birchBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('birchCrownsBaseline').getOrElse('build/birch-crowns-evidence/baseline275/baseline.txt')).asFile.absolutePath
+loom.runs.register('birchCrownsQualification'){
+ server();runDir(birchDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.birchCrownsMode='+birchMode);vmArg('-Dblockbranch.birchCrownsDirectory='+birchDir.asFile.absolutePath);vmArg('-Dblockbranch.birchCrownsBaseline='+birchBaselineDigests)
+}
+tasks.register('prepareBirchCrownsQualification'){doLast{
+ assert birchMode in ['baseline275','fresh276','verify276','legacy275']:'Unknown birchCrownsMode '+birchMode
+ birchDir.file('result.txt').asFile.delete()
+ if(birchMode in ['baseline275','fresh276'])assert !birchDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert birchDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ birchDir.asFile.mkdirs();birchDir.file('eula.txt').asFile.text='eula=true\n'
+ birchDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25645\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(birchMode=='baseline275'?'blockbranch:birch_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runBirchCrownsQualification'){dependsOn 'prepareBirchCrownsQualification';doLast{assert birchDir.file('result.txt').asFile.text.startsWith('PASS')}}

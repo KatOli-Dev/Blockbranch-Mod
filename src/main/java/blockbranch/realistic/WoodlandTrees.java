@@ -57,8 +57,8 @@ public final class WoodlandTrees {
     /** The broadleaf-crown bit applies only to roots that {@link #roots} itself produced. */
     static int flagsFor(Set<Root> ordinary,Root root,int flags){return ordinary.contains(root)?flags:flags&~BroadleafCrowns.FLAG;}
     public static List<Voxel> tree(Root root) { return tree(root,0); }
-    /** {@code flags} are saved vegetation flags; only {@link BroadleafCrowns#FLAG} changes ordinary-forest oak geometry. */
-    public static List<Voxel> tree(Root root,int flags) { return root.family()==DappledForest.FAMILY?DappledForest.tree(root):root.family()==12||root.family()==13?JungleTrees.tree(root):root.family()==10||root.family()==11?DarkCherryWoodland.tree(root):root.family()==3?SwampTrees.tree(root):root.family()==RedwoodForest.FAMILY?RedwoodTrees.tree(root):root.family()>0?ForestTrees.tree(root,BroadleafCrowns.enabled(flags)):shape(root,false); }
+    /** {@code flags} are saved vegetation flags; {@link BroadleafCrowns#FLAG} changes ordinary-forest oak geometry and {@link BirchCrowns#FLAG} mature old-growth-birch geometry. */
+    public static List<Voxel> tree(Root root,int flags) { return root.family()==DappledForest.FAMILY?DappledForest.tree(root):root.family()==12||root.family()==13?JungleTrees.tree(root):root.family()==10||root.family()==11?DarkCherryWoodland.tree(root):root.family()==3?SwampTrees.tree(root):root.family()==RedwoodForest.FAMILY?RedwoodTrees.tree(root):root.family()>0?ForestTrees.tree(root,BroadleafCrowns.enabled(flags),false,BirchCrowns.enabled(flags)):shape(root,false); }
     public static List<Voxel> humidTree(Root root) { return shape(root,true); }
     private static List<Voxel> shape(Root root,boolean humid) {
         int size=RADIUS*2+1,height=humid?HUMID_HEIGHT:MAX_HEIGHT,count=size*size*height;

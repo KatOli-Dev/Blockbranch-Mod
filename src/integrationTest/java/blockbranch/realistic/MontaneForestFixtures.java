@@ -1,9 +1,16 @@
 package blockbranch.realistic;
 import com.google.gson.JsonObject;
-/** QA-only explicit prerequisite views (seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
+/** QA-only explicit prerequisite views (birch crowns 276 over seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
 final class MontaneForestFixtures {
-    /** Complete broadleaf crowns 274: removes only the explicit seasonal-crown wrapper. */
+    /** Complete seasonal crowns 275: removes only the explicit birch-crown wrapper. */
+    static void seasonal275(JsonObject json){
+        if(!json.has("birch_crown_definition"))return;
+        if(json.get("shape_version").getAsInt()!=276||json.get("birch_crown_definition").getAsInt()!=1)throw new AssertionError("Complete birch crowns wrapper required");
+        json.remove("birch_crown_definition");json.addProperty("shape_version",275);
+    }
+    /** Complete broadleaf crowns 274: removes the birch and seasonal-crown wrappers. */
     static void broadleaf274(JsonObject json){
+        seasonal275(json);
         if(!json.has("seasonal_crown_definition"))return;
         if(json.get("shape_version").getAsInt()!=275||json.get("seasonal_crown_definition").getAsInt()!=1)throw new AssertionError("Complete seasonal crowns wrapper required");
         json.remove("seasonal_crown_definition");json.addProperty("shape_version",274);

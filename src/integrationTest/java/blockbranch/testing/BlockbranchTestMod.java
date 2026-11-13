@@ -108,6 +108,7 @@ public final class BlockbranchTestMod implements ModInitializer {
         if (System.getProperty("blockbranch.borealSlopeMode") != null) blockbranch.realistic.BorealSlopeQualification.register(System.getProperty("blockbranch.borealSlopeMode"));
         if (System.getProperty("blockbranch.broadleafCrownsMode") != null) blockbranch.realistic.BroadleafCrownsQualification.register(System.getProperty("blockbranch.broadleafCrownsMode"));
         if (System.getProperty("blockbranch.seasonalCrownsMode") != null) blockbranch.realistic.SeasonalCrownsQualification.register(System.getProperty("blockbranch.seasonalCrownsMode"));
+        if (System.getProperty("blockbranch.birchCrownsMode") != null) blockbranch.realistic.BirchCrownsQualification.register(System.getProperty("blockbranch.birchCrownsMode"));
         if (System.getProperty("blockbranch.mangroveRootsMode") != null) blockbranch.realistic.MangroveRootsQualification.register(System.getProperty("blockbranch.mangroveRootsMode"));
         if (System.getProperty("blockbranch.leafLitterReopen") != null) blockbranch.realistic.LeafLitterReopen.register(System.getProperty("blockbranch.leafLitterReopen"));
         if (Boolean.getBoolean("blockbranch.summerDryQualification")) blockbranch.realistic.SummerDryQualification.register();

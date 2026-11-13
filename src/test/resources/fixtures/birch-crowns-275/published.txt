@@ -1,0 +1,50 @@
+# Published old-growth-birch canopy, frozen from the unmodified published ForestTrees/WoodlandTrees (origin/main
+# 18b5e4bb7acdb19660c08c759b3d6b441cb51c94, schema 275) compiled in a separate detached checkout from the birch-crown change,
+# with the ten-argument WoodlandTrees.column on the BorealSlopeOracle terrain and the polar-capable climate. Never regenerate it
+# from the candidate.
+# window rows: site seed siteX siteZ vegetationFlags intsInWindow sha256(Arrays.toString per column, 5x5 chunks, x then z order).
+# birch-a is the audited seed-424242 old-growth-birch scene (1360000,-1328000); birch-b..d are other bounded-scan old-growth-birch
+# windows. flower-a (flower forest), birchforest-a/b (ordinary birch family 2) and forest-a (ordinary oak) are unchanged controls.
+# Flags 256 and 768 are the published broadleaf / broadleaf+seasonal bits; 917 = 1|4|16|128|256|512 is every published owner-free bit
+# (transitions, redwood, polar climate, boreal slope, broadleaf, seasonal). The bits 2, 8, 32 and 64 (dry forest, summer-dry, seasonal forest,
+# montane) need saved owner surfaces from the generator's biome source, so a pure window cannot carry them: native checks cover those. The birch bit
+# (1024) is never part of these flags. birch-d at 917 equals the native published-275 digest of the same window.
+# tree rows: family birch roots voxels sha256 over WoodlandTrees.tree(root,flags) for flags 0,256,512,768 on 27 heights x 24 variants.
+birch-a 424242 1360000 -1328000 0 36888 87249170ec2cd386abdef8b5fc181aa028ea2f522cdba469136123daa9b90dcb
+birch-a 424242 1360000 -1328000 256 36888 87249170ec2cd386abdef8b5fc181aa028ea2f522cdba469136123daa9b90dcb
+birch-a 424242 1360000 -1328000 768 36888 87249170ec2cd386abdef8b5fc181aa028ea2f522cdba469136123daa9b90dcb
+birch-a 424242 1360000 -1328000 917 36681 16001c33d0ac92e368ce3550244245a5cfd13b801955bd5e8e1a2f15d90eeadf
+birch-b 424242 1264000 -1296000 0 23624 6a414886a7a041fc1951b0d7f4bb084332130181b40bfaa425fec5651cd8f8da
+birch-b 424242 1264000 -1296000 256 23624 6a414886a7a041fc1951b0d7f4bb084332130181b40bfaa425fec5651cd8f8da
+birch-b 424242 1264000 -1296000 768 23624 6a414886a7a041fc1951b0d7f4bb084332130181b40bfaa425fec5651cd8f8da
+birch-b 424242 1264000 -1296000 917 23624 6a414886a7a041fc1951b0d7f4bb084332130181b40bfaa425fec5651cd8f8da
+birch-c 1 -684000 1364000 0 30258 93aca45489a9087ae5b0f001e3d013910576ce2d39d79bc1f887be02a703d014
+birch-c 1 -684000 1364000 256 30258 93aca45489a9087ae5b0f001e3d013910576ce2d39d79bc1f887be02a703d014
+birch-c 1 -684000 1364000 768 30258 93aca45489a9087ae5b0f001e3d013910576ce2d39d79bc1f887be02a703d014
+birch-c 1 -684000 1364000 917 29130 c7eb51a6b669ac5402583696c9972fc22f7e8b56fffef0c304d58b1e4bf49568
+birch-d 1 1492000 -940000 0 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+birch-d 1 1492000 -940000 256 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+birch-d 1 1492000 -940000 768 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+birch-d 1 1492000 -940000 917 26398 c5528fc319c8849e6ff3d335afdbd6c40d38962eec1bd138516dfb76db7caa39
+flower-a 1 -40000 -136000 0 20988 d2198e93cf1cc63c38166823f97199eaae29d87605cf28c036871e579c320861
+flower-a 1 -40000 -136000 256 19674 aa5f43dc87be315c56468db1f4f82dec4b5a82ccd1fac87861ac32c7ff56b042
+flower-a 1 -40000 -136000 768 19674 aa5f43dc87be315c56468db1f4f82dec4b5a82ccd1fac87861ac32c7ff56b042
+flower-a 1 -40000 -136000 917 19674 aa5f43dc87be315c56468db1f4f82dec4b5a82ccd1fac87861ac32c7ff56b042
+birchforest-a 1 152000 8000 0 3838 1cbd81f0d2a841fcaeb25c36c3f5c7c5c8c841ee9fe49663d695cf8f69897897
+birchforest-a 1 152000 8000 256 3838 1cbd81f0d2a841fcaeb25c36c3f5c7c5c8c841ee9fe49663d695cf8f69897897
+birchforest-a 1 152000 8000 768 3838 1cbd81f0d2a841fcaeb25c36c3f5c7c5c8c841ee9fe49663d695cf8f69897897
+birchforest-a 1 152000 8000 917 3838 1cbd81f0d2a841fcaeb25c36c3f5c7c5c8c841ee9fe49663d695cf8f69897897
+birchforest-b 1 176000 8000 0 23123 a61660adffd8c5bf6b670629982d9db297d0b8ed44665a51bebf20c08f69b990
+birchforest-b 1 176000 8000 256 23123 a61660adffd8c5bf6b670629982d9db297d0b8ed44665a51bebf20c08f69b990
+birchforest-b 1 176000 8000 768 23123 a61660adffd8c5bf6b670629982d9db297d0b8ed44665a51bebf20c08f69b990
+birchforest-b 1 176000 8000 917 23123 a61660adffd8c5bf6b670629982d9db297d0b8ed44665a51bebf20c08f69b990
+forest-a 1 48000 -304000 0 17414 6dbf15fe63ad025bab7ec762d9812c6a17918c5083316d89fd85ffc4a568f861
+forest-a 1 48000 -304000 256 16841 2942e600cea4a24910ae5f5068162dd9e17ed0ef11e78c70c1fe65afdaac15f6
+forest-a 1 48000 -304000 768 16841 2942e600cea4a24910ae5f5068162dd9e17ed0ef11e78c70c1fe65afdaac15f6
+forest-a 1 48000 -304000 917 16841 2942e600cea4a24910ae5f5068162dd9e17ed0ef11e78c70c1fe65afdaac15f6
+trees family=1 birch=true roots=648 voxels=603344 8d13e0774c39668d7a2a71c356a2c2c62a5f7d8cec1cac202583528e0cc93ee4
+trees family=1 birch=false roots=648 voxels=1271380 27c2eadcb8c56b931ae4240387ee62c15f329e0562224b1f99707c7184bd910d
+trees family=2 birch=true roots=648 voxels=1066584 270cea744662bd125a10a0f5ccd1e394abffc1bd9b12796bef63ae3e4dc2cb0b
+trees family=2 birch=false roots=648 voxels=1283892 4d589471a76971e95de74bd958e15214998562065880e9b5c22a25d7f5884084
+trees family=9 birch=true roots=648 voxels=1068916 d07d476e6469d4127a34c71ba03620aee89b831a3678d76da8ef691ccbe30f1f
+trees family=9 birch=false roots=648 voxels=1269164 2ffbf987b75c41cea1675f9b59c181103cb276daf64ba83334b07dfdd4125379
