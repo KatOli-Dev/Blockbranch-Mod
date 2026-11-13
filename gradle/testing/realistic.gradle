@@ -833,7 +833,13 @@ tasks.register('checkMangroveRoots',JavaExec){
  mainClass='blockbranch.realistic.MangroveRootsCheck'
  maxHeapSize='512m'
 }
-tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots')}
+tasks.register('checkBroadleafCrowns',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.BroadleafCrownsCheck'
+ maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns')}
 
 tasks.register('checkTaiga',JavaExec){
  dependsOn tasks.named('testClasses')

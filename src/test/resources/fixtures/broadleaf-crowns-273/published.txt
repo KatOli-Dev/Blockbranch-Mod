@@ -1,0 +1,21 @@
+# Published canopy columns (5 x 5 chunks around each site), frozen from the unmodified published
+# ForestTrees/WoodlandTrees/WoodlandDetails (origin/main 6083e33, schema 273) compiled separately from the
+# gated change, with the ten-argument WoodlandTrees.column on the seed-1 BorealSlopeOracle terrain and the
+# polar-capable climate. Columns: site seed chunkX chunkZ vegetationFlags intsInWindow sha256(Arrays.toString
+# per column, x then z order). Flags 0, 1 (transitions) and 3 (transitions + redwood) never include the
+# broadleaf bit. Sites: ordinary forest (two), birch forest, dappled oak-birch woodland (audited witnesses).
+forest-a 1 2998 -19007 0 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
+forest-a 1 2998 -19007 1 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
+forest-a 1 2998 -19007 3 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
+forest-b 1 -109000 -65000 0 28959 3332c0fbff73a37fdc5227beb4e14ad4252404ff94ade8adc82f2d8ca960a1a7
+forest-b 1 -109000 -65000 1 28959 3332c0fbff73a37fdc5227beb4e14ad4252404ff94ade8adc82f2d8ca960a1a7
+forest-b 1 -109000 -65000 3 28959 3332c0fbff73a37fdc5227beb4e14ad4252404ff94ade8adc82f2d8ca960a1a7
+forest-c 1 -108994 -65010 0 31244 cbbe4b11a313d5d3074f50e999909bd27327d7eb43dbe4cf53df3a00c1768e81
+forest-c 1 -108994 -65010 1 31244 cbbe4b11a313d5d3074f50e999909bd27327d7eb43dbe4cf53df3a00c1768e81
+forest-c 1 -108994 -65010 3 31244 cbbe4b11a313d5d3074f50e999909bd27327d7eb43dbe4cf53df3a00c1768e81
+birch 1 45000 -29000 0 22795 0a036ccab5b10767186fcbb839dde8675a47996b7249dcb9d2a15c6f8a70f089
+birch 1 45000 -29000 1 22795 0a036ccab5b10767186fcbb839dde8675a47996b7249dcb9d2a15c6f8a70f089
+birch 1 45000 -29000 3 22795 0a036ccab5b10767186fcbb839dde8675a47996b7249dcb9d2a15c6f8a70f089
+dappled 1 1000 -15000 0 7351 1618a477dbe10db4c1fcfc6fc7adb1cd936b63ce4db91ec076d7f89105d65d2b
+dappled 1 1000 -15000 1 5781 fd99351dabb1c8034dc75d98d6d0181ec4b9b4c98edf979e054efc4dbb99b104
+dappled 1 1000 -15000 3 5781 fd99351dabb1c8034dc75d98d6d0181ec4b9b4c98edf979e054efc4dbb99b104

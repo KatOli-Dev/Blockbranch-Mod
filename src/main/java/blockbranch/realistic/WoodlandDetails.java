@@ -85,7 +85,7 @@ public final class WoodlandDetails {
             if(!valid)continue;
             var roots=WoodlandTrees.roots(seed,x-14,z-14,x+14,z+14,d,c,transitions);
             for(var root:roots){for(int n=0;n<length;n++)if(Math.hypot(root.x()-x-(east?n*direction:0),root.z()-z-(east?0:n*direction))<(root.height()<10?6:3.5))valid=false;
-                if(valid)for(var v:WoodlandTrees.tree(root))if(v.y()==y)for(int n=0;n<length;n++)if(v.x()==x+(east?n*direction:0)&&v.z()==z+(east?0:n*direction))valid=false;
+                if(valid)for(var v:WoodlandTrees.tree(root,transitions))if(v.y()==y)for(int n=0;n<length;n++)if(v.x()==x+(east?n*direction:0)&&v.z()==z+(east?0:n*direction))valid=false;
             }
             if(!valid)continue;boolean birch=BirchForest.contains(seed,x,z,d,c)?(h&15)!=0:(h&7)==0;int code=(birch?3:0)+(east?2:3);
             for(int n=0;n<length;n++){int wx=x+(east?n*direction:0),wz=z+(east?0:n*direction);if((wx>>4)!=cx||(wz>>4)!=cz)continue;int key=((y-TerrainShape.FLOOR)<<8)|((wz&15)*16+(wx&15));out.put(key,(key<<blockbranch.cubic.CanopyLayer.STATE_BITS)|code);}
