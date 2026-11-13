@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "blockbranch:block/lake_reed_star",
   "textures": {
     "cross": "blockbranch:block/lake_reed_tip"
   }

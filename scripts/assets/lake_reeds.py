@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Hand-drawn emergent reeds with continuous stems and staggered seed heads.
+"""Hand-drawn emergent reeds with continuous stems, staggered seed heads and arching strap blades.
 
-Python standard library only. Segment borders keep the two culms aligned; long
-arching blades interrupt the repeated verticals. The item matches the tip art.
+Python standard library only. Segment borders keep the two culms aligned (columns 5 and 10 in every row of the stem
+segment and the lower rows of the tip); the blades are drawn by `blade` so their shape is one rule, not eleven sprites.
+The item matches the tip art.
 """
 from pathlib import Path
 import struct
@@ -20,42 +21,110 @@ PALETTE = {
     'b': (143, 108, 56, 255),
     'a': (170, 133, 74, 255),
 }
-STEM = (
-    '.....s....s.....',
-    '.....s....s.....',
-    '.....s....c..h..',
-    '..h..s....c.l...',
-    '...l.s....sl....',
-    '....ls....s.....',
-    '.....l....s.....',
-    '.....s....s.....',
-    '.h...c....s.....',
-    '..l..c....s.....',
-    '...l.c....s...h.',
-    '....ls....s.ll..',
-    '.....l....ssl...',
-    '.....s....ls....',
-    '.....s....s.....',
-    '.....s....s.....',
-)
-TIP = (
-    '................',
-    '.....t..........',
-    '....ab..........',
-    '....bo..........',
-    '....bo..........',
-    '....bo....t.....',
-    '....bo...ab.....',
-    '.....s...bo.....',
-    '..h..s...bo.....',
-    '...l.s...bo..h..',
-    '....ls...bo.l...',
-    '.....l....sl....',
-    '.....s....s.....',
-    '..h..s....s.....',
-    '...l.s....s.....',
-    '....ls....s.....',
-)
+CULMS = (5, 10)
+
+
+def blank():
+    return [['.'] * 16 for _ in range(16)]
+
+
+def put(grid, cells, ch, thick=False):
+    for x, y in cells:
+        if not (0 <= x < 16 and 0 <= y < 16):
+            raise AssertionError(('blade leaves the texture', x, y))
+        free = grid[y][x] == '.'
+        if thick:
+            if free:
+                grid[y][x] = ch
+        else:
+            assert free or grid[y][x] in 'sc', (x, y, grid[y][x])
+            grid[y][x] = ch
+
+
+def strap(grid, cells, below, above=None):
+    """Draw a leaf as a filled lens: `cells` is the centre line (base first), `below`/`above` the extra cells under/over it.
+
+    The upper surface is the lightest green and the underside the darkest, so a three-cell-thick blade reads as a flat
+    strap catching light rather than a one-cell twig.
+    """
+    above = above or [0] * len(cells)
+    for i, (x, y) in enumerate(cells):
+        column = [(y - k, 'h') for k in range(above[i], 0, -1)] + [(y, 'l' if i < len(cells) - 1 else 'h')]
+        column += [(y + k, 's' if k < below[i] else 'c') for k in range(1, below[i] + 1)]
+        for yy, ch in column:
+            if not (0 <= yy < 16) or not (0 <= x < 16):
+                raise AssertionError(('blade leaves the texture', x, yy))
+            if grid[yy][x] == '.' or (i == 0 and grid[yy][x] in 'sc'):
+                grid[yy][x] = ch
+
+
+def up(grid, x0, y0, step):
+    """Blade leaving a culm and leaning outward: three cells thick near the middle, one at the tip."""
+    strap(grid, [(x0 + i * step, y0 - i) for i in range(5)], [1, 2, 2, 1, 0], [0, 0, 1, 0, 0])
+
+
+def droop(grid, x0, y0, step):
+    """Blade that arches over and hangs: base, rise, level, then a fall that thins to the border."""
+    strap(grid, [(x0, y0), (x0 + step, y0 - 1), (x0 + 2 * step, y0 - 1), (x0 + 3 * step, y0), (x0 + 3 * step, y0 + 1), (x0 + 4 * step, y0 + 2)],
+          [1, 1, 1, 1, 1, 0], [0, 0, 1, 0, 0, 0])
+
+
+def inward(grid, x0, y0, step):
+    """Short blade between the two culms."""
+    strap(grid, [(x0, y0), (x0 + step, y0 - 1), (x0 + 2 * step, y0)], [1, 1, 0])
+
+
+def culms(grid):
+    for row in range(16):
+        for x in CULMS:
+            grid[row][x] = 's'
+    for row in (4, 10):
+        grid[row][CULMS[0]] = grid[row][CULMS[1]] = 'c'
+
+
+def rows_of(grid):
+    return tuple(''.join(row) for row in grid)
+
+
+def stem_art():
+    g = blank()
+    culms(g)
+    up(g, 11, 6, 1)
+    droop(g, 4, 2, -1)
+    up(g, 4, 11, -1)
+    droop(g, 11, 13, 1)
+    inward(g, 9, 3, -1)
+    inward(g, 6, 9, 1)
+    return rows_of(g)
+
+
+def tip_art():
+    g = blank()
+    culms(g)
+    for y in range(0, 11):
+        g[y][CULMS[0]] = g[y][CULMS[1]] = '.'
+    for y in range(7, 11):
+        g[y][CULMS[0]] = 's'
+    for y in range(10, 16):
+        g[y][CULMS[1]] = 's'
+    # staggered seed heads (the published silhouette: left one taller, right one lower)
+    for x, y, ch in (
+        (5, 1, 't'), (4, 2, 'a'), (5, 2, 'b'), (4, 3, 'b'), (5, 3, 'o'), (4, 4, 'b'), (5, 4, 'o'), (4, 5, 'b'), (5, 5, 'o'),
+        (4, 6, 'b'), (5, 6, 'o'),
+        (10, 5, 't'), (9, 6, 'a'), (10, 6, 'b'), (9, 7, 'b'), (10, 7, 'o'), (9, 8, 'b'), (10, 8, 'o'), (9, 9, 'b'), (10, 9, 'o'),
+    ):
+        g[y][x] = ch
+    up(g, 11, 4, 1)
+    droop(g, 11, 11, 1)
+    droop(g, 4, 7, -1)
+    up(g, 4, 14, -1)
+    inward(g, 9, 13, -1)
+    inward(g, 6, 11, 1)
+    return rows_of(g)
+
+
+STEM = stem_art()
+TIP = tip_art()
 
 
 def write_reeds(tip=False, destination=None):
