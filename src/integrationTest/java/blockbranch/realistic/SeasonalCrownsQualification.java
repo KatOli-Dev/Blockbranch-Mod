@@ -107,6 +107,8 @@ public final class SeasonalCrownsQualification {
         if(definition!=1+actual.borealCrownDefinition()+2*actual.vegetationFlags()||definition<1025)throw new AssertionError("Saved clear definition names the seasonal-crown bit: "+definition);
         var plan=BorealClearSmoke.plan(piece,actual,random);var gated=ForestTrees.tree(root,false,true);
         if(plan.isEmpty()||!gated.stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))))throw new AssertionError("New tree-clear plan covers the entire gated dry-forest footprint");
+        try{BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),retained,random);throw new AssertionError("A bit-512 plan replayed under a generator without the definition");}
+        catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalStateException))throw expected;}
         Path file=directory.resolve("seasonal-tree-clear.nbt");net.minecraft.nbt.NbtIo.writeCompressed(tag,file);
         var restored=BorealClearSmoke.load(context,net.minecraft.nbt.NbtIo.readCompressed(file,net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
         if(!plan.equals(BorealClearSmoke.plan(restored,actual,random)))throw new AssertionError("Compressed saved clear plan retains the exact footprint");

@@ -34,7 +34,7 @@ public final class SeasonalCrownsCheck {
     }
     /** Every published window, with the seasonal bit absent, stays bit-identical to the frozen columns, and the bit changes only dry-forest stands. */
     private static void published()throws Exception{
-        int rows=0,changed=0;
+        int rows=0,changed=0,regional=0;
         try(var in=new BufferedReader(new InputStreamReader(Objects.requireNonNull(SeasonalCrownsCheck.class.getResourceAsStream("/fixtures/seasonal-crowns-274/published.txt"))))){
             for(String line;(line=in.readLine())!=null;){
                 if(line.startsWith("#")||line.isBlank())continue;
@@ -44,11 +44,12 @@ public final class SeasonalCrownsCheck {
                 require(row.equals(f[6]+" "+f[7]),"Published columns changed at "+f[0]+" flags "+flags+" owner "+mode+": "+row+" vs frozen "+f[6]+" "+f[7]);
                 var gated=window(seed,x,z,flags|SeasonalCrowns.FLAG,mode);
                 if(mode==2){require(!gated.equals(row),"The gate changed nothing at "+f[0]);changed++;}
+                else if(mode==1&&!gated.equals(row))regional++;
                 else if(mode==0)require(gated.equals(row),"The seasonal bit changed a window with no dry-forest owner at "+f[0]);
                 rows++;
             }
         }
-        require(rows==11&&changed==3,"Every frozen window is checked: "+rows+" rows, "+changed+" seasonal stands");
+        require(rows==13&&changed==4&&regional>=1,"Every frozen window is checked: "+rows+" rows, "+changed+" seasonal stands, "+regional+" regional stands");
     }
     private static String window(long seed,int sx,int sz,int flags,int mode)throws Exception{
         var d=BorealSlopeOracle.terrain(seed);var c=new ClimateField(seed,true);var md=MessageDigest.getInstance("SHA-256");int n=0;

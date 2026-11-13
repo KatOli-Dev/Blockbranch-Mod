@@ -180,7 +180,7 @@ public final class SeasonalForestQualification {
         var piece=new ReimaginedTreeClearPiece(box,SEED,g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);
         require(tag.getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags(),"Explicit complete refined root/crown flags");
         var plan=BorealClearSmoke.plan(piece,g,random);
-        require(!plan.isEmpty()&&ForestTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
+        require(!plan.isEmpty()&&ForestTrees.tree(root,false,SeasonalCrowns.enabled(g.vegetationFlags())).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
         NbtIo.writeCompressed(tag,saved);Files.writeString(signature,new TreeMap<>(plan).toString());
         var restored=BorealClearSmoke.load(context,NbtIo.readCompressed(saved,NbtAccounter.unlimitedHeap()));require(plan.equals(BorealClearSmoke.plan(restored,g,random)),"Saved NBT exact clearing footprint");
         int historical=0;

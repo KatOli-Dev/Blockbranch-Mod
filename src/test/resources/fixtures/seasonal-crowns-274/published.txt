@@ -5,6 +5,8 @@
 # ownerMode 0 = no dry-forest owner, 1 = regional DryForest.domain, 2 = seasonal DryForest.domain (both with an accept-all
 # selected-quart predicate). The seasonal-crown bit (512) is never part of these flags. forest-a flag 256 is the published
 # broadleaf-crown bit; dry-a/dry-b/dry-c are seasonal dry-broadleaf stands (dry-c is seed 424242), birch and dappled are controls.
+# regional-b (1520680,-274406) is a stand owned by the regional dry-forest domain, found by the native qualification's bounded lookup
+# (the audited seasonal sites hold no regional-only stems, so their ownerMode 1 rows carry no dry-forest trees).
 dry-a 1 1488000 -304000 4 1 3897 d0f3895e40b720070bfe5e4c8e69686e71870c87599479d7ea96acb699769d22
 dry-a 1 1488000 -304000 36 2 43832 c503183df64a08a4e05ed0ef23822bef380747bcd98ef08b1ca69c509a692676
 dry-b 1 1520000 -336000 36 2 38926 2a609e176e04f882c3231194ac1c5db3a7fc108602189ef5660d94ee10c0c756
@@ -16,3 +18,5 @@ forest-a 1 47980 -304100 1 0 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d
 birch 1 720000 -464000 0 0 22795 0a036ccab5b10767186fcbb839dde8675a47996b7249dcb9d2a15c6f8a70f089
 dappled 1 16000 -240000 0 0 7351 1618a477dbe10db4c1fcfc6fc7adb1cd936b63ce4db91ec076d7f89105d65d2b
 dry-a 1 1488000 -304000 0 0 3897 d0f3895e40b720070bfe5e4c8e69686e71870c87599479d7ea96acb699769d22
+regional-b 1 1520680 -274406 4 1 43428 f943279c4fc28c4d288d2dee707b80b3c864a1251c4b5ae41c69b7a275009bc1
+regional-b 1 1520680 -274406 36 2 43428 f943279c4fc28c4d288d2dee707b80b3c864a1251c4b5ae41c69b7a275009bc1
