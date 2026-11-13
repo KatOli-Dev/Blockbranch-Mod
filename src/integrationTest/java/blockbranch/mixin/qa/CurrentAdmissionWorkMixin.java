@@ -19,10 +19,10 @@ abstract class CurrentAdmissionWorkMixin {
         var s=AdmissionWorkTrace.beginProfile(chunk,random.seed()); boolean ok=false;
         try {blockbranch.realistic.AdmissionPreparationChecks.injectFailure(chunk);var value=original.call(chunk,random);ok=true;return value;} catch(RuntimeException failure){if(Boolean.getBoolean("blockbranch.published269Snapshot")){try{blockbranch.realistic.Published269CoverAudit.logFailure((RealisticGenerator)(Object)this,chunk,random,failure);}catch(Exception diagnostic){failure.addSuppressed(diagnostic);}}throw failure;} finally {AdmissionWorkTrace.end(s,ok);}
     }
-    @WrapMethod(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Z)Lblockbranch/cubic/CanopyLayer;")
-    private static CanopyLayer canopy(@Coerce Object state,int x,int z,boolean icebergs,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry,java.util.function.BiPredicate<Integer,Integer> montane,boolean abyssalTraces,Operation<CanopyLayer> original) {
+    @WrapMethod(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;ZZ)Lblockbranch/cubic/CanopyLayer;")
+    private static CanopyLayer canopy(@Coerce Object state,int x,int z,boolean icebergs,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry,java.util.function.BiPredicate<Integer,Integer> montane,boolean abyssalTraces,boolean mangroveArches,Operation<CanopyLayer> original) {
         var s=AdmissionWorkTrace.begin("canopy",x>>4,z>>4);boolean ok=false;
-        try {var value=original.call(state,x,z,icebergs,whorled,transitions,rockland,dryForest,summerDry,montane,abyssalTraces);ok=true;return value;} finally {AdmissionWorkTrace.end(s,ok);}
+        try {var value=original.call(state,x,z,icebergs,whorled,transitions,rockland,dryForest,summerDry,montane,abyssalTraces,mangroveArches);ok=true;return value;} finally {AdmissionWorkTrace.end(s,ok);}
     }
     @WrapOperation(method="prepareCaveProfile",at=@At(value="INVOKE",target="Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;"))
     private Object preparedGet(Map<?,?> map,Object key,Operation<Object> original) {
@@ -40,15 +40,15 @@ abstract class CurrentAdmissionWorkMixin {
     private Object preparedConsume(Map<?,?> map,Object key,Operation<Object> original) {
         var old=original.call(map,key);AdmissionWorkTrace.cache(old==null?"prepared.consume.miss":"prepared.consume.nonNull",key);return old;
     }
-    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Z)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;get(Ljava/lang/Object;)Ljava/lang/Object;"))
+    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;ZZ)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;get(Ljava/lang/Object;)Ljava/lang/Object;"))
     private static Object canopyGet(LinkedHashMap<?,?> map,Object key,Operation<Object> original) {
         var old=original.call(map,key);AdmissionWorkTrace.cache(old==null?"canopy.get.miss":"canopy.get.hit",key);return old;
     }
-    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Z)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
+    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;ZZ)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
     private static Object canopyPut(LinkedHashMap<?,?> map,Object key,Object value,Operation<Object> original) {
         var old=original.call(map,key,value);AdmissionWorkTrace.cache(old==null?"canopy.put.new":"canopy.put.replace",key);return old;
     }
-    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Z)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;remove(Ljava/lang/Object;)Ljava/lang/Object;"))
+    @WrapOperation(method="canopy(Lblockbranch/realistic/RealisticGenerator$TerrainState;IIZZILjava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;Ljava/util/function/BiPredicate;ZZ)Lblockbranch/cubic/CanopyLayer;",at=@At(value="INVOKE",target="Ljava/util/LinkedHashMap;remove(Ljava/lang/Object;)Ljava/lang/Object;"))
     private static Object canopyEvict(LinkedHashMap<?,?> map,Object key,Operation<Object> original) {
         var old=original.call(map,key);AdmissionWorkTrace.cache("canopy.evict",key);return old;
     }

@@ -168,6 +168,7 @@ apply(from = "gradle/testing/leaf-litter.gradle")
 apply(from = "gradle/testing/warm-xeric.gradle")
 apply(from = "gradle/testing/seasonal-forest.gradle")
 apply(from = "gradle/testing/boreal-slope.gradle")
+apply(from = "gradle/testing/mangrove-roots.gradle")
 apply(from = "gradle/testing/floodplain.gradle")
 apply(from = "gradle/testing/montane-forest.gradle")
 

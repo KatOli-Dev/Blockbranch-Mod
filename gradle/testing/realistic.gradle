@@ -827,7 +827,13 @@ tasks.register('checkMangrove',JavaExec){
  mainClass='blockbranch.realistic.MangroveCheck'
  maxHeapSize='512m'
 }
-tasks.named('check'){dependsOn tasks.named('checkMangrove')}
+tasks.register('checkMangroveRoots',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.MangroveRootsCheck'
+ maxHeapSize='512m'
+}
+tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots')}
 
 tasks.register('checkTaiga',JavaExec){
  dependsOn tasks.named('testClasses')

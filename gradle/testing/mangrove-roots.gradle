@@ -1,0 +1,33 @@
+// Native views of the audited seed-1 mangrove swamp: bundled preset (arched roots) versus the same build's
+// gate-absent baseline preset. Evidence only, never a check threshold.
+def rootsVisual=layout.projectDirectory.dir(providers.gradleProperty('mangroveRootsVisualDirectory').getOrElse('build/mangrove-roots-evidence/visual-NEW'))
+def rootsBaseline=providers.gradleProperty('mangroveRootsVisualBaseline').isPresent()
+loom.runs.register('mangroveRootsVisual'){
+ client();runDir(rootsVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.mangroveRootsVisual=true');vmArg('-Dblockbranch.mangroveRootsVisualBaseline='+rootsBaseline)
+ vmArg('-Dblockbranch.mangroveRootsVisualDirectory='+rootsVisual.asFile.absolutePath)
+ programArgs('--username','MangroveView','--width','1024','--height','576')
+}
+tasks.register('prepareMangroveRootsVisual'){doLast{
+ assert !rootsVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ rootsVisual.asFile.mkdirs();rootsVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runMangroveRootsVisual'){dependsOn 'prepareMangroveRootsVisual';doLast{assert rootsVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Native generated-chunk witnesses at the audited swamp (seed 1); see MangroveRootsQualification for the modes.
+def rootsDir=layout.projectDirectory.dir(providers.gradleProperty('mangroveRootsDirectory').getOrElse('build/mangrove-roots-native'))
+def rootsMode=providers.gradleProperty('mangroveRootsMode').getOrElse('fresh273')
+def rootsPublished=layout.projectDirectory.file('src/test/resources/fixtures/mangrove-roots-272/published.txt').asFile.absolutePath
+loom.runs.register('mangroveRootsQualification'){
+ server();runDir(rootsDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.mangroveRootsMode='+rootsMode);vmArg('-Dblockbranch.mangroveRootsDirectory='+rootsDir.asFile.absolutePath);vmArg('-Dblockbranch.mangroveRootsPublished='+rootsPublished)
+}
+tasks.register('prepareMangroveRootsQualification'){doLast{
+ assert rootsMode in ['baseline272','fresh273','verify273','legacy272']:'Unknown mangroveRootsMode '+rootsMode
+ rootsDir.file('result.txt').asFile.delete()
+ if(rootsMode in ['baseline272','fresh273'])assert !rootsDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert rootsDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ rootsDir.asFile.mkdirs();rootsDir.file('eula.txt').asFile.text='eula=true\n'
+ rootsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25631\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(rootsMode=='baseline272'?'blockbranch:mangrove_roots_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runMangroveRootsQualification'){dependsOn 'prepareMangroveRootsQualification';doLast{assert rootsDir.file('result.txt').asFile.text.startsWith('PASS')}}
