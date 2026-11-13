@@ -35,7 +35,7 @@ public final class BorealSlopeQualification {
             var level=server.overworld();var g=(RealisticGenerator)level.getChunkSource().getGenerator();
             var json=RealisticGenerator.CODEC.codec().encodeStart(RegistryOps.create(JsonOps.INSTANCE,level.registryAccess()),g).getOrThrow().getAsJsonObject();
             int shape=json.get("shape_version").getAsInt(),slope=json.has("boreal_slope_definition")?json.get("boreal_slope_definition").getAsInt():0;
-            if(level.getSeed()!=1)throw new AssertionError("Seed 1 world required");
+            long wantSeed=mode.equals("overlap272")?Long.getLong("blockbranch.borealSlopeSeed",1L):1L;if(level.getSeed()!=wantSeed)throw new AssertionError("Seed "+wantSeed+" world required");
             int cx=SITE_X>>4,cz=SITE_Z>>4;Path signature=dir.resolve("signature.txt");
             switch(mode){
                 case "record270"->{
@@ -58,6 +58,11 @@ public final class BorealSlopeQualification {
                     }
                     if(logs!=0)throw new AssertionError("Unexplored chunks of a published 270 world must stay treeless; logs="+logs);
                     Files.writeString(dir.resolve("result.txt"),"PASS verify270: "+saved.size()+" saved chunks identical, "+fresh+" unexplored chunks treeless\n");
+                }
+                case "overlap272"->{
+                    var sites=new ArrayList<int[]>();for(var p:MontaneForestQualification.points(wantSeed))sites.add(p);
+                    if(wantSeed==1)sites.add(0,new int[]{SITE_X,SITE_Z});else{sites.add(0,new int[]{-972000,-1676000});sites.add(1,new int[]{1828000,-1196000});}
+                    Files.writeString(dir.resolve("result.txt"),"PASS overlap272: "+BorealMontaneOverlap.run(level,g,dir,wantSeed,sites.toArray(new int[0][])));
                 }
                 case "fresh272"->{
                     if(shape!=272||slope!=1||(g.vegetationFlags()&BorealSlope.FLAG)==0)throw new AssertionError("Bundled schema 272 preset required: "+shape+" "+slope);

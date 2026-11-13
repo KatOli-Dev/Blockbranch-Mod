@@ -20,7 +20,7 @@ public final class BorealSlopeCheck {
             require(i==BorealSlopeOracle.SITES.length,"Every frozen window is checked");
         }
         System.out.println("BOREAL_SLOPE_PUBLISHED_ORACLE_PASS");
-        schema();flags();tolerance();
+        schema();flags();tolerance();montaneDisjoint();
         System.out.println("BOREAL_SLOPE_GATED_PASS");
     }
     /** Saved schema 272 exists only as the complete montane 271 plus the explicit definition. */
@@ -70,6 +70,37 @@ public final class BorealSlopeCheck {
             for(int flags:new int[]{0,1,2,16,17,18})for(int cz=fz-1;cz<=fz;cz++)for(int cx=fx-1;cx<=fx;cx++)
                 require(Arrays.equals(WoodlandTrees.column(seed,cx,cz,fd,fc,true,flags),WoodlandTrees.column(seed,cx,cz,fd,fc,true,flags|BorealSlope.FLAG)),"Flat window "+site+" chunk "+cx+","+cz+" flags "+flags+" identical under the slope flag");
         }
+    }
+    /** Boreal stems are never filtered by the montane owner (published behaviour), so the new stems must be
+     * impossible on, or beside, montane ground. Montane eligibility requires ordinary temperate forest
+     * potential (mean temperature at least 6 C); boreal woodland requires a mean below 3 C. The cells are
+     * checked, not only the thresholds: no sampled cell satisfies both, no added stem has an eligible cell
+     * within the crown/halo reach, and the sampled temperature step bounds how close the domains can come. */
+    private static void montaneDisjoint()throws Exception{
+        long[][] montane={{1,-1744000,-1040000},{1,1584000,-944000},{1,1552000,-912000},{424242,592000,-496000},{424242,48000,-432000}};
+        int eligibleCells=0,borealCells=0;double maxStep=0;
+        var windows=new java.util.ArrayList<long[]>();for(var m:montane)windows.add(m);windows.add(BorealSlopeOracle.SITES[0]);windows.add(BorealSlopeOracle.SITES[3]);
+        for(var w:windows){
+            long seed=w[0];int cx=(int)w[1],cz=(int)w[2];var d=BorealSlopeOracle.terrain(seed);var c=new ClimateField(seed,true);
+            var eligible=new java.util.ArrayList<int[]>();
+            for(int z=cz-256;z<=cz+256;z+=4){double previous=Double.NaN;for(int x=cx-256;x<=cx+256;x+=4){
+                double t=c.sample(x,z,d::sample).meanTemperatureC();if(!Double.isNaN(previous))maxStep=Math.max(maxStep,Math.abs(t-previous));previous=t;
+                if(z>cz-256)maxStep=Math.max(maxStep,Math.abs(t-c.sample(x,z-4,d::sample).meanTemperatureC()));
+                boolean owned=MontaneForest.eligible(seed,x,z,d,c),boreal=BorealWoodland.contains(seed,x,z,d,c);
+                require(!(owned&&boreal),"Cell "+x+","+z+" is both montane-eligible and boreal woodland");
+                if(owned){eligibleCells++;eligible.add(new int[]{x,z});require(t>=6,"Montane-eligible cells are temperate (>=6 C): "+t);}
+                if(boreal){borealCells++;require(t<3.0000001,"Boreal woodland is cold (<3 C): "+t);}
+            }}
+            if(w==BorealSlopeOracle.SITES[0]||w==BorealSlopeOracle.SITES[3]){
+                int h=256;var added=new java.util.HashSet<>(BorealTrees.roots(seed,cx-h,cz-h,cx+h,cz+h,d,c,BorealSlope.RELIEF));added.removeAll(BorealTrees.roots(seed,cx-h,cz-h,cx+h,cz+h,d,c,BorealSlope.PUBLISHED_RELIEF));
+                for(var root:added)for(var cell:eligible)require(Math.hypot(root.x()-cell[0],root.z()-cell[1])>24,"Added boreal stem within 24 blocks of montane-eligible ground at "+root.x()+","+root.z());
+                if(w==BorealSlopeOracle.SITES[0])require(added.size()>100,"Non-vacuous: the audited window has added stems ("+added.size()+")");
+            }
+        }
+        require(eligibleCells>1000&&borealCells>1000,"Both domains are sampled (montane "+eligibleCells+", boreal "+borealCells+")");
+        // 3 C of mean temperature separate the domains; the steepest sampled 4-block step bounds the gap at far more than crown reach.
+        require(maxStep>0&&3.0/maxStep*4>24,"Sampled temperature step "+maxStep+" C per 4 blocks leaves a domain gap above 24 blocks");
+        System.out.println("BOREAL_MONTANE_DISJOINT_PASS montaneCells="+eligibleCells+" borealCells="+borealCells+" maxStepC/4m="+maxStep);
     }
     private static void require(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private BorealSlopeCheck(){}
