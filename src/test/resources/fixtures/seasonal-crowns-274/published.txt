@@ -1,0 +1,18 @@
+# Published canopy columns (5 x 5 chunks around each site), frozen from the unmodified published
+# ForestTrees/WoodlandTrees (origin/main 4dc1b4a, schema 274) compiled separately from the gated change,
+# with the ten-argument WoodlandTrees.column on the BorealSlopeOracle terrain and the polar-capable climate.
+# Columns: site seed siteX siteZ vegetationFlags ownerMode intsInWindow sha256(Arrays.toString per column, x then z order).
+# ownerMode 0 = no dry-forest owner, 1 = regional DryForest.domain, 2 = seasonal DryForest.domain (both with an accept-all
+# selected-quart predicate). The seasonal-crown bit (512) is never part of these flags. forest-a flag 256 is the published
+# broadleaf-crown bit; dry-a/dry-b/dry-c are seasonal dry-broadleaf stands (dry-c is seed 424242), birch and dappled are controls.
+dry-a 1 1488000 -304000 4 1 3897 d0f3895e40b720070bfe5e4c8e69686e71870c87599479d7ea96acb699769d22
+dry-a 1 1488000 -304000 36 2 43832 c503183df64a08a4e05ed0ef23822bef380747bcd98ef08b1ca69c509a692676
+dry-b 1 1520000 -336000 36 2 38926 2a609e176e04f882c3231194ac1c5db3a7fc108602189ef5660d94ee10c0c756
+dry-b 1 1520000 -336000 4 1 8569 e6301726bfc5661698f334fb02a20a776a7462b1980c562d3facb4b9d15abdf5
+dry-c 424242 528000 -272000 36 2 41770 6c35ed2aa3b559d9d6f6029f5f8b11bee8610347153612e2ed8d78c95550fdae
+forest-a 1 47980 -304100 0 0 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
+forest-a 1 47980 -304100 256 0 27957 be2fee858d2340bca027b45703731dc7e9e0749def310ab1a40fa898cb47d11c
+forest-a 1 47980 -304100 1 0 27291 a4a35a1a233b7f7571fd132ddfd760f2e35f58e59009d04dc5293281173cb3c2
+birch 1 720000 -464000 0 0 22795 0a036ccab5b10767186fcbb839dde8675a47996b7249dcb9d2a15c6f8a70f089
+dappled 1 16000 -240000 0 0 7351 1618a477dbe10db4c1fcfc6fc7adb1cd936b63ce4db91ec076d7f89105d65d2b
+dry-a 1 1488000 -304000 0 0 3897 d0f3895e40b720070bfe5e4c8e69686e71870c87599479d7ea96acb699769d22

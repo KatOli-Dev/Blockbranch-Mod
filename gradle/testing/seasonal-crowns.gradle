@@ -1,0 +1,17 @@
+// Native generated-chunk witnesses at the audited seasonal dry-forest scenes (seed 1); see SeasonalCrownsQualification for the modes.
+def rootsDir=layout.projectDirectory.dir(providers.gradleProperty('seasonalCrownsDirectory').getOrElse('build/seasonal-crowns-native'))
+def rootsMode=providers.gradleProperty('seasonalCrownsMode').getOrElse('fresh275')
+def rootsBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('seasonalCrownsBaseline').getOrElse('build/seasonal-crowns-evidence/baseline274/baseline.txt')).asFile.absolutePath
+loom.runs.register('seasonalCrownsQualification'){
+ server();runDir(rootsDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.seasonalCrownsMode='+rootsMode);vmArg('-Dblockbranch.seasonalCrownsDirectory='+rootsDir.asFile.absolutePath);vmArg('-Dblockbranch.seasonalCrownsBaseline='+rootsBaselineDigests)
+}
+tasks.register('prepareSeasonalCrownsQualification'){doLast{
+ assert rootsMode in ['baseline274','fresh275','verify275','legacy274']:'Unknown seasonalCrownsMode '+rootsMode
+ rootsDir.file('result.txt').asFile.delete()
+ if(rootsMode in ['baseline274','fresh275'])assert !rootsDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert rootsDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ rootsDir.asFile.mkdirs();rootsDir.file('eula.txt').asFile.text='eula=true\n'
+ rootsDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25643\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(rootsMode=='baseline274'?'blockbranch:seasonal_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runSeasonalCrownsQualification'){dependsOn 'prepareSeasonalCrownsQualification';doLast{assert rootsDir.file('result.txt').asFile.text.startsWith('PASS')}}
