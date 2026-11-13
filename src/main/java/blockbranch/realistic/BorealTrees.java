@@ -5,6 +5,10 @@ import java.util.*;
 /** Seeded narrow evergreen spires with lower whorls and scattered lighter birch crowns. */
 public final class BorealTrees {
     public static List<WoodlandTrees.Root> roots(long seed,int minX,int minZ,int maxX,int maxZ,DrainageNetwork drainage,ClimateField climate) {
+        return roots(seed,minX,minZ,maxX,maxZ,drainage,climate,BorealSlope.PUBLISHED_RELIEF);
+    }
+    /** {@code relief} bounds each footprint sample's height difference from the stem. */
+    public static List<WoodlandTrees.Root> roots(long seed,int minX,int minZ,int maxX,int maxZ,DrainageNetwork drainage,ClimateField climate,int relief) {
         var result=new ArrayList<WoodlandTrees.Root>();int radius=WoodlandTrees.RADIUS;
         var ecology=new GroundEcology.Field(drainage::sample,climate);
         for(var point:TreeScatter.points(seed,minX-radius,minZ-radius,maxX+radius,maxZ+radius,TreeScatter.Spacing.CONIFER)){
@@ -14,7 +18,7 @@ public final class BorealTrees {
             var center=drainage.sample(x,z);boolean safe=true;
             for(int dz=-radius;dz<=radius;dz+=radius) for(int dx=-radius;dx<=radius;dx+=radius) {
                 var s=drainage.sample(x+dx,z+dz);
-                if(s.waterLevel()!=DrainageNetwork.DRY || Math.abs(s.height()-center.height())>3 || drainage.channelAt(x+dx,z+dz).edge()>=0) safe=false;
+                if(s.waterLevel()!=DrainageNetwork.DRY || Math.abs(s.height()-center.height())>relief || drainage.channelAt(x+dx,z+dz).edge()>=0) safe=false;
             }
             if(!safe) continue;
             if(grove){result.add(Grove.root(point,center));continue;}

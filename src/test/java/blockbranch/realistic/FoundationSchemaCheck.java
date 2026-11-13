@@ -9,7 +9,7 @@ public final class FoundationSchemaCheck {
             int ice=pairs[i][0],litter=pairs[i][1];
             require(FoundationSchema.schema(264,ice,litter)==numbers[i],"Number for "+ice+"/"+litter);
             require(FoundationSchema.baseSchema(numbers[i],ice,litter)==264&&FoundationSchema.matches(numbers[i],ice,litter),"Read "+numbers[i]);
-            for(int saved=82;saved<=270;saved++){
+            for(int saved=82;saved<=272;saved++){
                 boolean expected=saved==numbers[i]||(ice==0&&litter==0&&(saved<265||saved>267)); // absent keeps every earlier/later number for later layers
                 require(FoundationSchema.matches(saved,ice,litter)==expected,"Saved "+saved+" under ice="+ice+" litter="+litter);
                 if(ice+litter>0&&FoundationSchema.matches(saved,ice,litter))require(FoundationSchema.baseSchema(saved,ice,litter)==264,"Complete 264 foundation");

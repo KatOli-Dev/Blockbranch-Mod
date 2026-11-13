@@ -60,7 +60,7 @@ private static final int[][] SCENES=new int[][]{{-1744000,-1040000},{1584000,-94
                     com.google.gson.JsonObject preset;
                     try(var input=new java.io.InputStreamReader(Objects.requireNonNull(MontaneForestVisualReview.class.getResourceAsStream("/data/blockbranch/worldgen/world_preset/realistic.json")),java.nio.charset.StandardCharsets.UTF_8)){preset=com.google.gson.JsonParser.parseReader(input).getAsJsonObject().getAsJsonObject("dimensions").getAsJsonObject("minecraft:overworld").getAsJsonObject("generator").deepCopy();}
                     preset.remove("type");var ops=net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE,level.registryAccess());
-                    var candidate=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();MontaneForestFixtures.published270(preset);var prior=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();var random=level.getChunkSource().randomState();boolean found=false;
+                    var montaneOnly=preset.deepCopy();MontaneForestFixtures.montane271(montaneOnly);var candidate=RealisticGenerator.CODEC.codec().parse(ops,montaneOnly).getOrThrow();MontaneForestFixtures.published270(preset);var prior=RealisticGenerator.CODEC.codec().parse(ops,preset).getOrThrow();var random=level.getChunkSource().randomState();boolean found=false;
                     search:for(int z=ez-16;z<=ez+16;z++)for(int x=ex-16;x<=ex+16;x++){
                         int h=d.sample(x,z).height();boolean clear=true;for(int y=h+1;y<=h+3;y++)clear&=candidate.canopy(x,z,random).state(x,y,z)==null&&prior.canopy(x,z,random).state(x,y,z)==null;
                         if(clear){cameraX=x;cameraZ=z;cameraY=h+1;found=true;break search;}

@@ -1,0 +1,15 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "833abc510ec3234ecf409d1a5e083d13a0e9e090",
+  "productionTrees": {
+    "src/main": "2e88a9cdd46093e267a647665d8cd084d7d538e4",
+    "src/client": "bc2fb123cbdae034f28780bd86e68d5e7a67b573"
+  },
+  "collector": "src/test/java/blockbranch/realistic/BorealSlopeOracle.java",
+  "oracle": {
+    "path": "oracle.txt",
+    "sha256": "76aa7ad6702ae3aef53a2ec9b20aed3a70a043cff61db9e26fc3216d1e55c1c5"
+  },
+  "recording": "BorealSlopeOracle.main was compiled against and run on the complete unmodified published-270 production tree (git diff --exit-code origin/main -- src/main src/client passed before recording).",
+  "scope": "Five 128 x 128 m windows (seed 1 and 424242), published terrain/climate flags; finite fingerprints of boreal roots and crown voxels. The first window is the sampled treeless slope (0 roots). Not a global compatibility proof."
+}
