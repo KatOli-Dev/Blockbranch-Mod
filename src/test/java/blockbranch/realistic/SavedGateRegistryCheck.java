@@ -20,6 +20,7 @@ public final class SavedGateRegistryCheck {
     private static final Map<Integer,String> RESERVED=Map.of(1,"biome transitions",16,"polar climate");
     private static final Pattern COMMENTS=Pattern.compile("/\\*.*?\\*/|//[^\\n]*",Pattern.DOTALL);
     private static final Pattern DECLARATION=Pattern.compile("static\\s+final\\s+int\\s+([^;(]+);");
+    private static final Pattern NAMED=Pattern.compile("static\\s+final\\s+int\\s+[^;]*?\\b(BASE|VERSION|FLAG)\\s*=");
     private static final Pattern DECLARATOR=Pattern.compile("([A-Z][A-Z0-9_]*)\\s*=\\s*(0x[0-9a-fA-F]+|\\d+(?:\\s*<<\\s*\\d+)?)");
 
     public static void main(String[] args)throws Exception{
@@ -28,7 +29,7 @@ public final class SavedGateRegistryCheck {
         var sources=new ArrayList<File>();collect(new File(root,"blockbranch"),sources);
         require(sources.size()>300,"Production sources are readable from "+root.getAbsolutePath());
         Collections.sort(sources);
-        int pieceLimit=-1;
+        int pieceLimit=-1,storedLimit=-1;
         for(var file:sources){
             var name=file.getName().replace(".java","");
             var text=COMMENTS.matcher(Files.readString(file.toPath())).replaceAll(" ");
@@ -38,6 +39,8 @@ public final class SavedGateRegistryCheck {
                 var declarator=DECLARATOR.matcher(declaration.group(1));
                 while(declarator.find())constants.putIfAbsent(declarator.group(1),value(declarator.group(2)));
             }
+            var named=NAMED.matcher(text);
+            while(named.find())require(constants.containsKey(named.group(1)),name+"."+named.group(1)+" must be a decimal, hex or shifted literal so the scan can read it");
             if(constants.containsKey("BASE")&&constants.containsKey("VERSION")){
                 int b=constants.get("BASE"),v=constants.get("VERSION");
                 require(b<v,name+" wraps an earlier schema ("+b+" -> "+v+")");
@@ -55,11 +58,15 @@ public final class SavedGateRegistryCheck {
                 var limit=Pattern.compile("transitions>(\\d+)").matcher(text);
                 require(limit.find(),"Tree-clear piece states its vegetation flag range");
                 pieceLimit=Integer.parseInt(limit.group(1));
+                var stored=Pattern.compile("clearDefinition>(\\d+)").matcher(text);
+                require(stored.find(),"Tree-clear piece states its saved definition range");
+                storedLimit=Integer.parseInt(stored.group(1));
             }
         }
         require("BorealSlopeSchema".equals(versions.get(BorealSlopeSchema.VERSION))&&"BorealSlope".equals(flags.get(BorealSlope.FLAG)),"Scan found the boreal slope gate");
         int all=0;for(int bit:flags.keySet())all|=bit;for(int bit:RESERVED.keySet())all|=bit;
         require(pieceLimit>0&&all<=pieceLimit,"Vegetation flags "+all+" exceed the saved clear range "+pieceLimit+"; widen ReimaginedTreeClearPiece with the new bit");
+        require(storedLimit==2*pieceLimit+2,"Saved clear definitions 1.."+storedLimit+" must match vegetation flags 0.."+pieceLimit+" (1+crown+2*flags)");
         System.out.println("SAVED_GATE_REGISTRY_PASS sources="+sources.size()+" schemas="+versions+" flags="+flags+" clearFlagLimit="+pieceLimit);
     }
     private static void collect(File dir,List<File> out){
