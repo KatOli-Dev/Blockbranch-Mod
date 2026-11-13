@@ -1,10 +1,22 @@
 {
   "variants": {
-    "tip=false": {
-      "model": "blockbranch:block/lake_reed_stem"
-    },
-    "tip=true": {
-      "model": "blockbranch:block/lake_reed_tip"
-    }
+    "tip=false": [
+      {
+        "model": "blockbranch:block/lake_reed_stem"
+      },
+      {
+        "model": "blockbranch:block/lake_reed_stem",
+        "y": 180
+      }
+    ],
+    "tip=true": [
+      {
+        "model": "blockbranch:block/lake_reed_tip"
+      },
+      {
+        "model": "blockbranch:block/lake_reed_tip",
+        "y": 180
+      }
+    ]
   }
 }

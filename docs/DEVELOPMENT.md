@@ -37,7 +37,7 @@ Bundled schema275 adds seasonal-crown definition1 to complete274, which adds bro
 | Custom ID | Real-world analog; placement drivers | Selector / cover evidence |
 | --- | --- | --- |
 | `alpine_scree_slope` | Alpine rock debris; elevation, slope, dry exposure | `AlpineScree` |
-| `inland_lake_reedbed` | Emergent lake reeds; shallow water, sheltered margin | `InlandLakeReedbed`, `ReedbedContent` |
+| `inland_lake_reedbed` | Emergent lake reeds; shallow water, sheltered margin; resource-only plant art (three-plane star model, two-way half-turn variants (culms stay aligned when stacked), arching blades; `checkLakeReedAssets`, native `runLakeReedVisual`) beside placement/hydrology, which it does not change; an inspected plant-architecture analog (a USGS Colorado River *Phragmites* photo), not a lake density/species target | `InlandLakeReedbed`, `ReedbedContent`, `scripts/assets/lake_reeds.py` |
 | `gravel_bed_river_margin` | Coarse river bank; routed channel, gradient | `GravelRiverMargin` |
 | `low_gradient_sandy_shore` | Sandy littoral; marine water, low slope | `LowGradientSandyShore`, `SandyShoreContent` |
 | `rolling_lowland_forb_grass_meadow` | Mesic rolling grass/forbs; moisture, soil support | `LowlandMeadow` |

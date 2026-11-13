@@ -1,0 +1,22 @@
+// Native views of the audited seed-424242 terminal-lake reedbed at fixed poses (the audit's views 2/3 plus two near-water views).
+// Evidence only, never a check threshold; capture the same poses from main and from the candidate to compare.
+def reedVisual=layout.projectDirectory.dir(providers.gradleProperty('lakeReedVisualDirectory').getOrElse('build/lake-reed-evidence/visual-NEW'))
+loom.runs.register('lakeReedVisual'){
+ client();runDir(reedVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.lakeReedVisual=true')
+ vmArg('-Dblockbranch.lakeReedVisualDirectory='+reedVisual.asFile.absolutePath)
+ programArgs('--username','ReedView','--width','1024','--height','576')
+}
+tasks.register('prepareLakeReedVisual'){doLast{
+ assert !reedVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ reedVisual.asFile.mkdirs();reedVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runLakeReedVisual'){dependsOn 'prepareLakeReedVisual';doLast{assert reedVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Resource-only reed morphology guard (pure; no Python): saved state names, variants, model cost and texture continuity.
+tasks.register('checkLakeReedAssets',JavaExec){
+ dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath
+ mainClass='blockbranch.realistic.LakeReedAssetCheck';maxHeapSize='256m'
+ jvmArgs '-Djava.awt.headless=true'
+}
+tasks.named('check'){dependsOn 'checkLakeReedAssets'}
