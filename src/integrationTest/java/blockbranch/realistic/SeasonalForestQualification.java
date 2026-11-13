@@ -27,7 +27,7 @@ public final class SeasonalForestQualification {
             var level=server.overworld();var random=level.getChunkSource().randomState();require(random.seed()==SEED,"Disclosed native seed");
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
+            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.seasonalCrownDefinition()==1?275:g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Flat exact codec roundtrip");
             AlluvialFixtures.published269(fresh);
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);
@@ -180,7 +180,7 @@ public final class SeasonalForestQualification {
         var piece=new ReimaginedTreeClearPiece(box,SEED,g.borealCrownDefinition(),g.vegetationFlags());var tag=piece.createTag(context);
         require(tag.getIntOr("ClearDefinition",0)==1+g.borealCrownDefinition()+2*g.vegetationFlags(),"Explicit complete refined root/crown flags");
         var plan=BorealClearSmoke.plan(piece,g,random);
-        require(!plan.isEmpty()&&ForestTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
+        require(!plan.isEmpty()&&ForestTrees.tree(root,false,SeasonalCrowns.enabled(g.vegetationFlags())).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"Whole supported broadleaf footprint cleared");
         NbtIo.writeCompressed(tag,saved);Files.writeString(signature,new TreeMap<>(plan).toString());
         var restored=BorealClearSmoke.load(context,NbtIo.readCompressed(saved,NbtAccounter.unlimitedHeap()));require(plan.equals(BorealClearSmoke.plan(restored,g,random)),"Saved NBT exact clearing footprint");
         int historical=0;
