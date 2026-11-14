@@ -11,7 +11,9 @@ loom.runs.register('lowlandSurfaceProbe'){
     vmArg('-Dblockbranch.lowlandPoints='+providers.gradleProperty('lowlandPoints').getOrElse('unset'))
 }
 tasks.register('prepareLowlandSurfaceProbe'){doLast{
-    assert !lowlandDir.file('server.properties').asFile.exists():'Preserve previous evidence; select a fresh lowlandDirectory.'
+    // An empty or absent directory only: an existing save, stale result.txt or earlier evidence must never be reused or reported as this run.
+    def existing=lowlandDir.asFile.list()
+    assert existing==null||existing.length==0:'Preserve previous evidence and saves; select a new or empty lowlandDirectory.'
     lowlandDir.asFile.mkdirs()
     lowlandDir.file('eula.txt').asFile.text='eula=true\n'
     lowlandDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port='+lowlandPort+'\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+lowlandSeed+'\nmax-tick-time=0\n'

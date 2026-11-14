@@ -6,7 +6,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.core.BlockPos;
 
 /**
- * Opt-in native readback for listed points of the world seed: raw selector vs final biome, existing
+ * Opt-in native readback for listed points of the world seed: raw selector, the loaded chunk's stored quart
+ * ({@code level.getNoiseBiome}, read after the chunk is generated; column {@code native_quart}) and the
+ * zoomed visible biome ({@code level.getBiome}), existing
  * woodland/meadow eligibility conjuncts (with and without the moisture ceiling), native surface and
  * above-ground blocks in a local window, and the selector composition of a 8 km neighbourhood.
  * It reports observations only; it asserts nothing about ecology and changes no generation. Trunk, leaf
