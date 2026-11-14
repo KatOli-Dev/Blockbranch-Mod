@@ -869,13 +869,19 @@ tasks.register('checkScreeBelt',JavaExec){
  mainClass='blockbranch.realistic.ScreeBeltCheck'
  maxHeapSize='1G'
 }
+tasks.register('checkScreeSpawnParity',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.ScreeSpawnParityCheck'
+ maxHeapSize='256m'
+}
 tasks.register('checkCoastalOakCrowns',JavaExec){
  dependsOn tasks.named('testClasses')
  classpath=sourceSets.test.runtimeClasspath
  mainClass='blockbranch.realistic.CoastalOakCrownsCheck'
  maxHeapSize='1G'
 }
-tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns'),tasks.named('checkSeasonalCrowns'),tasks.named('checkBirchCrowns'),tasks.named('checkPineCrowns'),tasks.named('checkCoastalOakCrowns'),tasks.named('checkHumidCrowns'),tasks.named('checkScreeBelt')}
+tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns'),tasks.named('checkSeasonalCrowns'),tasks.named('checkBirchCrowns'),tasks.named('checkPineCrowns'),tasks.named('checkCoastalOakCrowns'),tasks.named('checkHumidCrowns'),tasks.named('checkScreeBelt'),tasks.named('checkScreeSpawnParity')}
 
 tasks.register('checkTaiga',JavaExec){
  dependsOn tasks.named('testClasses')
