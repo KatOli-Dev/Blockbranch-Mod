@@ -9,7 +9,7 @@ public final class FoundationSchemaCheck {
             int ice=pairs[i][0],litter=pairs[i][1];
             require(FoundationSchema.schema(264,ice,litter)==numbers[i],"Number for "+ice+"/"+litter);
             require(FoundationSchema.baseSchema(numbers[i],ice,litter)==264&&FoundationSchema.matches(numbers[i],ice,litter),"Read "+numbers[i]);
-            for(int saved=82;saved<=278;saved++){
+            for(int saved=82;saved<=279;saved++){
                 boolean expected=saved==numbers[i]||(ice==0&&litter==0&&(saved<265||saved>267)); // absent keeps every earlier/later number for later layers
                 require(FoundationSchema.matches(saved,ice,litter)==expected,"Saved "+saved+" under ice="+ice+" litter="+litter);
                 if(ice+litter>0&&FoundationSchema.matches(saved,ice,litter))require(FoundationSchema.baseSchema(saved,ice,litter)==264,"Complete 264 foundation");
@@ -22,7 +22,7 @@ public final class FoundationSchemaCheck {
         for(int base:new int[]{82,257,263,265,266,267,268}){expect(()->FoundationSchema.schema(base,1,0));expect(()->FoundationSchema.schema(base,0,1));expect(()->FoundationSchema.schema(base,1,1));}
         expect(()->FoundationSchema.schema(264,2,0));expect(()->FoundationSchema.schema(264,0,-1));
         require(!FoundationSchema.matches(264,2,0)&&!FoundationSchema.matches(267,0,2),"Unknown definitions never match");
-        System.out.println("PASS foundation schema identity: 265 ice only, 266 litter only, 267 both; 4 definition pairs x 189 saved numbers");
+        System.out.println("PASS foundation schema identity: 265 ice only, 266 litter only, 267 both; 4 definition pairs x 198 saved numbers");
     }
     private static void require(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private static void expect(Runnable action){try{action.run();}catch(IllegalArgumentException expected){return;}throw new AssertionError("Expected rejection");}

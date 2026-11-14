@@ -135,9 +135,9 @@ public final class PineCrownsQualification {
         if(plan.isEmpty()||!gated.stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))))throw new AssertionError("New tree-clear plan covers the entire gated pine footprint");
         try{BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),retained,random);throw new AssertionError("A bit-2048 plan replayed under a generator without the definition");}
         catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalStateException))throw expected;}
-        for(int bad:new int[]{0,16385,-1}){var malformed=tag.copy();malformed.putInt("ClearDefinition",bad);
+        for(int bad:new int[]{0,32769,-1}){var malformed=tag.copy();malformed.putInt("ClearDefinition",bad);
             try{BorealClearSmoke.load(context,malformed);throw new AssertionError("Malformed clear definition "+bad+" loaded");}catch(RuntimeException expected){}}
-        try{new ReimaginedTreeClearPiece(new BoundingBox(0,0,0,0,0,0),random.seed(),0,8192);throw new AssertionError("A flag beyond bit 4096 was accepted");}catch(IllegalArgumentException expected){}
+        try{new ReimaginedTreeClearPiece(new BoundingBox(0,0,0,0,0,0),random.seed(),0,16384);throw new AssertionError("A flag beyond the current limit (bit 8192, flags up to 16383) was accepted");}catch(IllegalArgumentException expected){}
         Path file=directory.resolve("pine-tree-clear.nbt");net.minecraft.nbt.NbtIo.writeCompressed(tag,file);
         var restored=BorealClearSmoke.load(context,net.minecraft.nbt.NbtIo.readCompressed(file,net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
         if(!plan.equals(BorealClearSmoke.plan(restored,actual,random)))throw new AssertionError("Compressed saved clear plan retains the exact footprint");

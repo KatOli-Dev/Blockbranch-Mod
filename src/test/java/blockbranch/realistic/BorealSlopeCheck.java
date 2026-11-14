@@ -25,7 +25,7 @@ public final class BorealSlopeCheck {
     }
     /** Saved schema 272 exists only as the complete montane 271 plus the explicit definition. */
     private static void schema(){
-        for(int saved=82;saved<=278;saved++){
+        for(int saved=82;saved<=279;saved++){
             require(BorealSlopeSchema.schema(saved,0)==saved,"Absent definition retains "+saved);
             require(BorealSlopeSchema.baseSchema(saved,0)==(saved==272?Integer.MAX_VALUE:saved),"Absent definition never reads 272 ("+saved+")");
             require(BorealSlopeSchema.matches(saved,1)==(saved==272),"Only 272 reads under the definition ("+saved+")");

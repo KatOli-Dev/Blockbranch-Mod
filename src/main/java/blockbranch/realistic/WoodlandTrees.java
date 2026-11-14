@@ -60,9 +60,11 @@ public final class WoodlandTrees {
     /** {@code flags} are saved vegetation flags; {@link BroadleafCrowns#FLAG} changes ordinary-forest oak geometry and {@link BirchCrowns#FLAG} mature old-growth-birch geometry. */
     public static List<Voxel> tree(Root root,int flags) { return root.family()==DappledForest.FAMILY?DappledForest.tree(root):root.family()==12||root.family()==13?JungleTrees.tree(root):root.family()==10||root.family()==11?DarkCherryWoodland.tree(root):root.family()==3?SwampTrees.tree(root):root.family()==RedwoodForest.FAMILY?RedwoodTrees.tree(root):root.family()>0?ForestTrees.tree(root,BroadleafCrowns.enabled(flags),false,BirchCrowns.enabled(flags)):shape(root,false); }
     public static List<Voxel> humidTree(Root root) { return shape(root,true); }
+    /** {@code gated} selects the saved {@link HumidCrowns} architecture, and only for mature humid stems; young stems keep the published shape. */
+    static List<Voxel> humidTree(Root root,boolean gated) { return gated&&root.height()>=HumidCrowns.MATURE_HEIGHT?HumidCrowns.tree(root):shape(root,true); }
     private static List<Voxel> shape(Root root,boolean humid) {
         int size=RADIUS*2+1,height=humid?HUMID_HEIGHT:MAX_HEIGHT,count=size*size*height;
-        byte[] blocks=new byte[count],distance=new byte[count];Arrays.fill(distance,(byte)7);
+        byte[] blocks=new byte[count];
         int wood=root.birch() ? 4 : 1;
         int stem=root.height()-(root.birch() ? 4 : 6);
         line(blocks,0,0,0,0,stem,0,wood);
@@ -106,6 +108,11 @@ public final class WoodlandTrees {
                         long edge=OakBirchWoodland.mix(root.variant() ^ x*0x9E3779B97F4A7C15L ^ y*0xC2B2AE3D27D4EB4FL ^ z*0x165667B19E3779F9L);
                         if(d<0.72 || (edge&7)!=0)blocks[index]=19;
                     }
+        return support(root,size,height,blocks);
+    }
+    /** Support distances through foliage and the final voxel list for a rasterized crown; shared by the published shape and {@link HumidCrowns}. */
+    static List<Voxel> support(Root root,int size,int height,byte[] blocks) {
+        int count=blocks.length;byte[] distance=new byte[count];Arrays.fill(distance,(byte)7);
         // Calculate actual six-neighbour support through foliage, rather than marking
         // natural leaves persistent or assuming distance through holes in a crown.
         int[] queue=new int[count];int head=0,tail=0;
@@ -174,7 +181,7 @@ public final class WoodlandTrees {
         var redwoods=RedwoodForest.enabled(transitions)?RedwoodTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate):List.<Root>of();
         for(var root:redwoods)geometry.addAll(RedwoodTrees.tree(root));roots.addAll(redwoods);
         var humid=HumidTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
-        for(var root:humid)geometry.addAll(HumidTrees.tree(root));roots.addAll(humid);
+        for(var root:humid)geometry.addAll(HumidTrees.tree(root,HumidCrowns.enabled(transitions)));roots.addAll(humid);
         var savanna=SavannaTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
         for(var root:savanna)geometry.addAll(SavannaTrees.tree(root));roots.addAll(savanna);
         var upland=SavannaUplands.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);
@@ -253,9 +260,9 @@ public final class WoodlandTrees {
     public static int leafBase(int code) { return code>=131&&code<=148 ? 130+(code-131)/6*6 : code>=104 ? 103 : code>=95 ? 94 : code<=12 ? 6 : code<=18 ? 12 : code<=27 ? 21 : code<=36 ? 30 : 39; }
     public static int leafDistance(int code) { return code-leafBase(code); }
     private static final int[][] DIRECTIONS={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
-    private static int index(int x,int y,int z) { int size=RADIUS*2+1;return (y*size+z+RADIUS)*size+x+RADIUS; }
+    static int index(int x,int y,int z) { int size=RADIUS*2+1;return (y*size+z+RADIUS)*size+x+RADIUS; }
     private static double square(double x) { return x*x; }
-    private static void line(byte[] blocks,int x,int y,int z,int tx,int ty,int tz,int wood) {
+    static void line(byte[] blocks,int x,int y,int z,int tx,int ty,int tz,int wood) {
         blocks[index(x,y,z)]=(byte)wood;
         // Connected rising branch steps with directional log axes.
         while(x!=tx || y!=ty || z!=tz) {
