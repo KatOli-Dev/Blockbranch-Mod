@@ -1,9 +1,16 @@
 package blockbranch.realistic;
 import com.google.gson.JsonObject;
-/** QA-only explicit prerequisite views (pine crowns 277 over birch crowns 276 over seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
+/** QA-only explicit prerequisite views (coastal oak crowns 278 over pine crowns 277 over birch crowns 276 over seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
 final class MontaneForestFixtures {
-    /** Complete birch crowns 276: removes only the explicit pine-crown wrapper. */
+    /** Complete pine crowns 277: removes only the explicit coastal-oak-crown wrapper. */
+    static void pine277(JsonObject json){
+        if(!json.has("coastal_oak_crown_definition"))return;
+        if(json.get("shape_version").getAsInt()!=278||json.get("coastal_oak_crown_definition").getAsInt()!=1)throw new AssertionError("Complete coastal oak crowns wrapper required");
+        json.remove("coastal_oak_crown_definition");json.addProperty("shape_version",277);
+    }
+    /** Complete birch crowns 276: removes the coastal-oak and pine-crown wrappers. */
     static void birch276(JsonObject json){
+        pine277(json);
         if(!json.has("pine_crown_definition"))return;
         if(json.get("shape_version").getAsInt()!=277||json.get("pine_crown_definition").getAsInt()!=1)throw new AssertionError("Complete pine crowns wrapper required");
         json.remove("pine_crown_definition");json.addProperty("shape_version",276);

@@ -170,7 +170,7 @@ public final class WoodlandTrees {
         if(summerDry!=null)warm.removeIf(root->summerDry.test(root.x(),root.z()));
         for(var root:warm){geometry.addAll(WarmTrees.tree(root));roots.add(new Root(root.x(),root.y(),root.z(),false,root.height(),root.variant()));}
         if(dryForest!=null){var dry=DryForestTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,dryForest);for(var root:dry)geometry.addAll(ForestTrees.tree(root,false,SeasonalCrowns.enabled(transitions)));roots.addAll(dry);}
-        if(summerDry!=null){var dry=SummerDryTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,summerDry);for(var root:dry)geometry.addAll(SummerDryTrees.tree(root));roots.addAll(dry);}
+        if(summerDry!=null){var dry=SummerDryTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate,summerDry);for(var root:dry)geometry.addAll(SummerDryTrees.tree(root,CoastalOakCrowns.enabled(transitions)));roots.addAll(dry);}
         var redwoods=RedwoodForest.enabled(transitions)?RedwoodTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate):List.<Root>of();
         for(var root:redwoods)geometry.addAll(RedwoodTrees.tree(root));roots.addAll(redwoods);
         var humid=HumidTrees.roots(seed,startX,startZ,minX+15+halo,minZ+15+halo,drainage,climate);

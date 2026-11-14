@@ -32,8 +32,10 @@ public final class SummerDryTrees {
             if(Math.abs(d.sample(x+dx,z+dz).height()-center.height())>relief||LandVegetation.reserved(d,x+dx,z+dz))return false;
         return true;
     }
-    static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root){
-        if(root.height()>5)return ForestTrees.tree(root);
+    static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root){return tree(root,false);}
+    /** {@code coastal} selects the saved {@link CoastalOakCrowns} architecture, and only for mature oaks; shrubs and young stems keep the published shape. */
+    static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean coastal){
+        if(root.height()>5)return ForestTrees.tree(root,false,false,false,coastal);
         var out=new ArrayList<WoodlandTrees.Voxel>();int h=root.height();
         // Low branched woody axis. Raw leaves also need valid support distances:
         // saved tree clearing consumes this geometry before the common canopy

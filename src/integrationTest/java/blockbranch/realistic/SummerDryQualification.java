@@ -172,9 +172,10 @@ public final class SummerDryQualification {
         var root=SummerDryTrees.roots(random.seed(),p[0]-16,p[1]-16,p[0]+16,p[1]+16,d,c,owner).stream().filter(r->r.height()>=12).findFirst().orElseThrow();
         var box=new BoundingBox(root.x(),root.y(),root.z(),root.x(),root.y(),root.z());
         var piece=new ReimaginedTreeClearPiece(box,random.seed(),actual.borealCrownDefinition(),actual.vegetationFlags());
-        var tag=piece.createTag(context);require(tag.getIntOr("ClearDefinition",0)==32,"Saved current root/crown flags include summer-dry woodland");
+        var tag=piece.createTag(context);int savedFlags=actual.vegetationFlags();boolean coastal=CoastalOakCrowns.enabled(savedFlags);
+        require((savedFlags&8)!=0&&coastal==(actual.coastalOakCrownDefinition()==1)&&tag.getIntOr("ClearDefinition",0)==actual.borealCrownDefinition()+1+2*savedFlags,"Saved root/crown flags include summer-dry woodland and exactly this world's saved coastal-oak gate");
         var plan=BorealClearSmoke.plan(piece,actual,random);
-        require(!plan.isEmpty()&&SummerDryTrees.tree(root).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"New tree-clear plan covers entire immutable summer-dry woodland footprint");
+        require(!plan.isEmpty()&&SummerDryTrees.tree(root,coastal).stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))),"New tree-clear plan covers entire immutable summer-dry woodland footprint");
         Path file=directory.resolve("summer-dry-tree-clear.nbt");
         if(reopen)require(Files.exists(file),"Requires prior process's actual compressed plan");
         else{require(!Files.exists(file),"Preserve prior saved-plan evidence");NbtIo.writeCompressed(tag,file);}
@@ -191,7 +192,7 @@ public final class SummerDryQualification {
             var after=BorealClearSmoke.plan(BorealClearSmoke.load(context,oldTag),actual,random);
             require(!before.isEmpty()&&before.equals(after),"Historical clear footprints do not adopt current summer-dry woodland roots");
         }
-        return Map.of("newDefinition",32,"newFootprintCells",plan.size(),"historicalDefinitionsCompared",16);
+        return Map.of("newDefinition",tag.getIntOr("ClearDefinition",0),"coastalOakGate",coastal,"newFootprintCells",plan.size(),"historicalDefinitionsCompared",16);
     }
     private static Map<String,Object> unchangedCanopies(net.minecraft.server.level.ServerLevel level,RealisticGenerator g){
         var random=level.getChunkSource().randomState();var chunks=new HashSet<Long>();int states=0;
@@ -208,7 +209,7 @@ public final class SummerDryQualification {
         var random=level.getChunkSource().randomState();var d=g.drainage(random);var c=new ClimateField(random.seed());var context=StructurePieceSerializationContext.fromLevel(level);int candidates=0;
         for(var p:POINTS){
             var geometry=new LinkedHashMap<WoodlandTrees.Root,List<WoodlandTrees.Voxel>>();
-            for(var root:SummerDryTrees.roots(random.seed(),p[0]-32,p[1]-32,p[0]+32,p[1]+32,d,c,g.summerDryOwner(random)))geometry.put(root,SummerDryTrees.tree(root));
+            for(var root:SummerDryTrees.roots(random.seed(),p[0]-32,p[1]-32,p[0]+32,p[1]+32,d,c,g.summerDryOwner(random)))geometry.put(root,SummerDryTrees.tree(root,CoastalOakCrowns.enabled(g.vegetationFlags())));
             for(var cut:geometry.keySet()){
                 if(cut.height()<=5||Math.abs(cut.x()-p[0])>16||Math.abs(cut.z()-p[1])>16)continue;candidates++;
                 var box=new BoundingBox(cut.x(),cut.y(),cut.z(),cut.x(),cut.y(),cut.z());var removed=new HashSet<Long>();var retained=new HashMap<Long,Retained>();

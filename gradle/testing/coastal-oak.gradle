@@ -1,0 +1,39 @@
+// Native views of the audited seed-1 coastal winter-rain oak scene at fixed poses: the bundled preset versus any gate-absent preset
+// passed by -PcoastalOakVisualPreset/-PcoastalOakVisualGate. Evidence only, never a check threshold.
+def coastalVisual=layout.projectDirectory.dir(providers.gradleProperty('coastalOakVisualDirectory').getOrElse('build/coastal-oak-evidence/visual-NEW'))
+def coastalPreset=providers.gradleProperty('coastalOakVisualPreset').getOrElse('blockbranch:realistic')
+def coastalGate=providers.gradleProperty('coastalOakVisualGate').getOrElse('any')
+loom.runs.register('coastalOakVisual'){
+ client();runDir(coastalVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.coastalOakVisual=true');vmArg('-Dblockbranch.coastalOakVisualPreset='+coastalPreset);vmArg('-Dblockbranch.coastalOakVisualGate='+coastalGate)
+ vmArg('-Dblockbranch.coastalOakVisualDirectory='+coastalVisual.asFile.absolutePath)
+ programArgs('--username','OakView','--width','1024','--height','576')
+}
+tasks.register('prepareCoastalOakVisual'){doLast{
+ assert !coastalVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ coastalVisual.asFile.mkdirs();coastalVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runCoastalOakVisual'){dependsOn 'prepareCoastalOakVisual';doLast{assert coastalVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+
+
+
+
+// Native generated-chunk witnesses at two coastal-oak windows and seven controls (seed 1); see CoastalOakQualification for the modes.
+// baseline277 uses the gate-absent baseline preset (schema 277, the bundled preset before schema 278); fresh278 uses the bundled preset.
+def coastalDir=layout.projectDirectory.dir(providers.gradleProperty('coastalOakDirectory').getOrElse('build/coastal-oak-native'))
+def coastalMode=providers.gradleProperty('coastalOakMode').getOrElse('fresh278')
+def coastalBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('coastalOakBaseline').getOrElse('build/coastal-oak-evidence/baseline277/baseline.txt')).asFile.absolutePath
+loom.runs.register('coastalOakQualification'){
+ server();runDir(coastalDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.coastalOakMode='+coastalMode);vmArg('-Dblockbranch.coastalOakDirectory='+coastalDir.asFile.absolutePath);vmArg('-Dblockbranch.coastalOakBaseline='+coastalBaselineDigests)
+}
+tasks.register('prepareCoastalOakQualification'){doLast{
+ assert coastalMode in ['baseline277','fresh278','verify278','legacy277']:'Unknown coastalOakMode '+coastalMode
+ coastalDir.file('result.txt').asFile.delete()
+ if(coastalMode in ['baseline277','fresh278'])assert !coastalDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert coastalDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ coastalDir.asFile.mkdirs();coastalDir.file('eula.txt').asFile.text='eula=true\n'
+ coastalDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25647\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(coastalMode=='baseline277'?'blockbranch:coastal_oak_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runCoastalOakQualification'){dependsOn 'prepareCoastalOakQualification';doLast{assert coastalDir.file('result.txt').asFile.text.startsWith('PASS')}}

@@ -18,7 +18,7 @@ tasks.named('runPineCrownsVisual'){dependsOn 'preparePineCrownsVisual';doLast{as
 
 
 // Native generated-chunk witnesses at two old-growth-pine windows and five controls (seed 1); see PineCrownsQualification for the modes.
-// baseline276 uses the pine-gate-absent baseline preset (schema 276, the bundled preset before schema 277); fresh277 uses the bundled preset.
+// baseline276 uses the pine-gate-absent baseline preset (schema 276, the bundled preset before schema 277); fresh277 uses the coastal-oak-absent baseline preset (schema 277, the bundled preset until schema 278).
 def pineDir=layout.projectDirectory.dir(providers.gradleProperty('pineCrownsDirectory').getOrElse('build/pine-crowns-native'))
 def pineMode=providers.gradleProperty('pineCrownsMode').getOrElse('fresh277')
 def pineBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('pineCrownsBaseline').getOrElse('build/pine-crowns-evidence/baseline276/baseline.txt')).asFile.absolutePath
@@ -32,6 +32,6 @@ tasks.register('preparePineCrownsQualification'){doLast{
  if(pineMode in ['baseline276','fresh277'])assert !pineDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert pineDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  pineDir.asFile.mkdirs();pineDir.file('eula.txt').asFile.text='eula=true\n'
- pineDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25646\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(pineMode=='baseline276'?'blockbranch:pine_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+ pineDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25646\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(pineMode=='baseline276'?'blockbranch:pine_crowns_baseline':'blockbranch:coastal_oak_crowns_baseline')+'\nlevel-seed=1\nmax-tick-time=0\n'
 }}
 tasks.named('runPineCrownsQualification'){dependsOn 'preparePineCrownsQualification';doLast{assert pineDir.file('result.txt').asFile.text.startsWith('PASS')}}
