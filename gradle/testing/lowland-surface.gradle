@@ -1,0 +1,19 @@
+// Opt-in native readback for listed points: raw selector vs final biome, woodland eligibility
+// conjuncts, surface/above-ground blocks and neighbourhood composition. Observation only.
+// Usage: -PlowlandDirectory=<fresh dir> -PlowlandPoints=<points file> -PlowlandSeed=<seed>
+def lowlandDir=layout.projectDirectory.dir(providers.gradleProperty('lowlandDirectory').getOrElse('build/lowland-surface'))
+def lowlandPort=providers.gradleProperty('lowlandPort').getOrElse('25651')
+def lowlandSeed=providers.gradleProperty('lowlandSeed').getOrElse('424242')
+loom.runs.register('lowlandSurfaceProbe'){
+    server();runDir(lowlandDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+    vmArg('-Dblockbranch.lowlandSurfaceProbe=true')
+    vmArg('-Dblockbranch.lowlandDirectory='+lowlandDir.asFile.absolutePath)
+    vmArg('-Dblockbranch.lowlandPoints='+providers.gradleProperty('lowlandPoints').getOrElse('unset'))
+}
+tasks.register('prepareLowlandSurfaceProbe'){doLast{
+    assert !lowlandDir.file('server.properties').asFile.exists():'Preserve previous evidence; select a fresh lowlandDirectory.'
+    lowlandDir.asFile.mkdirs()
+    lowlandDir.file('eula.txt').asFile.text='eula=true\n'
+    lowlandDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port='+lowlandPort+'\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed='+lowlandSeed+'\nmax-tick-time=0\n'
+}}
+tasks.named('runLowlandSurfaceProbe'){dependsOn 'prepareLowlandSurfaceProbe';doLast{assert lowlandDir.file('result.txt').asFile.text.startsWith('PASS')}}
