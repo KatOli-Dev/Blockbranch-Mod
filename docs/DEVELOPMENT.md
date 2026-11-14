@@ -5,13 +5,13 @@ Use Java 25 and the checked-in Gradle wrapper from the repository root. Versions
 ## Build and repository layout
 
 ```sh
-./gradlew build
+./gradlew --no-parallel --max-workers=1 build
 ./gradlew checkDocumentation checkProductionArchives checkDevelopmentClasspaths
 ./gradlew verifyWildlifeItemResources verifyNativePickaxeResources
 ./gradlew tasks --all
 ```
 
-`build` compiles production/development code, runs canonical analytic JavaExec checks through `test`/`check`, and creates binary/source JARs in `build/libs/`. There are no framework-discovered tests; historical/manual diagnostics remain explicitly callable, not adopted by task-name prefix.
+The serial, one-worker `build` form is the laptop-safe default: `gradle.properties` enables parallel execution, and a full aggregate with several workers once exhausted memory and swap on a roughly 15 GiB development machine; the flags change no setting or test coverage, so the same checks run, and plain `./gradlew build` remains valid on a roomy machine. `build` compiles production/development code, runs canonical analytic JavaExec checks through `test`/`check`, and creates binary/source JARs in `build/libs/`. There are no framework-discovered tests; historical/manual diagnostics remain explicitly callable, not adopted by task-name prefix.
 
 | Location | Purpose |
 | --- | --- |
@@ -32,7 +32,7 @@ Keep only this guide and [SAVE_COMPATIBILITY.md](SAVE_COMPATIBILITY.md) under `d
 
 The goal is broad natural surface representation before rare/underground additions. **No measured 99% Earth coverage is established.** `represented` means a selected, implemented visual/structural analog; `partial` means a family has analogs but meaningful subtypes/drivers remain absent; `missing` means no dedicated representation. None means full ecology or visual acceptance. Inventory authority is the [preset](../src/main/resources/data/blockbranch/worldgen/world_preset/realistic.json), [surface selector](../src/main/java/blockbranch/realistic/ScreeBiomeSource.java), and [physical cover/overrides](../src/main/java/blockbranch/realistic/RealisticGenerator.java).
 
-Bundled schema277 adds pine-crown definition1 to complete276, which adds birch-crown definition1 to complete275, which adds seasonal-crown definition1 to complete274, which adds broadleaf-crown definition1 to complete273, which adds mangrove-roots definition1 to complete272, which adds boreal-slope definition1 to complete271 (montane needleleaf over complete270: static alluvial foundation over269 seasonal forest,268 xeric and267 polar/litter). Published265/266 retain polar-only/litter-only definitions. The 26 listed definitions have status **represented analog** at definition level, not disjoint Earth biome families. Registry presence is separate from observed selection; generic shelf identity can be superseded by thermal variants that reuse its substrate. IDs have prefix `blockbranch:`; definitions are in [worldgen/biome](../src/main/resources/data/blockbranch/worldgen/biome). Placement/cover classes are in [realistic](../src/main/java/blockbranch/realistic); the class names below identify implementation evidence.
+Bundled schema278 adds coastal-oak-crown definition1 to complete277, which adds pine-crown definition1 to complete276, which adds birch-crown definition1 to complete275, which adds seasonal-crown definition1 to complete274, which adds broadleaf-crown definition1 to complete273, which adds mangrove-roots definition1 to complete272, which adds boreal-slope definition1 to complete271 (montane needleleaf over complete270: static alluvial foundation over269 seasonal forest,268 xeric and267 polar/litter). Published265/266 retain polar-only/litter-only definitions. The 26 listed definitions have status **represented analog** at definition level, not disjoint Earth biome families. Registry presence is separate from observed selection; generic shelf identity can be superseded by thermal variants that reuse its substrate. IDs have prefix `blockbranch:`; definitions are in [worldgen/biome](../src/main/resources/data/blockbranch/worldgen/biome). Placement/cover classes are in [realistic](../src/main/java/blockbranch/realistic); the class names below identify implementation evidence.
 
 | Custom ID | Real-world analog; placement drivers | Selector / cover evidence |
 | --- | --- | --- |

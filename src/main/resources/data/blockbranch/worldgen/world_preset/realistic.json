@@ -4,7 +4,7 @@
       "type": "minecraft:overworld",
       "generator": {
         "type": "blockbranch:realistic",
-        "shape_version": 277,
+        "shape_version": 278,
         "alluvial_floodplain_definition": 1,
         "montane_forest_definition": 1,
         "boreal_slope_definition": 1,
@@ -13,6 +13,7 @@
         "seasonal_crown_definition": 1,
         "birch_crown_definition": 1,
         "pine_crown_definition": 1,
+        "coastal_oak_crown_definition": 1,
         "land_ice_definition": 1,
         "summer_dry_definition": 1,
         "continental_ice_definition": 1,

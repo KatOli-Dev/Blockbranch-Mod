@@ -21,9 +21,13 @@ public final class ForestTrees {
      * dry-forest stems only; every other caller and family keeps the published crown. */
     public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal){return tree(root,scaffold,seasonal,false);}
     /** {@code birch} selects {@link BirchCrowns} for mature old-growth-birch stems ({@link TemperateForestVariants#BIRCH_FAMILY}) only. */
-    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal,boolean birch){
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal,boolean birch){return tree(root,scaffold,seasonal,birch,false);}
+    /** {@code coastal} selects {@link CoastalOakCrowns} for mature coastal winter-rain oaks ({@link SummerDryWoodland#FAMILY}) only. */
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean scaffold,boolean seasonal,boolean birch,boolean coastal){
         int wood=root.birch()?4:1,h=root.height();long seed=OakBirchWoodland.mix(root.variant()^0x464F52455354464FL);double angle=unit(seed^11)*Math.PI*2;
         byte[] grid=new byte[PLANE*MAX_HEIGHT],distance=new byte[grid.length];Arrays.fill(distance,(byte)7);var crowns=new ArrayList<Crown>();
+        boolean coastalOak=coastal&&root.family()==SummerDryWoodland.FAMILY&&h>=CoastalOakCrowns.MATURE_HEIGHT;
+        if(coastalOak)coastalOak(grid,crowns,h,seed,angle,wood);else{
         int lean=(root.family()==2||root.family()==TemperateForestVariants.BIRCH_FAMILY)?(int)Long.remainderUnsigned(seed,3):1+(int)Long.remainderUnsigned(seed,2),fork=Math.max(2,(int)(h*(root.birch()?.42+.12*unit(seed^19):.30+.20*unit(seed^19))));
         var stem=new Node((int)Math.round(Math.cos(angle)*lean),fork,(int)Math.round(Math.sin(angle)*lean));
         segment(grid,new Node(0,0,0),new Node(0,Math.min(3,fork),0),wood);segment(grid,new Node(0,Math.min(3,fork),0),stem,wood);
@@ -59,14 +63,16 @@ public final class ForestTrees {
             crowns.add(crown(leader.x()*.8,h-3,leader.z()*.8,(3.1+unit(seed^41))*s,(2.6+unit(seed^73))*Math.sqrt(s),(3+unit(seed^101))*s,seed^151));
             if(h>=20&&(seed&3)==1){var start=attach(grid,Math.max(3,h/3));var tip=end(start,angle+2,3.5,h/2+1);branch(grid,start,tip,wood,seed^181);crowns.add(crown(tip.x()*.8,tip.y()+.8,tip.z()*.8,2.8,2.5,3.0,seed^191));}
         }
+        }
         // Each crown writes the same leaf code. Its footprint and tilt are
         // already exact per horizontal cell; nonnegative dy^2 cannot reduce q.
         // Rasterize only that crown's conservative vertical interval, preserving
         // the original arithmetic and edge test. One-cell padding covers rounding.
         for(var crown:crowns)for(int z=-R;z<=R;z++)for(int x=-R;x<=R;x++){
             int horizontal=(z+R)*S+x+R;double footprint=crown.footprint()[horizontal];if(footprint>1)continue;
+            if(coastalOak&&(Math.abs(x)>CoastalOakCrowns.EXTENT||Math.abs(z)>CoastalOakCrowns.EXTENT))continue;
             double center=crown.y()+crown.tilt()[horizontal];
-            int first=Math.max(1,(int)Math.floor(center-crown.ry())-1),last=Math.min(MAX_HEIGHT-1,(int)Math.ceil(center+crown.ry())+1);
+            int first=Math.max(1,(int)Math.floor(center-crown.ry())-1),last=Math.min(coastalOak?h:MAX_HEIGHT-1,(int)Math.ceil(center+crown.ry())+1);
             for(int y=first;y<=last;y++){
                 int i=index(x,y,z);if(grid[i]!=0)continue;
                 double q=footprint,dy=(y-crown.y()-crown.tilt()[horizontal])/crown.ry();q+=dy*dy;if(q>1)continue;
@@ -105,6 +111,44 @@ public final class ForestTrees {
         // The apex rides a short limb off the divided leader, so no straight pole runs through the crown.
         var apex=end(leader,angle+2.2+unit(seed^313)*2.0,1.0+unit(seed^317)*1.2,h-2);branch(grid,leader,apex,wood,seed^337);
         crowns.add(crown(apex.x()*.9,h-2.6,apex.z()*.9,(2.7+unit(seed^41)*.7)*r,(2.3+unit(seed^73)*.6)*r,(2.7+unit(seed^101)*.7)*r,seed^151));
+    }
+    /** Mature coastal oak under {@link CoastalOakCrowns}: the trunk leans from the root to a fork, then one axis continues outward and, on most
+     * stems, a second diverges back across the root; 3..4 limbs below height 15 and 4..5 from height 15 (3..5 overall) of graded reach leave the outermost wood in their direction and each ends in a
+     * separate lobe, so the crown is a set of unequal lobes on visible wood rather than stacked balls on a pole. Lobe centres and radii are fitted
+     * to {@link CoastalOakCrowns#EXTENT}, and the rasterizer clips at the root height. */
+    private static void coastalOak(byte[] grid,List<Crown> crowns,int h,long seed,double angle,int wood){
+        double lean=1.6+1.8*unit(seed^601);
+        int fork=Math.clamp(Math.round(h*(.40+.14*unit(seed^603))),4,h-6);
+        var base=new Node(0,2,0);segment(grid,new Node(0,0,0),base,wood);
+        var forkNode=new Node((int)Math.round(Math.cos(angle)*lean),fork,(int)Math.round(Math.sin(angle)*lean));segment(grid,base,forkNode,wood);
+        boolean forked=unit(seed^607)<.6;
+        double aA=angle+(unit(seed^611)-.5)*.9;int yA=h-2-(int)Long.remainderUnsigned(seed>>>14,2);
+        var topA=end(forkNode,aA,forked?1.4+unit(seed^613)*1.4:.6+unit(seed^613)*1.2,yA);branch(grid,forkNode,topA,wood,seed^617);
+        crowns.add(lobe(topA.x(),yA-.4,topA.z(),3.3+unit(seed^41)*.9,2.4+unit(seed^73)*.6,seed^151));
+        if(forked){
+            double aB=angle+Math.PI+(unit(seed^619)-.5)*1.0;int yB=Math.max(fork+3,h-4-(int)Long.remainderUnsigned(seed>>>16,3));
+            var topB=end(forkNode,aB,1.6+unit(seed^621)*1.4,yB);branch(grid,forkNode,topB,wood,seed^623);
+            crowns.add(lobe(topB.x(),yB-.4,topB.z(),3.1+unit(seed^101)*.9,2.3+unit(seed^107)*.6,seed^191));
+        }
+        int limbs=3+(h>=15?1:0)+(int)Long.remainderUnsigned(seed>>>9,2);
+        for(int n=0;n<limbs;n++){
+            long v=OakBirchWoodland.mix(seed+n*1237);double f=(n+.4+.4*unit(v^625))/limbs,a=angle+1.1+n*2.39996+(unit(v^13)-.5)*1.0;
+            int by=Math.clamp((int)Math.round(fork+(h-5-fork)*f),fork,h-5);var start=attachToward(grid,by,a);
+            double reach=(2.3+1.5*unit(v^29))*(1-.25*f);int tipY=Math.min(h-3,by+(int)Math.round(reach*(.1+.5*unit(v^31))));
+            var tip=end(start,a,reach,tipY);branch(grid,start,tip,wood,v);
+            crowns.add(lobe(tip.x()+Math.cos(a)*.4,tipY+.3,tip.z()+Math.sin(a)*.4,2.9+unit(v)*1.4,(2.0+unit(v^43)*.9)*(1-.12*f),v));
+        }
+    }
+    /** An elliptical lobe whose centre and radii are fitted inside the coastal-oak horizontal extent. */
+    private static Crown lobe(double x,double y,double z,double r,double ry,long seed){
+        x=Math.clamp(x,-4,4);z=Math.clamp(z,-4,4);
+        double room=(CoastalOakCrowns.EXTENT+.4-Math.max(Math.abs(x),Math.abs(z)))/1.04,wide=Math.min(r*(1.05+.2*unit(seed^631)),room),narrow=Math.min(r*(.8+.15*unit(seed^637)),room);
+        return crown(x,y,z,wide,ry,narrow,seed);
+    }
+    private static Node attachToward(byte[] grid,int y,double angle){
+        double cs=Math.cos(angle),sn=Math.sin(angle),best=-1e9;Node found=null;
+        for(int z=-R;z<=R;z++)for(int x=-R;x<=R;x++){int c=grid[index(x,y,z)];if(c<1||c>6)continue;double score=x*cs+z*sn;if(score>best){best=score;found=new Node(x,y,z);}}
+        if(found==null)throw new IllegalArgumentException("No wood for coastal-oak limb");return found;
     }
     /** Birch-led stands use one asymmetric oval envelope,not a vertical stack of limb-tip balls. */
     private static void birchCrown(byte[] grid,List<Crown> crowns,Node stem,int h,long seed,double angle,int wood){

@@ -1,0 +1,62 @@
+# Published coastal-oak canopy, frozen from the unmodified published ForestTrees/SummerDryTrees/WoodlandTrees (origin/main
+# e068a795895246b2b62ad46a801f04023b44cbc2, schema 277; compiled in a separate detached checkout from the coastal-oak change)
+# with the ten-argument WoodlandTrees.column on the BorealSlopeOracle terrain and the polar-capable climate. Never regenerate it
+# from the candidate.
+# window rows: site seed siteX siteZ vegetationFlags intsInWindow sha256(Arrays.toString per column, 5x5 chunks, x then z order).
+# coast-a..e are bounded-scan windows of the summer-dry owner (selected where the pure owner predicate admits family-19 stems; the check only
+# asserts that every coast row changes under the gate; coast-a is the audited seed-1 scene at 464000,-528000). The owner predicate of every pure window is SummerDryWoodland.eligible, the
+# climate/surface test the generator's saved owner selects from; the generator's own owner additionally goes through the biome source's
+# 4-block selection, so only the native qualification exercises the actual saved owner. pine-a, pine-d, spruce-a, taiga-a, snowy-a,
+# grove-a, birch-d, forest-a and flower-a are controls the coastal-oak bit must not change (the pine bit is part of the current
+# published code and not part of these flags). Flags 8/136/3993: the summer-dry bit, plus boreal slope, and the summer-dry bit plus
+# every owner-free published bit (1|16|128|256|512|1024|2048). Bits 2, 4, 32 and 64 need saved owner surfaces from the generator's
+# biome source, so a pure window cannot carry them: native checks cover those. The coastal-oak bit (4096) is never part of these flags.
+# tree rows: family roots forest/woodland = voxels:sha256 over ForestTrees.tree and WoodlandTrees.tree(root,0) of unflagged roots on 27
+# heights x 24 variants; summerdry = SummerDryTrees.tree on heights 3..18 x 24 variants of family 19.
+window coast-a 1 464000 -528000 8 32398 bbaa089aaf39cec92c0f9c0097a68fdfa6e2bb7891663e67611ac6a354d1e3b9
+window coast-a 1 464000 -528000 136 32398 bbaa089aaf39cec92c0f9c0097a68fdfa6e2bb7891663e67611ac6a354d1e3b9
+window coast-a 1 464000 -528000 3993 32398 bbaa089aaf39cec92c0f9c0097a68fdfa6e2bb7891663e67611ac6a354d1e3b9
+window coast-b 1 487552 -610176 8 32725 8a0fc84ad5340bc1215d904bb60692fd53da2e58f086dd4ef0688a1c54c38329
+window coast-b 1 487552 -610176 136 32725 8a0fc84ad5340bc1215d904bb60692fd53da2e58f086dd4ef0688a1c54c38329
+window coast-b 1 487552 -610176 3993 32725 8a0fc84ad5340bc1215d904bb60692fd53da2e58f086dd4ef0688a1c54c38329
+window coast-c 1 1401088 -532224 8 31103 c00ce6bc4003545cd4b67cfb617301bf1e90ff7071ee6df9430ff7770559c732
+window coast-c 1 1401088 -532224 136 31103 c00ce6bc4003545cd4b67cfb617301bf1e90ff7071ee6df9430ff7770559c732
+window coast-c 1 1401088 -532224 3993 31103 c00ce6bc4003545cd4b67cfb617301bf1e90ff7071ee6df9430ff7770559c732
+window coast-d 424242 7328 -762720 8 31109 32cc42b6ab4e1d8a4a44bf6cbb77186a7449d80bec706f1e1597b8e7d6f5a6d8
+window coast-d 424242 7328 -762720 136 31109 32cc42b6ab4e1d8a4a44bf6cbb77186a7449d80bec706f1e1597b8e7d6f5a6d8
+window coast-d 424242 7328 -762720 3993 31109 32cc42b6ab4e1d8a4a44bf6cbb77186a7449d80bec706f1e1597b8e7d6f5a6d8
+window coast-e 424242 285856 -746336 8 27809 3ec79dba51658650ed68f00ab39a069f558ed936e159e59193b210cddf3fbb24
+window coast-e 424242 285856 -746336 136 27809 3ec79dba51658650ed68f00ab39a069f558ed936e159e59193b210cddf3fbb24
+window coast-e 424242 285856 -746336 3993 27809 3ec79dba51658650ed68f00ab39a069f558ed936e159e59193b210cddf3fbb24
+window pine-a 424242 1520000 -1584000 8 28732 69d6f9937dd41e6463ecae560f5a4a231c7e86640d7d8f1d1a1f3f123e3ea991
+window pine-a 424242 1520000 -1584000 136 28732 69d6f9937dd41e6463ecae560f5a4a231c7e86640d7d8f1d1a1f3f123e3ea991
+window pine-a 424242 1520000 -1584000 3993 29077 d866e2f0d564a9a1d3b44535fe1e3e32d78e0a246d63be56256aee1301ef96f2
+window pine-d 1 595456 -1600000 8 28357 f84b6abce3f9b74276c3ca9cb870a58ccf5a4faff9551d129efc0d49bc9a1d5d
+window pine-d 1 595456 -1600000 136 28357 f84b6abce3f9b74276c3ca9cb870a58ccf5a4faff9551d129efc0d49bc9a1d5d
+window pine-d 1 595456 -1600000 3993 28365 898ef8d559d22e4fc51b121f61ac62498892d85e27c29a570fddecbffdd2ae0b
+window spruce-a 424242 -944000 -1616000 8 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window spruce-a 424242 -944000 -1616000 136 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window spruce-a 424242 -944000 -1616000 3993 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window taiga-a 1 24704 -1200000 8 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window taiga-a 1 24704 -1200000 136 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window taiga-a 1 24704 -1200000 3993 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window snowy-a 1 106624 -1167232 8 7508 027c5afc9900749d922701a6c0d69d826e0aa3deed3f6581605ad070644327c2
+window snowy-a 1 106624 -1167232 136 8007 be004611bd87b5a583c650ff19774ff4278077232a0bfc4e95504071fb3d2f79
+window snowy-a 1 106624 -1167232 3993 8007 be004611bd87b5a583c650ff19774ff4278077232a0bfc4e95504071fb3d2f79
+window grove-a 1 110720 -1163136 8 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window grove-a 1 110720 -1163136 136 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window grove-a 1 110720 -1163136 3993 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window birch-d 1 1492000 -940000 8 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+window birch-d 1 1492000 -940000 136 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+window birch-d 1 1492000 -940000 3993 26485 2dac0cd685cca8a9e3a9746bca220931ccd19d651c860fcc661bd455b462a1b2
+window forest-a 1 48000 -304000 8 17414 6dbf15fe63ad025bab7ec762d9812c6a17918c5083316d89fd85ffc4a568f861
+window forest-a 1 48000 -304000 136 17414 6dbf15fe63ad025bab7ec762d9812c6a17918c5083316d89fd85ffc4a568f861
+window forest-a 1 48000 -304000 3993 16841 2942e600cea4a24910ae5f5068162dd9e17ed0ef11e78c70c1fe65afdaac15f6
+window flower-a 1 -40000 -136000 8 20988 d2198e93cf1cc63c38166823f97199eaae29d87605cf28c036871e579c320861
+window flower-a 1 -40000 -136000 136 20988 d2198e93cf1cc63c38166823f97199eaae29d87605cf28c036871e579c320861
+window flower-a 1 -40000 -136000 3993 19674 aa5f43dc87be315c56468db1f4f82dec4b5a82ccd1fac87861ac32c7ff56b042
+trees family=1 roots=648 forest=316850:70bfd91b44e46c2d546a398c954058fdfe778bd7dade08b070d62a57fe512683 woodland=316850:70bfd91b44e46c2d546a398c954058fdfe778bd7dade08b070d62a57fe512683
+trees family=2 roots=648 forest=320973:4b26f498769ab83f2d1969aade347a43115ddf03497403b5615936cc02ffdd20 woodland=320973:4b26f498769ab83f2d1969aade347a43115ddf03497403b5615936cc02ffdd20
+trees family=9 roots=648 forest=267229:5e42fafd8dcee173728c5e5d29df3f460c78ab284ced29ffbc8e3e1a582e5d21 woodland=267229:5e42fafd8dcee173728c5e5d29df3f460c78ab284ced29ffbc8e3e1a582e5d21
+trees family=19 roots=648 forest=320073:821094dc1a02af3181346f2feb1525cfa243d7f186a1d5f37f2eb906d3d4e8e7 woodland=320073:821094dc1a02af3181346f2feb1525cfa243d7f186a1d5f37f2eb906d3d4e8e7
+summerdry roots=384 tree=97178:dbfb3e80143be299f98cee44179125d3eab806bd83236b65a6107d10d639cd06

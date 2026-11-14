@@ -26,3 +26,5 @@
   the user's authorization. Record the base commit before a broad cleanup.
 - Validate proportionately: build, relevant resource/fixture references, documentation
   links, and production archive/development classpath guards. Review the final diff.
+  Run Gradle aggregates serially (`--no-parallel --max-workers=1`) as described in
+  `docs/DEVELOPMENT.md`; parallel workers can exhaust a laptop's memory.
