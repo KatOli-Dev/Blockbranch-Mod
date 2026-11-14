@@ -31,10 +31,12 @@ public final class LowlandSurfaceProbe {
                     + "stand,oak_potential,oak_nonclimate,oak_climate,forest_potential,forest_nonclimate,redwood_province,redwood_actual,redwood_ceilingfree,swamp,plains,meadow_actual,humid,"
                     + "raw_selector,native_quart,native_biome,cover_meadow,cover_woodland,cover_steppe,cover_warm,cover_coldsteppe,cover_desert,cover_reedbed,cover_rivermargin,cover_sandyshore,screeDepth,"
                     + "win_columns,win_surface_hist,win_above_hist,win_trunk_columns,win_leaf_columns,win_plant_columns,ring_hist,ring_moist_gt85,ring_cells\n");
-                int n = 0;
+                int n = 0, otherSeed = 0;
                 for (var line : Files.readAllLines(Path.of(System.getProperty("blockbranch.lowlandPoints")))) {
+                    if (line.isBlank()) continue;
                     var p = line.trim().split(" ");
-                    if (p.length < 8 || Long.parseLong(p[0]) != seed) continue;
+                    if (p.length != 8) throw new AssertionError("Malformed points line (expected 8 fields): " + line);
+                    if (Long.parseLong(p[0]) != seed) { otherSeed++; continue; }
                     int x = Integer.parseInt(p[1]), z = Integer.parseInt(p[2]);
                     var s = d.sample(x, z);
                     var q = climate.sample(x, z, d::sample);
@@ -49,6 +51,9 @@ public final class LowlandSurfaceProbe {
                     boolean oakClimate = OakBirchWoodland.climateSuitable(q);
                     boolean forestPot = Forest.potential(seed, x, z, d, climate);
                     boolean forestNon = oakNon && stand >= .65;
+                    // The non-climate replication is only reported if it matches production wherever the climate gate passes.
+                    if (oakClimate && (oakNon != oakPot || forestNon != forestPot))
+                        throw new AssertionError("Non-climate woodland replication diverges from production at " + x + "," + z);
                     double province = RedwoodForest.province(seed, x, z);
                     boolean redwoodCeilingFree = province >= .42 && elev >= 0 && elev <= 900 && q.meanTemperatureC() >= 8 && q.meanTemperatureC() <= 16 && q.moisture() >= .68 && oakNon && !forestNon;
                     var pos = new BlockPos(x, s.height(), z);
@@ -99,7 +104,7 @@ public final class LowlandSurfaceProbe {
                 }
                 if (n == 0) throw new AssertionError("No points for seed " + seed);
                 Files.writeString(dir.resolve("surface.csv"), rows.toString());
-                Files.writeString(dir.resolve("result.txt"), "PASS " + n + " points seed " + seed + "\n");
+                Files.writeString(dir.resolve("result.txt"), "PASS " + n + " points seed " + seed + " (skipped " + otherSeed + " other-seed lines)\n");
             } catch (Throwable t) {
                 try { Files.writeString(dir.resolve("result.txt"), "FAIL " + t + "\n"); } catch (Exception ignored) {}
             } finally { server.halt(false); }
