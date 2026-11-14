@@ -19,8 +19,10 @@ keep their normal terrain elevations; the extra vertical space starts empty.
 Use Java 25 and the checked-in Gradle wrapper:
 
 ```sh
-./gradlew build
+./gradlew --no-parallel --max-workers=1 build
 ```
+
+The serial form is the laptop-safe default; plain `./gradlew build` also works on a machine with ample memory (see [DEVELOPMENT.md](docs/DEVELOPMENT.md)).
 
 Install the generated mod JAR from `build/libs/` (not the sources JAR), Fabric
 Loader and Fabric API for Minecraft 26.3 on both client and server. Current pinned
