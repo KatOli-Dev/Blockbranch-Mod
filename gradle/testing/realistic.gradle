@@ -851,7 +851,13 @@ tasks.register('checkBirchCrowns',JavaExec){
  mainClass='blockbranch.realistic.BirchCrownsCheck'
  maxHeapSize='1G'
 }
-tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns'),tasks.named('checkSeasonalCrowns'),tasks.named('checkBirchCrowns')}
+tasks.register('checkPineCrowns',JavaExec){
+ dependsOn tasks.named('testClasses')
+ classpath=sourceSets.test.runtimeClasspath
+ mainClass='blockbranch.realistic.PineCrownsCheck'
+ maxHeapSize='1G'
+}
+tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns'),tasks.named('checkSeasonalCrowns'),tasks.named('checkBirchCrowns'),tasks.named('checkPineCrowns')}
 
 tasks.register('checkTaiga',JavaExec){
  dependsOn tasks.named('testClasses')

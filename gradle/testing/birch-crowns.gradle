@@ -16,6 +16,7 @@ tasks.register('prepareBirchCrownsVisual'){doLast{
 tasks.named('runBirchCrownsVisual'){dependsOn 'prepareBirchCrownsVisual';doLast{assert birchVisual.file('result.txt').asFile.text.startsWith('PASS')}}
 
 // Native generated-chunk witnesses at two old-growth-birch windows and three controls (seed 1); see BirchCrownsQualification for the modes.
+// fresh276/verify276 use the pine-gate-absent baseline preset (schema 276, the bundled preset before schema 277).
 def birchDir=layout.projectDirectory.dir(providers.gradleProperty('birchCrownsDirectory').getOrElse('build/birch-crowns-native'))
 def birchMode=providers.gradleProperty('birchCrownsMode').getOrElse('fresh276')
 def birchBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('birchCrownsBaseline').getOrElse('build/birch-crowns-evidence/baseline275/baseline.txt')).asFile.absolutePath
@@ -29,6 +30,6 @@ tasks.register('prepareBirchCrownsQualification'){doLast{
  if(birchMode in ['baseline275','fresh276'])assert !birchDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert birchDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  birchDir.asFile.mkdirs();birchDir.file('eula.txt').asFile.text='eula=true\n'
- birchDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25645\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(birchMode=='baseline275'?'blockbranch:birch_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+ birchDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25645\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(birchMode=='baseline275'?'blockbranch:birch_crowns_baseline':'blockbranch:pine_crowns_baseline')+'\nlevel-seed=1\nmax-tick-time=0\n'
 }}
 tasks.named('runBirchCrownsQualification'){dependsOn 'prepareBirchCrownsQualification';doLast{assert birchDir.file('result.txt').asFile.text.startsWith('PASS')}}

@@ -32,11 +32,13 @@ public final class BorealTrees {
         }
         return result;
     }
-    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root) { return tree(root,true); }
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root) { return tree(root,true,false); }
+    /** {@code pine} selects the saved mature-pine crown architecture ({@link PineCrowns}); it changes only family-7 stems of mature height. */
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean pine) { return tree(root,true,pine); }
     /** Historical saved-world crowns and young warm-climate pines retain this exact shape. */
-    static List<WoodlandTrees.Voxel> legacyTree(WoodlandTrees.Root root) { return tree(root,false); }
-    private static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean whorled) {
-        if(root.family()==4||root.family()==5||root.family()==6||root.family()==7||root.family()==8)return TaigaTrees.tree(root);
+    static List<WoodlandTrees.Voxel> legacyTree(WoodlandTrees.Root root) { return tree(root,false,false); }
+    private static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean whorled,boolean pine) {
+        if(root.family()==4||root.family()==5||root.family()==6||root.family()==7||root.family()==8)return TaigaTrees.tree(root,pine);
         if(root.birch()) return WoodlandTrees.tree(root);
         var raw=new HashMap<Long,Integer>();int h=root.height();
         for(int y=0;y<h-1;y++) raw.put(key(0,y,0),19);
