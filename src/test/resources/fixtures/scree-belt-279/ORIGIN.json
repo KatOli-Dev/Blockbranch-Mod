@@ -1,0 +1,8 @@
+{
+  "repository": "KatOli-Dev/Blockbranch-Mod",
+  "commit": "1070bd3641d135cf3ad909152a51802d546b3f22",
+  "fixture": {"path": "published.txt", "sha256": "ffcef9c149e3f6aa93f4d95faac1084a5c5303ef17937e37ee91e41e2bf0c0ac"},
+  "collector": "src/integrationTest/java/blockbranch/realistic/ScreeBeltQualification.java, mode record279",
+  "recording": "Run on the unmodified published-279 production tree (no src/main change when recorded; the gate-absent saved generator reported shape_version 279 without cold_scree_belt_definition). Raw labels are ScreeBiomeSource.surfaceResolver() at seed-424242 survey-grid cells; the belt flag restates the eligibility rule independently of production.",
+  "scope": "All 48 belt-eligible cells of 4,092 seed-424242 land cells plus 162 stratified controls (every 25th other cell). One seed; not a global compatibility proof and not a survey of other seeds."
+}
