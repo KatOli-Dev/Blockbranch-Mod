@@ -1,9 +1,16 @@
 package blockbranch.realistic;
 import com.google.gson.JsonObject;
-/** QA-only explicit prerequisite views (coastal oak crowns 278 over pine crowns 277 over birch crowns 276 over seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
+/** QA-only explicit prerequisite views (humid crowns 279 over coastal oak crowns 278 over pine crowns 277 over birch crowns 276 over seasonal crowns 275 over broadleaf crowns 274 over mangrove roots 273 over boreal slope 272 over montane 271 over 270); never promote a saved world. */
 final class MontaneForestFixtures {
-    /** Complete pine crowns 277: removes only the explicit coastal-oak-crown wrapper. */
+    /** Complete coastal oak crowns 278: removes only the explicit humid-crown wrapper. */
+    static void coastal278(JsonObject json){
+        if(!json.has("humid_crown_definition"))return;
+        if(json.get("shape_version").getAsInt()!=279||json.get("humid_crown_definition").getAsInt()!=1)throw new AssertionError("Complete humid crowns wrapper required");
+        json.remove("humid_crown_definition");json.addProperty("shape_version",278);
+    }
+    /** Complete pine crowns 277: removes the humid-crown and coastal-oak-crown wrappers. */
     static void pine277(JsonObject json){
+        coastal278(json);
         if(!json.has("coastal_oak_crown_definition"))return;
         if(json.get("shape_version").getAsInt()!=278||json.get("coastal_oak_crown_definition").getAsInt()!=1)throw new AssertionError("Complete coastal oak crowns wrapper required");
         json.remove("coastal_oak_crown_definition");json.addProperty("shape_version",277);

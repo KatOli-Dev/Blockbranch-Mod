@@ -27,7 +27,7 @@ public final class SeasonalForestQualification {
             var level=server.overworld();var random=level.getChunkSource().randomState();require(random.seed()==SEED,"Disclosed native seed");
             var g=(RealisticGenerator)level.getChunkSource().getGenerator();var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
             var fresh=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
-            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.coastalOakCrownDefinition()==1?278:g.pineCrownDefinition()==1?277:g.birchCrownDefinition()==1?276:g.seasonalCrownDefinition()==1?275:g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
+            require(g.seasonalForestDefinition()==1&&fresh.get("shape_version").getAsInt()==(g.humidCrownDefinition()==1?279:g.coastalOakCrownDefinition()==1?278:g.pineCrownDefinition()==1?277:g.birchCrownDefinition()==1?276:g.seasonalCrownDefinition()==1?275:g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:g.borealSlopeDefinition()==1?272:g.montaneForestDefinition()==1?271:g.alluvialDefinition()==1?270:269),"Actual saved refinement");
             require(RealisticGenerator.CODEC.codec().encodeStart(ops,RealisticGenerator.CODEC.codec().parse(ops,fresh).getOrThrow()).getOrThrow().equals(fresh),"Flat exact codec roundtrip");
             AlluvialFixtures.published269(fresh);
             var old=fresh.deepCopy();SeasonalForestFixtures.published268(old);

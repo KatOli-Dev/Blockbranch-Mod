@@ -20,7 +20,7 @@ tasks.named('runCoastalOakVisual'){dependsOn 'prepareCoastalOakVisual';doLast{as
 
 
 // Native generated-chunk witnesses at two coastal-oak windows and seven controls (seed 1); see CoastalOakQualification for the modes.
-// baseline277 uses the gate-absent baseline preset (schema 277, the bundled preset before schema 278); fresh278 uses the bundled preset.
+// baseline277 uses the gate-absent baseline preset (schema 277, the bundled preset before schema 278); fresh278 uses the schema-278 baseline preset humid_crowns_baseline (the bundled preset before schema 279), because the bundled preset is now 279.
 def coastalDir=layout.projectDirectory.dir(providers.gradleProperty('coastalOakDirectory').getOrElse('build/coastal-oak-native'))
 def coastalMode=providers.gradleProperty('coastalOakMode').getOrElse('fresh278')
 def coastalBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('coastalOakBaseline').getOrElse('build/coastal-oak-evidence/baseline277/baseline.txt')).asFile.absolutePath
@@ -34,6 +34,6 @@ tasks.register('prepareCoastalOakQualification'){doLast{
  if(coastalMode in ['baseline277','fresh278'])assert !coastalDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
  else assert coastalDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
  coastalDir.asFile.mkdirs();coastalDir.file('eula.txt').asFile.text='eula=true\n'
- coastalDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25647\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(coastalMode=='baseline277'?'blockbranch:coastal_oak_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+ coastalDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25647\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(coastalMode=='baseline277'?'blockbranch:coastal_oak_crowns_baseline':'blockbranch:humid_crowns_baseline')+'\nlevel-seed=1\nmax-tick-time=0\n'
 }}
 tasks.named('runCoastalOakQualification'){dependsOn 'prepareCoastalOakQualification';doLast{assert coastalDir.file('result.txt').asFile.text.startsWith('PASS')}}

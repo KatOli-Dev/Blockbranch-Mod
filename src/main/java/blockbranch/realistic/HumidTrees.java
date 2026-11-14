@@ -19,5 +19,7 @@ public final class HumidTrees {
         return result;
     }
     public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root){return WoodlandTrees.humidTree(root);}
+    /** {@code gated} selects the saved {@link HumidCrowns} architecture; young stems always keep the published crown. */
+    public static List<WoodlandTrees.Voxel> tree(WoodlandTrees.Root root,boolean gated){return WoodlandTrees.humidTree(root,gated);}
     private HumidTrees(){}
 }

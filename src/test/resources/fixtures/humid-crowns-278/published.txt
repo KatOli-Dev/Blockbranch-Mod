@@ -1,0 +1,67 @@
+# Published humid-woodland canopy, frozen from the unmodified published HumidTrees/WoodlandTrees (origin/main
+# 36bc7d2098a7d88ef4c5d93e38b1ca6bd14fc3e1, schema 278; compiled in a separate detached checkout from the humid-crown change)
+# with the ten-argument WoodlandTrees.column on the BorealSlopeOracle terrain and the polar-capable climate. Never regenerate it
+# from the candidate.
+# window rows: site seed siteX siteZ vegetationFlags intsInWindow sha256(Arrays.toString per column, 5x5 chunks, x then z order).
+# humid-a..e are bounded-scan windows of the humid woodland predicate (HumidWoodland.contains; the bounded scan counted 81..102 mature
+# and 32..39 young HumidTrees roots in an 81x81 area around each of these five sites, via HumidTrees.roots). Humid woodland has no saved owner, so the pure windows
+# exercise the actual predicate. coast-a (the summer-dry owner), pine-a, pine-d, spruce-a, taiga-a, snowy-a, grove-a, birch-d,
+# forest-a and flower-a are controls the humid bit must not change. Flags 0/128/8081: none, boreal slope, and every owner-free
+# published bit (1|16|128|256|512|1024|2048|4096); coast-a also at 8/8089 (the summer-dry bit without and with those bits).
+# tree rows: sha256 over every voxel (x,y,z,code) of a frozen recipe; family 0/1/9/19 rows use WoodlandTrees.tree(root,0) over
+# heights 8..24 (family 0) or 5..31, 24 variants each; these are valid synthetic controls fed straight to WoodlandTrees.tree, not roots the
+# generator is known to emit at those heights (the actual HumidTrees height bands are the humid rows below); humid rows use HumidTrees.tree and
+# WoodlandTrees.humidTree over the actual young (8..12) and mature (21..27) HumidTrees height bands, 24 variants each.
+window humid-a 1 512000 -512000 0 55030 3407160be462ee1e64f4dcfb8c2f165333c38c7ae59822a0f243bca968e4bc40
+window humid-a 1 512000 -512000 128 55030 3407160be462ee1e64f4dcfb8c2f165333c38c7ae59822a0f243bca968e4bc40
+window humid-a 1 512000 -512000 8081 55030 3407160be462ee1e64f4dcfb8c2f165333c38c7ae59822a0f243bca968e4bc40
+window humid-b 1 1424000 -560000 0 50615 10c93f8e7039351742a8dd75bce0d7f666c2da23297e613f84705d33c4f096ec
+window humid-b 1 1424000 -560000 128 50615 10c93f8e7039351742a8dd75bce0d7f666c2da23297e613f84705d33c4f096ec
+window humid-b 1 1424000 -560000 8081 50615 10c93f8e7039351742a8dd75bce0d7f666c2da23297e613f84705d33c4f096ec
+window humid-c 1 1392000 -496000 0 46035 fd5713afe724865fce0f19208715d30a66d39b37f0eb3727ca8acef510065965
+window humid-c 1 1392000 -496000 128 46035 fd5713afe724865fce0f19208715d30a66d39b37f0eb3727ca8acef510065965
+window humid-c 1 1392000 -496000 8081 46035 fd5713afe724865fce0f19208715d30a66d39b37f0eb3727ca8acef510065965
+window humid-d 424242 -1072000 -240000 0 47944 f4d42a8feb2aafd31312bfce37845d73e3a4881cec17801b5164e8536228e11f
+window humid-d 424242 -1072000 -240000 128 47944 f4d42a8feb2aafd31312bfce37845d73e3a4881cec17801b5164e8536228e11f
+window humid-d 424242 -1072000 -240000 8081 47944 f4d42a8feb2aafd31312bfce37845d73e3a4881cec17801b5164e8536228e11f
+window humid-e 424242 -1056000 -224000 0 46698 653844453040ab5aea0b8dfcd02efe6dbc6e1213530292c5e2c094aecb58cc32
+window humid-e 424242 -1056000 -224000 128 46698 653844453040ab5aea0b8dfcd02efe6dbc6e1213530292c5e2c094aecb58cc32
+window humid-e 424242 -1056000 -224000 8081 46698 653844453040ab5aea0b8dfcd02efe6dbc6e1213530292c5e2c094aecb58cc32
+window coast-a 1 464000 -528000 0 11174 6a168cc2daf70da43e8ff07130899d90a3488061f35fae4425d71eba823c3a71
+window coast-a 1 464000 -528000 128 11174 6a168cc2daf70da43e8ff07130899d90a3488061f35fae4425d71eba823c3a71
+window coast-a 1 464000 -528000 8081 11174 6a168cc2daf70da43e8ff07130899d90a3488061f35fae4425d71eba823c3a71
+window pine-a 424242 1520000 -1584000 0 28732 69d6f9937dd41e6463ecae560f5a4a231c7e86640d7d8f1d1a1f3f123e3ea991
+window pine-a 424242 1520000 -1584000 128 28732 69d6f9937dd41e6463ecae560f5a4a231c7e86640d7d8f1d1a1f3f123e3ea991
+window pine-a 424242 1520000 -1584000 8081 29077 d866e2f0d564a9a1d3b44535fe1e3e32d78e0a246d63be56256aee1301ef96f2
+window pine-d 1 595456 -1600000 0 28357 f84b6abce3f9b74276c3ca9cb870a58ccf5a4faff9551d129efc0d49bc9a1d5d
+window pine-d 1 595456 -1600000 128 28357 f84b6abce3f9b74276c3ca9cb870a58ccf5a4faff9551d129efc0d49bc9a1d5d
+window pine-d 1 595456 -1600000 8081 28365 898ef8d559d22e4fc51b121f61ac62498892d85e27c29a570fddecbffdd2ae0b
+window spruce-a 424242 -944000 -1616000 0 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window spruce-a 424242 -944000 -1616000 128 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window spruce-a 424242 -944000 -1616000 8081 20025 fff8df953fd3f3a5715b58c9bdd922b2df673a34713af05ba641936bc23392ab
+window taiga-a 1 24704 -1200000 0 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window taiga-a 1 24704 -1200000 128 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window taiga-a 1 24704 -1200000 8081 21426 e955b662de94364c6362974318c5181b2613370f809f6b2c27f392df54982905
+window snowy-a 1 106624 -1167232 0 7508 027c5afc9900749d922701a6c0d69d826e0aa3deed3f6581605ad070644327c2
+window snowy-a 1 106624 -1167232 128 8007 be004611bd87b5a583c650ff19774ff4278077232a0bfc4e95504071fb3d2f79
+window snowy-a 1 106624 -1167232 8081 8007 be004611bd87b5a583c650ff19774ff4278077232a0bfc4e95504071fb3d2f79
+window grove-a 1 110720 -1163136 0 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window grove-a 1 110720 -1163136 128 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window grove-a 1 110720 -1163136 8081 6669 7a614d1df2a396d90b70d4fb21460f738911015020da34969ed8e86a33270c6e
+window birch-d 1 1492000 -940000 0 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+window birch-d 1 1492000 -940000 128 29131 f381efd386f1b19a69c8dc05420f39dded159825c066064abd7cfba98981eb89
+window birch-d 1 1492000 -940000 8081 26485 2dac0cd685cca8a9e3a9746bca220931ccd19d651c860fcc661bd455b462a1b2
+window forest-a 1 48000 -304000 0 17414 6dbf15fe63ad025bab7ec762d9812c6a17918c5083316d89fd85ffc4a568f861
+window forest-a 1 48000 -304000 128 17414 6dbf15fe63ad025bab7ec762d9812c6a17918c5083316d89fd85ffc4a568f861
+window forest-a 1 48000 -304000 8081 16841 2942e600cea4a24910ae5f5068162dd9e17ed0ef11e78c70c1fe65afdaac15f6
+window flower-a 1 -40000 -136000 0 20988 d2198e93cf1cc63c38166823f97199eaae29d87605cf28c036871e579c320861
+window flower-a 1 -40000 -136000 128 20988 d2198e93cf1cc63c38166823f97199eaae29d87605cf28c036871e579c320861
+window flower-a 1 -40000 -136000 8081 19674 aa5f43dc87be315c56468db1f4f82dec4b5a82ccd1fac87861ac32c7ff56b042
+window coast-a 1 464000 -528000 8 32398 bbaa089aaf39cec92c0f9c0097a68fdfa6e2bb7891663e67611ac6a354d1e3b9
+window coast-a 1 464000 -528000 8089 29343 12272aa0040a6162a7c5ed8b3da0d7fa62a84bd8ad8e5e340163b459f3d6e109
+trees family=0 roots=408 woodland=164732:159a55e0310482e19a672ff01855b8ffb34fd048aad48a07de8fa61081c39682
+trees family=1 roots=648 woodland=316850:70bfd91b44e46c2d546a398c954058fdfe778bd7dade08b070d62a57fe512683
+trees family=9 roots=648 woodland=267229:5e42fafd8dcee173728c5e5d29df3f460c78ab284ced29ffbc8e3e1a582e5d21
+trees family=19 roots=648 woodland=320073:821094dc1a02af3181346f2feb1525cfa243d7f186a1d5f37f2eb906d3d4e8e7
+humid heights=8-12 roots=120 tree=47983:1c026a87afac210ad28bf0119b7c6b7d10cebdbb8c6581c6972288ec8f4ac20c humidTree=1c026a87afac210ad28bf0119b7c6b7d10cebdbb8c6581c6972288ec8f4ac20c
+humid heights=21-27 roots=168 tree=138920:9f1aeb4a7a6390d5f8ca370199cfdf97e3fc911acc9a53104cbc8276d4bd99be humidTree=9f1aeb4a7a6390d5f8ca370199cfdf97e3fc911acc9a53104cbc8276d4bd99be

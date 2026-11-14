@@ -1,0 +1,193 @@
+package blockbranch.realistic;
+
+import blockbranch.Blockbranch;
+import blockbranch.cubic.CanopyLayer;
+import blockbranch.cubic.SparseColumn;
+import com.mojang.serialization.JsonOps;
+import java.nio.file.*;
+import java.security.MessageDigest;
+import java.util.*;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
+
+/**
+ * Native generated-chunk witnesses for the gated mature humid-woodland crowns on seed 1. Each window is the 5 x 5 chunks of the chunks' own
+ * saved canopy (the real generation path). Humid stems have no saved owner: a window qualifies by the mature {@link HumidTrees} roots the actual
+ * generator's drainage and climate produce there, and the generated holder at each root is reported separately (a visible tree is not assumed
+ * to belong to the selected holder). Modes: {@code baseline278} (a fresh world from the gate-absent baseline preset, which keeps the
+ * coastal-oak gate, records each window's digest), {@code fresh279} (the bundled preset: gate on, humid windows differ, every control does not,
+ * logs attached, saved clear plan covers the new footprint, mismatched or malformed schema/definition never loads, edit and signature saved),
+ * {@code verify279} (reopen that closed world in a second process) and {@code legacy278} (reopen a schema-278 world written before the gate
+ * existed: shape 278, gate absent, its windows equal the baseline digests, and its clear plans keep the published footprint). The legacy world is
+ * either a prior-release world (its humid windows were never explored) or a copy of the baseline-generated world (whose humid windows were
+ * explored); the two are different evidence. Counts are finite witnesses at two humid windows and six controls, not coverage.
+ */
+public final class HumidCrownQualification {
+    private static final String[] NAMES={"humid-1","humid-2","coast-1","taiga","snowy","grove","birch","forest-a"};
+    private static final int[][] HUMID_ANCHORS={{1840000,-240000},{512000,-512000}};
+    private static final int[] COAST_ANCHOR={464000,-528000};
+    private static final int[][] CONTROLS={{24704,-1200000},{106624,-1167232},{110720,-1163136},{1492000,-940000},{47980,-304100}};
+    private static final String HOLDER="blockbranch:humid_subtropical_oak_fern_woodland",COAST_HOLDER="blockbranch:coastal_winter_rain_oak_woodland";
+    private static int[][] sites;
+    /** Orphan-log tolerance: neighbouring crowns can merge over a stem cell in the published stand too. */
+    private static final int ISOLATED_LOGS=8;
+    /** Mature humid stems of a window the way generation takes them (the actual generator's drainage and climate; no saved owner). */
+    private static List<WoodlandTrees.Root> humid(RealisticGenerator g,ServerLevel level,int x,int z,int radius){
+        var random=level.getChunkSource().randomState();var d=g.drainage(random);var c=new ClimateField(random.seed(),(g.vegetationFlags()&16)!=0);
+        var out=new ArrayList<WoodlandTrees.Root>();
+        for(var r:HumidTrees.roots(random.seed(),x-radius,z-radius,x+radius,z+radius,d,c))if(r.height()>=HumidCrowns.MATURE_HEIGHT)out.add(r);
+        return out;
+    }
+    /** How many of those stems stand in the humid holder's biome; diagnostic only. */
+    private static int inHolder(ServerLevel level,List<WoodlandTrees.Root> roots){int n=0;for(var r:roots)if(level.getBiome(new BlockPos(r.x(),r.y(),r.z())).unwrapKey().orElseThrow().identifier().toString().equals(HOLDER))n++;return n;}
+    /** Mature coastal oaks of a window under the world's full saved flags (actual saved summer-dry owner, then the generated holder); the coast window is a control here. */
+    private static List<WoodlandTrees.Root> oaks(RealisticGenerator g,ServerLevel level,int x,int z,int radius){
+        var random=level.getChunkSource().randomState();var d=g.drainage(random);var c=new ClimateField(random.seed(),(g.vegetationFlags()&16)!=0);
+        var out=new ArrayList<WoodlandTrees.Root>();
+        for(var r:SummerDryTrees.roots(random.seed(),x-radius,z-radius,x+radius,z+radius,d,c,g.summerDryOwner(random)))
+            if(r.family()==SummerDryWoodland.FAMILY&&r.height()>=CoastalOakCrowns.MATURE_HEIGHT&&level.getBiome(new BlockPos(r.x(),r.y(),r.z())).unwrapKey().orElseThrow().identifier().toString().equals(COAST_HOLDER))out.add(r);
+        return out;
+    }
+    /** First 2048-block grid point within 8192 blocks of each humid anchor whose 80 x 80 window holds at least ten mature humid stems; then the coast control and fixed controls. */
+    private static int[][] select(RealisticGenerator g,ServerLevel level){
+        var out=new ArrayList<int[]>();
+        for(var a:HUMID_ANCHORS){
+            search:for(int dz=-8192;dz<=8192;dz+=2048)for(int dx=-8192;dx<=8192;dx+=2048){
+                int x=a[0]+dx,z=a[1]+dz;
+                if(humid(g,level,x,z,40).size()>=10){out.add(new int[]{x,z});break search;}
+            }
+        }
+        if(out.size()<2)throw new AssertionError("Fewer than two humid windows near the anchors: "+out.size());
+        search:for(int dz=-8192;dz<=8192;dz+=2048)for(int dx=-8192;dx<=8192;dx+=2048){
+            int x=COAST_ANCHOR[0]+dx,z=COAST_ANCHOR[1]+dz;
+            if(oaks(g,level,x,z,40).size()>=10){out.add(new int[]{x,z});break search;}
+        }
+        if(out.size()<3)throw new AssertionError("No coastal-oak control window near the anchor");
+        for(var cs:CONTROLS)out.add(cs);
+        return out.toArray(new int[0][]);
+    }
+    public static void register(String mode){ServerLifecycleEvents.SERVER_STARTED.register(server->{
+        Path dir=Path.of(System.getProperty("blockbranch.humidCrownDirectory"));
+        try{
+            var level=server.overworld();var g=(RealisticGenerator)level.getChunkSource().getGenerator();
+            var ops=RegistryOps.create(JsonOps.INSTANCE,level.registryAccess());
+            var json=RealisticGenerator.CODEC.codec().encodeStart(ops,g).getOrThrow().getAsJsonObject();
+            int shape=json.get("shape_version").getAsInt(),gate=g.humidCrownDefinition();
+            if(level.getSeed()!=1L)throw new AssertionError("Seed 1 world required");
+            sites=select(g,level);var windows=new ArrayList<Window>();for(var s:sites)windows.add(window(level,s[0]>>4,s[1]>>4));
+            Path signature=dir.resolve("signature.txt");var edit=new BlockPos(sites[0][0]+3,g.drainage(level.getChunkSource().randomState()).sample(sites[0][0]+3,sites[0][1]+3).height(),sites[0][1]+3);
+            switch(mode){
+                case "baseline278"->{
+                    if(shape!=278||gate!=0||g.coastalOakCrownDefinition()!=1||g.pineCrownDefinition()!=1||g.summerDryDefinition()!=1||(g.vegetationFlags()&HumidCrowns.FLAG)!=0)throw new AssertionError("Gate-absent 278 baseline required: "+shape+" "+gate);
+                    for(int i=0;i<windows.size();i++)if(windows.get(i).trees()==0)throw new AssertionError("Window without tree cells: "+NAMES[i]);
+                    Files.writeString(dir.resolve("baseline.txt"),lines(windows));server.saveEverything(false,true,true);
+                    Files.writeString(dir.resolve("result.txt"),"PASS baseline278: "+summary(windows)+"; mature humid stems "+humid(g,level,sites[0][0],sites[0][1],40).size()+" and "+humid(g,level,sites[1][0],sites[1][1],40).size()+"\n");
+                }
+                case "fresh279"->{
+                    if(shape!=279||gate!=1||json.get("humid_crown_definition").getAsInt()!=1||(g.vegetationFlags()&HumidCrowns.FLAG)==0||g.coastalOakCrownDefinition()!=1||g.pineCrownDefinition()!=1)throw new AssertionError("Bundled schema 279 preset required: "+shape+" "+gate);
+                    var base=baseline();var humidA=humid(g,level,sites[0][0],sites[0][1],40);var humidB=humid(g,level,sites[1][0],sites[1][1],40);int matureA=humidA.size(),matureB=humidB.size();
+                    if(matureA<10||matureB<10)throw new AssertionError("Target windows hold mature humid stems under the full saved flags "+g.vegetationFlags()+": "+matureA+" "+matureB);
+                    for(int i=0;i<2;i++)if(windows.get(i).digest().equals(base.get(i)))throw new AssertionError("The humid gate changed nothing in "+NAMES[i]+": "+windows.get(i)+" vs baseline "+base.get(i)+"; flags "+g.vegetationFlags());
+                    for(int i=2;i<windows.size();i++)if(!windows.get(i).digest().equals(base.get(i)))throw new AssertionError("The humid gate changed the control window "+NAMES[i]);
+                    for(int i=0;i<windows.size();i++)if(windows.get(i).isolated()>ISOLATED_LOGS)throw new AssertionError("Orphan log cells in "+NAMES[i]+": "+windows.get(i));
+                    for(var mutation:new String[][]{{"humid_crown_definition","0"},{"humid_crown_definition","2"},{"humid_crown_definition","-1"},{"shape_version","278"},{"shape_version","280"},{"coastal_oak_crown_definition","0"},{"pine_crown_definition","0"},{"summer_dry_definition","0"}}){
+                        var bad=json.deepCopy();bad.addProperty(mutation[0],Integer.parseInt(mutation[1]));
+                        if(RealisticGenerator.CODEC.codec().parse(ops,bad).result().isPresent())throw new AssertionError("Mismatched schema/definition accepted: "+mutation[0]+"="+mutation[1]);
+                    }
+                    var missing=json.deepCopy();missing.remove("humid_crown_definition");
+                    if(RealisticGenerator.CODEC.codec().parse(ops,missing).result().isPresent())throw new AssertionError("Schema 279 without its definition accepted");
+                    var older=json.deepCopy();older.remove("humid_crown_definition");older.addProperty("shape_version",278);
+                    var retained=RealisticGenerator.CODEC.codec().parse(ops,older).getOrThrow();
+                    if(retained.humidCrownDefinition()!=0||(retained.vegetationFlags()&HumidCrowns.FLAG)!=0||retained.coastalOakCrownDefinition()!=1)throw new AssertionError("Complete 278 without the gate must read");
+                    var clear=clearing(level,g,retained,dir);
+                    level.setBlock(edit,Blocks.GOLD_BLOCK.defaultBlockState(),3);
+                    Files.writeString(signature,lines(windows));server.saveEverything(false,true,true);
+                    Files.writeString(dir.resolve("result.txt"),"PASS fresh279: "+summary(windows)+"; mature humid stems "+matureA+" ("+inHolder(level,humidA)+" in the humid holder) and "+matureB+" ("+inHolder(level,humidB)+") under flags "+g.vegetationFlags()+"; baseline digests differ in the humid windows and match in controls; "+clear+"; edit "+edit.toShortString()+"\n");
+                }
+                case "verify279"->{
+                    if(shape!=279||gate!=1||(g.vegetationFlags()&HumidCrowns.FLAG)==0||g.coastalOakCrownDefinition()!=1)throw new AssertionError("Saved schema 279 world must reopen as 279 with the gate on: "+shape+" "+gate);
+                    if(!lines(windows).equals(Files.readString(signature)))throw new AssertionError("Saved gated windows changed on reopen");
+                    if(!level.getBlockState(edit).is(Blocks.GOLD_BLOCK))throw new AssertionError("Explicit edit lost across reopen at "+edit);
+                    Files.writeString(dir.resolve("result.txt"),"PASS verify279: "+summary(windows)+" identical, edit retained\n");
+                }
+                case "legacy278"->{
+                    if(shape!=278||gate!=0||g.coastalOakCrownDefinition()!=1)throw new AssertionError("A schema-278 world must reopen as 278 with the humid gate absent: "+shape+" "+gate);
+                    var base=baseline();
+                    for(int i=0;i<windows.size();i++)if(!windows.get(i).digest().equals(base.get(i)))throw new AssertionError((i<2?"Humid window ":"Control window ")+NAMES[i]+" differs from the published baseline: "+windows.get(i));
+                    var plan=publishedPlan(level,g,dir);
+                    Files.writeString(dir.resolve("result.txt"),"PASS legacy278: windows "+summary(windows)+" equal the published baseline digests (windows the source world never stored are generated first in this reopen; windows it stored are read from its saved chunks); "+plan+"\n");
+                }
+                default->throw new IllegalArgumentException("Unknown mode "+mode);
+            }
+        }catch(Throwable t){Blockbranch.LOGGER.error("HUMID_CROWN_FAIL",t);try{Files.writeString(dir.resolve("result.txt"),"FAIL "+t+"\n");}catch(Exception ignored){}}
+        finally{server.halt(false);}
+    });}
+    private static List<String> baseline()throws Exception{
+        var out=new ArrayList<String>();for(var line:Files.readAllLines(Path.of(System.getProperty("blockbranch.humidCrownBaseline"))))out.add(line.substring(line.indexOf(' ')+1));
+        if(out.size()!=NAMES.length)throw new AssertionError("Baseline digests missing");return out;
+    }
+    private static String lines(List<Window> windows){var sb=new StringBuilder();for(int i=0;i<windows.size();i++)sb.append(NAMES[i]).append(' ').append(windows.get(i).digest()).append('\n');return sb.toString();}
+    private static String summary(List<Window> windows){var sb=new StringBuilder();for(int i=0;i<windows.size();i++)sb.append(NAMES[i]).append('[').append(windows.get(i)).append("] ");return sb.toString().trim();}
+    private static ReimaginedTreeClearPiece piece(RealisticGenerator g,long seed,int flags,WoodlandTrees.Root root){
+        var box=new BoundingBox(root.x(),root.y(),root.z(),root.x(),root.y(),root.z());return new ReimaginedTreeClearPiece(box,seed,g.borealCrownDefinition(),flags);
+    }
+    /** A mature humid stem of the first window. */
+    private static WoodlandTrees.Root stem(RealisticGenerator g,ServerLevel level){return humid(g,level,sites[0][0],sites[0][1],48).getFirst();}
+    /** A new plan names the gated footprint, round-trips its NBT, malformed definitions never load, and the historical definitions keep the published footprint. */
+    private static String clearing(ServerLevel level,RealisticGenerator actual,RealisticGenerator retained,Path directory)throws Exception{
+        var random=level.getChunkSource().randomState();var context=StructurePieceSerializationContext.fromLevel(level);var root=stem(actual,level);
+        var piece=piece(actual,random.seed(),actual.vegetationFlags(),root);var tag=piece.createTag(context);int definition=tag.getIntOr("ClearDefinition",0);
+        if(definition!=1+actual.borealCrownDefinition()+2*actual.vegetationFlags()||definition<16385||definition>32768)throw new AssertionError("Saved clear definition names the humid bit: "+definition);
+        var plan=BorealClearSmoke.plan(piece,actual,random);var gated=HumidTrees.tree(root,true);
+        if(plan.isEmpty()||!gated.stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))))throw new AssertionError("New tree-clear plan covers the entire gated humid footprint");
+        try{BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),retained,random);throw new AssertionError("A bit-8192 plan replayed under a generator without the definition");}
+        catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalStateException))throw expected;}
+        for(int bad:new int[]{0,32769,-1}){var malformed=tag.copy();malformed.putInt("ClearDefinition",bad);
+            try{BorealClearSmoke.load(context,malformed);throw new AssertionError("Malformed clear definition "+bad+" loaded");}catch(RuntimeException expected){}}
+        try{new ReimaginedTreeClearPiece(new BoundingBox(0,0,0,0,0,0),random.seed(),0,16384);throw new AssertionError("A flag beyond bit 8192 was accepted");}catch(IllegalArgumentException expected){}
+        Path file=directory.resolve("humid-crown-tree-clear.nbt");net.minecraft.nbt.NbtIo.writeCompressed(tag,file);
+        var restored=BorealClearSmoke.load(context,net.minecraft.nbt.NbtIo.readCompressed(file,net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
+        if(!plan.equals(BorealClearSmoke.plan(restored,actual,random)))throw new AssertionError("Compressed saved clear plan retains the exact footprint");
+        var published=publishedPlan(level,actual,retained,directory,root);
+        return "gated clear definition "+definition+" covers "+gated.size()+" humid cells; "+published;
+    }
+    private static String publishedPlan(ServerLevel level,RealisticGenerator g,Path directory)throws Exception{return publishedPlan(level,g,g,directory,stem(g,level));}
+    /** Every historical definition (humid bit absent) replays the published footprint; with the same generator as both replayer and holder (legacy mode) only the footprint coverage is evidence, not a cross-generator comparison. */
+    private static String publishedPlan(ServerLevel level,RealisticGenerator actual,RealisticGenerator retained,Path directory,WoodlandTrees.Root root)throws Exception{
+        var random=level.getChunkSource().randomState();var context=StructurePieceSerializationContext.fromLevel(level);
+        int flags=actual.vegetationFlags()&~HumidCrowns.FLAG;int compared=0,cells=0;var old=HumidTrees.tree(root);
+        for(int mask:new int[]{flags,flags&~CoastalOakCrowns.FLAG&~PineCrowns.FLAG&~BirchCrowns.FLAG&~SeasonalCrowns.FLAG&~BroadleafCrowns.FLAG}){
+            var tag=piece(actual,random.seed(),mask,root).createTag(context);
+            var before=BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),retained,random);var after=BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),actual,random);
+            if(before.isEmpty()||!before.equals(after))throw new AssertionError("Historical clear footprints do not adopt the gated crowns: mask "+mask+" stem "+root+" before "+before.size()+" after "+after.size());
+            if(!old.stream().allMatch(v->after.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))))throw new AssertionError("Historical plan covers the published humid footprint: mask "+mask);
+            compared++;cells+=old.size();
+        }
+        return "historical definitions compared "+compared+" ("+cells+" published humid cells summed over them, at stem "+root.x()+","+root.z()+")";
+    }
+    private static Window window(ServerLevel level,int cx,int cz)throws Exception{
+        var md=MessageDigest.getInstance("SHA-256");int ints=0,trees=0;var logs=new HashSet<Pos>();
+        for(int z=cz-2;z<=cz+2;z++)for(int x=cx-2;x<=cx+2;x++){
+            var column=((SparseColumn)level.getChunk(x,z)).blockbranch$terrain().base().canopy().encode();ints+=column.length;md.update(Arrays.toString(column).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            for(int packed:column){int key=packed>>>CanopyLayer.STATE_BITS,code=packed&CanopyLayer.STATE_MASK;
+                if(code!=0)trees++;
+                if(WoodlandTrees.logCode(code))logs.add(new Pos(x*16+(key&15),(key>>>8)+TerrainShape.FLOOR,z*16+((key>>>4)&15)));}
+        }
+        int isolated=0;int minX=(cx-2)*16+8,maxX=(cx+2)*16+23,minZ=(cz-2)*16+8,maxZ=(cz+2)*16+23;
+        for(var k:logs){int x=k.x(),y=k.y(),z=k.z();if(x<minX||x>maxX||z<minZ||z>maxZ)continue;boolean joined=false;
+            for(int[] q:new int[][]{{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}})if(logs.contains(new Pos(x+q[0],y+q[1],z+q[2])))joined=true;
+            if(!joined)isolated++;}
+        return new Window(ints,HexFormat.of().formatHex(md.digest()),trees,logs.size(),isolated);
+    }
+    private record Pos(int x,int y,int z){}
+    private record Window(int ints,String sha,int trees,int logs,int isolated){
+        String digest(){return ints+" "+sha;}
+        @Override public String toString(){return "ints="+ints+" treeCells="+trees+" logCells="+logs+" isolatedLogCells="+isolated+" sha256="+sha.substring(0,12);}
+    }
+    private HumidCrownQualification(){}
+}

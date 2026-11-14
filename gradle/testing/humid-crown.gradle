@@ -1,0 +1,35 @@
+// Native views of the audited seed-1 humid subtropical oak-fern scene at fixed poses: the bundled preset versus any gate-absent preset
+// passed by -PhumidCrownVisualPreset/-PhumidCrownVisualGate. Evidence only, never a check threshold.
+def humidVisual=layout.projectDirectory.dir(providers.gradleProperty('humidCrownVisualDirectory').getOrElse('build/humid-crown-evidence/visual-NEW'))
+def humidPreset=providers.gradleProperty('humidCrownVisualPreset').getOrElse('blockbranch:realistic')
+def humidGate=providers.gradleProperty('humidCrownVisualGate').getOrElse('any')
+loom.runs.register('humidCrownVisual'){
+ client();runDir(humidVisual.asFile.absolutePath);vmArg('-Xms512m');vmArg('-Xmx3G')
+ vmArg('-Dblockbranch.humidCrownVisual=true');vmArg('-Dblockbranch.humidCrownVisualPreset='+humidPreset);vmArg('-Dblockbranch.humidCrownVisualGate='+humidGate)
+ vmArg('-Dblockbranch.humidCrownVisualDirectory='+humidVisual.asFile.absolutePath)
+ programArgs('--username','HumidView','--width','1024','--height','576')
+}
+tasks.register('prepareHumidCrownVisual'){doLast{
+ assert !humidVisual.file('options.txt').asFile.exists():'Retain native captures; choose a fresh directory.'
+ humidVisual.asFile.mkdirs();humidVisual.file('options.txt').asFile.text='renderDistance:6\nsimulationDistance:5\nmaxFps:260\nenableVsync:false\npauseOnLostFocus:false\nonboardAccessibility:false\nlang:en_us\ntutorialStep:none\nsoundCategory_master:0.0\nsoundCategory_music:0.0\n'
+}}
+tasks.named('runHumidCrownVisual'){dependsOn 'prepareHumidCrownVisual';doLast{assert humidVisual.file('result.txt').asFile.text.startsWith('PASS')}}
+
+// Native generated-chunk witnesses at two humid windows and six controls (seed 1); see HumidCrownQualification for the modes.
+// baseline278 uses the gate-absent baseline preset (schema 278, the bundled preset before schema 279); fresh279 uses the bundled preset.
+def humidDir=layout.projectDirectory.dir(providers.gradleProperty('humidCrownDirectory').getOrElse('build/humid-crown-native'))
+def humidMode=providers.gradleProperty('humidCrownMode').getOrElse('fresh279')
+def humidBaselineDigests=layout.projectDirectory.file(providers.gradleProperty('humidCrownBaseline').getOrElse('build/humid-crown-evidence/baseline278/baseline.txt')).asFile.absolutePath
+loom.runs.register('humidCrownQualification'){
+ server();runDir(humidDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.humidCrownMode='+humidMode);vmArg('-Dblockbranch.humidCrownDirectory='+humidDir.asFile.absolutePath);vmArg('-Dblockbranch.humidCrownBaseline='+humidBaselineDigests)
+}
+tasks.register('prepareHumidCrownQualification'){doLast{
+ assert humidMode in ['baseline278','fresh279','verify279','legacy278']:'Unknown humidCrownMode '+humidMode
+ humidDir.file('result.txt').asFile.delete()
+ if(humidMode in ['baseline278','fresh279'])assert !humidDir.file('server.properties').asFile.exists():'Retain the recorded world; choose a fresh directory.'
+ else assert humidDir.file('survey/level.dat').asFile.exists():'Requires the actual closed world.'
+ humidDir.asFile.mkdirs();humidDir.file('eula.txt').asFile.text='eula=true\n'
+ humidDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25648\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(humidMode=='baseline278'?'blockbranch:humid_crowns_baseline':'blockbranch:realistic')+'\nlevel-seed=1\nmax-tick-time=0\n'
+}}
+tasks.named('runHumidCrownQualification'){dependsOn 'prepareHumidCrownQualification';doLast{assert humidDir.file('result.txt').asFile.text.startsWith('PASS')}}

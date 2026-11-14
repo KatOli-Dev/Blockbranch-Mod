@@ -19,7 +19,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
  * Native generated-chunk witnesses for the gated mature coastal winter-rain oak crowns on seed 1. Each window is the 5 x 5 chunks
  * of the chunks' own saved canopy (the real generation path), so a stem exists only where the actual saved summer-dry owner and holder select it.
  * Modes: {@code baseline277} (a fresh world from the gate-absent baseline preset, which keeps the pine gate, records each window's digest),
- * {@code fresh278} (the bundled preset: gate on, coastal-oak windows differ, every control does not, logs attached, saved clear plan covers
+ * {@code fresh278} (the schema-278 baseline preset humid_crowns_baseline, the bundled preset before schema 279: gate on, coastal-oak windows differ, every control does not, logs attached, saved clear plan covers
  * the new footprint, mismatched or malformed schema/definition never loads, edit and signature saved), {@code verify278} (reopen that closed
  * world in a second process) and {@code legacy277} (reopen a schema-277 world written before the gate existed: shape 277, gate absent,
  * its windows equal the baseline digests, and its clear plans keep the published footprint). The legacy world is either a prior-release
@@ -97,7 +97,7 @@ public final class CoastalOakQualification {
                     for(int i=0;i<2;i++)if(windows.get(i).digest().equals(base.get(i)))throw new AssertionError("The gate changed nothing in "+NAMES[i]+": "+windows.get(i)+" vs baseline "+base.get(i)+"; flags "+g.vegetationFlags());
                     for(int i=2;i<windows.size();i++)if(!windows.get(i).digest().equals(base.get(i)))throw new AssertionError("The gate changed the control window "+NAMES[i]);
                     for(int i=0;i<windows.size();i++)if(windows.get(i).isolated()>ISOLATED_LOGS)throw new AssertionError("Orphan log cells in "+NAMES[i]+": "+windows.get(i));
-                    for(var mutation:new String[][]{{"coastal_oak_crown_definition","0"},{"coastal_oak_crown_definition","2"},{"coastal_oak_crown_definition","-1"},{"shape_version","277"},{"shape_version","279"},{"pine_crown_definition","0"},{"birch_crown_definition","0"},{"summer_dry_definition","0"}}){
+                    for(var mutation:new String[][]{{"coastal_oak_crown_definition","0"},{"coastal_oak_crown_definition","2"},{"coastal_oak_crown_definition","-1"},{"shape_version","277"},{"shape_version","280"},{"pine_crown_definition","0"},{"birch_crown_definition","0"},{"summer_dry_definition","0"}}){
                         var bad=json.deepCopy();bad.addProperty(mutation[0],Integer.parseInt(mutation[1]));
                         if(RealisticGenerator.CODEC.codec().parse(ops,bad).result().isPresent())throw new AssertionError("Mismatched schema/definition accepted: "+mutation[0]+"="+mutation[1]);
                     }
@@ -149,9 +149,9 @@ public final class CoastalOakQualification {
         if(plan.isEmpty()||!gated.stream().allMatch(v->plan.containsKey(BlockPos.asLong(v.x(),v.y(),v.z()))))throw new AssertionError("New tree-clear plan covers the entire gated oak footprint");
         try{BorealClearSmoke.plan(BorealClearSmoke.load(context,tag),retained,random);throw new AssertionError("A bit-4096 plan replayed under a generator without the definition");}
         catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalStateException))throw expected;}
-        for(int bad:new int[]{0,16385,-1}){var malformed=tag.copy();malformed.putInt("ClearDefinition",bad);
+        for(int bad:new int[]{0,32769,-1}){var malformed=tag.copy();malformed.putInt("ClearDefinition",bad);
             try{BorealClearSmoke.load(context,malformed);throw new AssertionError("Malformed clear definition "+bad+" loaded");}catch(RuntimeException expected){}}
-        try{new ReimaginedTreeClearPiece(new BoundingBox(0,0,0,0,0,0),random.seed(),0,8192);throw new AssertionError("A flag beyond bit 4096 was accepted");}catch(IllegalArgumentException expected){}
+        try{new ReimaginedTreeClearPiece(new BoundingBox(0,0,0,0,0,0),random.seed(),0,16384);throw new AssertionError("A flag beyond the current limit (bit 8192, flags up to 16383) was accepted");}catch(IllegalArgumentException expected){}
         Path file=directory.resolve("coastal-oak-tree-clear.nbt");net.minecraft.nbt.NbtIo.writeCompressed(tag,file);
         var restored=BorealClearSmoke.load(context,net.minecraft.nbt.NbtIo.readCompressed(file,net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
         if(!plan.equals(BorealClearSmoke.plan(restored,actual,random)))throw new AssertionError("Compressed saved clear plan retains the exact footprint");
