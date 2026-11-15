@@ -65,8 +65,8 @@ public final class BorealSlopeQualification {
                     Files.writeString(dir.resolve("result.txt"),"PASS overlap272: "+BorealMontaneOverlap.run(level,g,dir,wantSeed,sites.toArray(new int[0][])));
                 }
                 case "fresh272"->{
-                    int current=g.humidCrownDefinition()==1?279:g.coastalOakCrownDefinition()==1?278:g.pineCrownDefinition()==1?277:g.birchCrownDefinition()==1?276:g.seasonalCrownDefinition()==1?275:g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:272;
-                    if(shape!=current||slope!=1||(g.vegetationFlags()&BorealSlope.FLAG)==0)throw new AssertionError("Bundled boreal-slope preset required (272, 273 with mangrove roots, 274 with broadleaf crowns, 275 with seasonal crowns, 276 with birch crowns, 277 with pine crowns, 278 with coastal oak crowns, or 279 with humid crowns): "+shape+" "+slope);
+                    int current=g.screeBeltDefinition()==1?280:g.humidCrownDefinition()==1?279:g.coastalOakCrownDefinition()==1?278:g.pineCrownDefinition()==1?277:g.birchCrownDefinition()==1?276:g.seasonalCrownDefinition()==1?275:g.broadleafCrownDefinition()==1?274:g.mangroveRootsDefinition()==1?273:272;
+                    if(shape!=current||slope!=1||(g.vegetationFlags()&BorealSlope.FLAG)==0)throw new AssertionError("Bundled boreal-slope preset required (272, 273 with mangrove roots, 274 with broadleaf crowns, 275 with seasonal crowns, 276 with birch crowns, 277 with pine crowns, 278 with coastal oak crowns, 279 with humid crowns, or 280 with the cold scree belt): "+shape+" "+slope);
                     var random=level.getChunkSource().randomState();var lines=new ArrayList<String>();long logs=0,leaves=0;int stocked=0;
                     for(int dz=-HALF_CHUNKS;dz<HALF_CHUNKS;dz++)for(int dx=-HALF_CHUNKS;dx<HALF_CHUNKS;dx++){
                         var row=describe(level,cx+dx,cz+dz);var f=row.split(" ");logs+=Long.parseLong(f[3]);leaves+=Long.parseLong(f[4]);if(Long.parseLong(f[3])>0)stocked++;
@@ -113,7 +113,7 @@ public final class BorealSlopeQualification {
                     Files.writeString(dir.resolve("result.txt"),"PASS verifyMontane271\n");
                 }
                 case "verify272"->{
-                    if(shape<272||shape>279||slope!=1||(shape>=273)!=(g.mangroveRootsDefinition()==1)||(shape>=274)!=(g.broadleafCrownDefinition()==1)||(shape>=275)!=(g.seasonalCrownDefinition()==1)||(shape>=276)!=(g.birchCrownDefinition()==1)||(shape>=277)!=(g.pineCrownDefinition()==1)||(shape>=278)!=(g.coastalOakCrownDefinition()==1)||(shape==279)!=(g.humidCrownDefinition()==1))throw new AssertionError("Saved boreal-slope world must reopen as 272 (mangrove roots absent) or 273 (present) with its definition: "+shape+" "+slope);
+                    if(shape<272||shape>280||slope!=1||(shape>=273)!=(g.mangroveRootsDefinition()==1)||(shape>=274)!=(g.broadleafCrownDefinition()==1)||(shape>=275)!=(g.seasonalCrownDefinition()==1)||(shape>=276)!=(g.birchCrownDefinition()==1)||(shape>=277)!=(g.pineCrownDefinition()==1)||(shape>=278)!=(g.coastalOakCrownDefinition()==1)||(shape>=279)!=(g.humidCrownDefinition()==1)||(shape==280)!=(g.screeBeltDefinition()==1))throw new AssertionError("Saved boreal-slope world must reopen as 272 (mangrove roots absent) or 273 (present) with its definition: "+shape+" "+slope);
                     var saved=Files.readAllLines(signature);int i=0;
                     for(int dz=-2;dz<2;dz++)for(int dx=-2;dx<2;dx++)if(!describe(level,cx+dx,cz+dz).equals(saved.get(i++)))throw new AssertionError("Saved schema 272 chunk changed on reopen: "+(cx+dx)+","+(cz+dz));
                     var edit=new BlockPos(SITE_X+3,g.drainage(level.getChunkSource().randomState()).sample(SITE_X+3,SITE_Z+3).height(),SITE_Z+3);

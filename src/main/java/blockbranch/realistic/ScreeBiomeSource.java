@@ -21,7 +21,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     private final Holder<Biome> fallback, scree, reedbed, riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert,humid,tundra,lake,riverChannel,shelf,deepOcean;
     private final int dripstoneDefinition,caveBiomeDefinition;
     private volatile Bound bound;
-    private boolean deepDarkEnabled,landIceEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled,summerDryEnabled,warmXericEnabled,seasonalForestEnabled,montaneForestEnabled;
+    private boolean deepDarkEnabled,landIceEnabled,redwoodForestsEnabled,surfaceOwnershipEnabled,dryForestEnabled,coolDesertEnabled,screeBeltEnabled,summerDryEnabled,warmXericEnabled,seasonalForestEnabled,montaneForestEnabled;
     ScreeBiomeSource withMontaneForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");montaneForestEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> montaneForestSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.montaneForest;}
     ScreeBiomeSource withSeasonalForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");seasonalForestEnabled=enabled;return this;}
@@ -30,6 +30,7 @@ public final class ScreeBiomeSource extends BiomeSource {
     ScreeBiomeSource withSummerDryWoodlands(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");summerDryEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> summerDrySurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.summerDry;}
     ScreeBiomeSource withLandIce(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");landIceEnabled=enabled;return this;}
+    ScreeBiomeSource withScreeBelt(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");screeBeltEnabled=enabled;return this;}
     ScreeBiomeSource withCoolDeserts(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");coolDesertEnabled=enabled;return this;}
     java.util.function.BiPredicate<Integer,Integer> coolDesertSurface(){var b=bound;if(b==null)throw new IllegalStateException("Unbound biome source");return b.coolDesert;}
     ScreeBiomeSource withDryForests(boolean enabled){if(bound!=null)throw new IllegalStateException("Already bound biome source");dryForestEnabled=enabled;return this;}
@@ -127,7 +128,7 @@ public final class ScreeBiomeSource extends BiomeSource {
             : ColdTundra.contains(x*4,z*4,drainage,climate) ? tundra
             : palette.additional().containsKey("savanna") && Savanna.contains(seed,x*4,z*4,drainage,climate) ? palette.additional("savanna")
             : palette.additional().containsKey("jungle")&&Jungle.contains(seed,x*4,z*4,drainage,climate)?palette.additional("jungle")
-            : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):surfaceOwnershipEnabled&&ColdRockland.contains(x*4,z*4,drainage,climate)?palette.additional(ColdRockland.KEY):coolDesertEnabled&&CoolDesert.eligible(x*4,z*4,drainage,climate)?palette.additional(CoolDesert.KEY):fallback;
+            : SandyDesert.contains(seed,x*4,z*4,drainage,climate)?palette.additional("desert"):surfaceOwnershipEnabled&&ColdRockland.contains(x*4,z*4,drainage,climate)?palette.additional(ColdRockland.KEY):coolDesertEnabled&&CoolDesert.eligible(x*4,z*4,drainage,climate)?palette.additional(CoolDesert.KEY):screeBeltEnabled&&ScreeBelt.contains(x*4,z*4,drainage,climate)?scree:fallback;
         // Restrict this split to existing open dryland owners. Wet/coastal,
         // forest, savanna, badland and cold specialists keep their precedence.
         BiomeResolver xericSurface=warmXericEnabled?(x,y,z)->{

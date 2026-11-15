@@ -22,9 +22,9 @@ public final class CurrentBiomeSurvey {
     private record Point(int x, int z) {}
 
     /** Newest reviewed generator schema. A later schema fails the survey until its gate is reviewed against the selector wiring below. */
-    private static final int FIRST_REVIEWED_SCHEMA = 257, LAST_REVIEWED_SCHEMA = 279;
+    private static final int FIRST_REVIEWED_SCHEMA = 257, LAST_REVIEWED_SCHEMA = 280;
     /**
-     * Wrapper schemas 272..279 and the definition each one adds. Reviewed 2026-11 against schema 279: production reads these definitions only as saved
+     * Wrapper schemas 272..279 and the definition each one adds. Reviewed 2026-11 against schema 280: production reads these definitions only as saved
      * vegetation flags (tree/canopy generation, saved tree-clear plans and their replay guards), never in the biome source, DrainageNetwork or
      * ClimateField that this survey reconstructs, so the surface selector, footprints and fallback sentinel do not depend on them. Presence
      * and exact coupling are still asserted so a stale or hand-edited preset cannot be surveyed under the wrong schema number.
@@ -32,12 +32,14 @@ public final class CurrentBiomeSurvey {
     private static final String[][] TREE_ONLY_WRAPPERS = {{"272", "boreal_slope_definition"}, {"273", "mangrove_roots_definition"},
         {"274", "broadleaf_crown_definition"}, {"275", "seasonal_crown_definition"}, {"276", "birch_crown_definition"},
         {"277", "pine_crown_definition"}, {"278", "coastal_oak_crown_definition"}, {"279", "humid_crown_definition"}};
+    /** Schema 280 changes the surface label, so unlike the tree-only wrappers it is replicated in {@link #source}. */
+    private static final String[][] SELECTOR_WRAPPERS = {{"280", "cold_scree_belt_definition"}};
     /**
-     * Every biome-source gate the production generator can set, reviewed against {@link #source}: the nine surface gates below are replicated
+     * Every biome-source gate the production generator can set, reviewed against {@link #source}: the ten surface gates below are replicated
      * from the saved preset; {@code withDeepDark} only selects the cave-only holder, which the inventory already excludes from surface biomes.
      */
     private static final Set<String> REVIEWED_SOURCE_GATES = Set.of("withMontaneForests", "withSeasonalForests", "withWarmXeric", "withSummerDryWoodlands",
-        "withLandIce", "withCoolDeserts", "withDryForests", "withSurfaceOwnership", "withRedwoodForests", "withDeepDark");
+        "withLandIce", "withCoolDeserts", "withDryForests", "withSurfaceOwnership", "withRedwoodForests", "withScreeBelt", "withDeepDark");
 
     public static void register() {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
@@ -238,6 +240,7 @@ public final class CurrentBiomeSurvey {
         source.withMontaneForests(preset.has("montane_forest_definition") && preset.get("montane_forest_definition").getAsInt()==1);
         source.withSeasonalForests(preset.has("seasonal_forest_definition") && preset.get("seasonal_forest_definition").getAsInt()==1);
         source.withWarmXeric(preset.has("warm_xeric_definition") && preset.get("warm_xeric_definition").getAsInt()==1);
+        source.withScreeBelt(preset.has("cold_scree_belt_definition") && preset.get("cold_scree_belt_definition").getAsInt()==1);
         source.withSummerDryWoodlands(preset.has("summer_dry_definition") && preset.get("summer_dry_definition").getAsInt()==1);
         source.withLandIce(preset.has("land_ice_definition") && preset.get("land_ice_definition").getAsInt()==1).bind(seed, d, c);
         return source;
@@ -290,32 +293,39 @@ public final class CurrentBiomeSurvey {
         require(footprint(new DrainageNetwork.Sample(100, DrainageNetwork.DRY, 0, false), false, false, false).equals("land"), "Dry land");
     }
     /**
-     * The survey accepts schemas FIRST_REVIEWED_SCHEMA..LAST_REVIEWED_SCHEMA. Schemas 257..271 are accepted as before; each of 272..279 must
+     * The survey accepts schemas FIRST_REVIEWED_SCHEMA..LAST_REVIEWED_SCHEMA. Schemas 257..271 are accepted as before; each of 272..280 must
      * have exactly its own definition (set to 1) when the schema is at least its number and none above, so the chain is complete and ordered.
      */
     static void reviewFoundation(JsonObject preset) {
         int shape = preset.get("shape_version").getAsInt();
         require(shape >= FIRST_REVIEWED_SCHEMA && shape <= LAST_REVIEWED_SCHEMA, "Review survey foundation for new schema " + shape);
-        for (var wrapper : TREE_ONLY_WRAPPERS) {
+        for (var wrapper : wrappers()) {
             boolean expected = shape >= Integer.parseInt(wrapper[0]);
             boolean present = preset.has(wrapper[1]) && preset.get(wrapper[1]).getAsInt() == 1;
             require(present == expected && (expected || !preset.has(wrapper[1])), "Schema " + shape + " and " + wrapper[1] + " disagree (wrapper " + wrapper[0] + ")");
         }
     }
     private static void checkFoundationReview() {
-        for (int shape : new int[] {257, 271, 272, 275, 278, 279}) reviewFoundation(chain(shape));
-        for (int shape : new int[] {256, 280, 1000}) requireRejected(() -> reviewFoundation(chain(shape)), "Unreviewed schema " + shape);
+        for (int shape : new int[] {257, 271, 272, 275, 278, 279, 280}) reviewFoundation(chain(shape));
+        for (int shape : new int[] {256, 281, 1000}) requireRejected(() -> reviewFoundation(chain(shape)), "Unreviewed schema " + shape);
         var missing = chain(279); missing.remove("humid_crown_definition");
         requireRejected(() -> reviewFoundation(missing), "Schema 279 without its definition");
+        var noBelt = chain(280); noBelt.remove("cold_scree_belt_definition");
+        requireRejected(() -> reviewFoundation(noBelt), "Schema 280 without its definition");
+        var earlyBelt = chain(279); earlyBelt.addProperty("cold_scree_belt_definition", 1);
+        requireRejected(() -> reviewFoundation(earlyBelt), "Schema 279 carrying the 280 definition");
         var early = chain(278); early.addProperty("humid_crown_definition", 1);
         requireRejected(() -> reviewFoundation(early), "Schema 278 carrying the 279 definition");
-        var off = chain(279); off.addProperty("pine_crown_definition", 0);
-        requireRejected(() -> reviewFoundation(off), "Schema 279 with a wrapper definition switched off");
+        var off = chain(280); off.addProperty("pine_crown_definition", 0);
+        requireRejected(() -> reviewFoundation(off), "Schema 280 with a wrapper definition switched off");
     }
     private static JsonObject chain(int shape) {
         var json = new JsonObject(); json.addProperty("shape_version", shape);
-        for (var wrapper : TREE_ONLY_WRAPPERS) if (shape >= Integer.parseInt(wrapper[0])) json.addProperty(wrapper[1], 1);
+        for (var wrapper : wrappers()) if (shape >= Integer.parseInt(wrapper[0])) json.addProperty(wrapper[1], 1);
         return json;
+    }
+    private static List<String[]> wrappers() {
+        var all = new ArrayList<>(Arrays.asList(TREE_ONLY_WRAPPERS)); all.addAll(Arrays.asList(SELECTOR_WRAPPERS)); return all;
     }
     /** A new biome-source gate must be reviewed here, and replicated in {@link #source} if it changes the surface selector. */
     private static void checkSourceGates() {

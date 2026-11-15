@@ -187,3 +187,4 @@ apply(from = "gradle/testing/resonite.gradle")
 apply(from = "gradle/testing/uranium.gradle")
 
 apply(from = "gradle/testing/bismuth.gradle")
+apply(from = "gradle/testing/scree-belt.gradle")

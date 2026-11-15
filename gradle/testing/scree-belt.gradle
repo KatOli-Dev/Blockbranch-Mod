@@ -1,0 +1,23 @@
+// Native witnesses for the cold-belt scree label (schema 280); see ScreeBeltQualification for the modes.
+// record279 runs the unmodified published build; baseline279 the gate-absent baseline preset; fresh280 the bundled preset;
+// legacy279 reopens a copy of the closed record279 world. Properties: screeBeltDirectory, screeBeltMode, screeBeltPoints,
+// screeBeltGrid (optional x z cells), screeBeltBaseline (digest.txt of baseline279), screeBeltPort.
+def screeDir=layout.projectDirectory.dir(providers.gradleProperty('screeBeltDirectory').getOrElse('build/scree-belt-native'))
+def screeMode=providers.gradleProperty('screeBeltMode').getOrElse('fresh280')
+def screePoints=providers.gradleProperty('screeBeltPoints').getOrElse('unset')
+def screeGrid=providers.gradleProperty('screeBeltGrid').getOrElse('')
+def screeBaseline=providers.gradleProperty('screeBeltBaseline').getOrElse('')
+def screePort=providers.gradleProperty('screeBeltPort').getOrElse('25661')
+loom.runs.register('screeBeltQualification'){
+ server();runDir(screeDir.asFile.absolutePath);vmArg('-Xmx3G');programArg('--nogui')
+ vmArg('-Dblockbranch.screeBeltMode='+screeMode);vmArg('-Dblockbranch.screeBeltDirectory='+screeDir.asFile.absolutePath)
+ vmArg('-Dblockbranch.screeBeltPoints='+screePoints);vmArg('-Dblockbranch.screeBeltGrid='+screeGrid);vmArg('-Dblockbranch.screeBeltBaseline='+screeBaseline)
+}
+tasks.register('prepareScreeBeltQualification'){doLast{
+ assert screeMode in ['record279','baseline279','fresh280','legacy279']:'Unknown screeBeltMode '+screeMode
+ if(screeMode=='legacy279')assert screeDir.file('survey/level.dat').asFile.exists()&&!screeDir.file('result.txt').asFile.exists():'Requires a copied closed record279 world without a result file.'
+ else{def existing=screeDir.asFile.list();assert existing==null||existing.length==0:'Preserve earlier evidence; choose a new or empty screeBeltDirectory.'}
+ screeDir.asFile.mkdirs();screeDir.file('eula.txt').asFile.text='eula=true\n'
+ screeDir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port='+screePort+'\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type='+(screeMode=='baseline279'?'blockbranch:alpine_scree_belt_baseline':'blockbranch:realistic')+'\nlevel-seed=424242\nmax-tick-time=0\n'
+}}
+tasks.named('runScreeBeltQualification'){dependsOn 'prepareScreeBeltQualification';doLast{assert screeDir.file('result.txt').asFile.text.startsWith('PASS')}}
