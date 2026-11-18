@@ -4,7 +4,7 @@ import java.util.*;
 public final class LandIceAssessment {
     public static void main(String[] args){
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true));var c=new ClimateField(seed);
             int cold=0,supply=0;var roughness=new TreeMap<Integer,Integer>();var candidates=new ArrayList<int[]>();
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){
                 var s=d.sample(x,z);if(s.waterLevel()!=DrainageNetwork.DRY)continue;

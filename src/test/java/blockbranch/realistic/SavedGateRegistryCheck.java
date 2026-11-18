@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * {@code vegetationFlags()} are outside it; the bits it does not name are the reserved ones below.
  */
 public final class SavedGateRegistryCheck {
-    /** Bit 1 (transitions) and bit 16 (polar climate) are literals in {@code RealisticGenerator.vegetationFlags()}. */
+    /** Bit 1 (transitions) and bit 16 (polar climate) are literals in {@code GenerationSettings.vegetationFlags()}. */
     private static final Map<Integer,String> RESERVED=Map.of(1,"biome transitions",16,"polar climate");
     private static final Pattern COMMENTS=Pattern.compile("/\\*.*?\\*/|//[^\\n]*",Pattern.DOTALL);
     private static final Pattern DECLARATION=Pattern.compile("static\\s+final\\s+int\\s+([^;(]+);");

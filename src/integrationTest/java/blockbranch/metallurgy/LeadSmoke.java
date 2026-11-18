@@ -43,7 +43,7 @@ public final class LeadSmoke {
                 var frozen=bind.invoke(ctor.newInstance(seed,cx,-1,7,65535,65535),64,64);var retained=new OreLayer(seed,cx,-1,7,65535,65535).bind(64,64);var current=new OreLayer(seed,cx,-1,8,65535,65535).bind(64,64);
                 for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=4;depth<=224;depth+=2){
                     int y=64-depth;var host=(y<0?Blocks.DEEPSLATE:Blocks.STONE).defaultBlockState();var expected=state.invoke(frozen,x,y,z,64,host,caves);require(retained.state(x,y,z,64,host,caves)==expected,"published stainless definition7 remains exact");var next=current.state(x,y,z,64,host,caves);
-                    if(expected!=host)require(next==expected,"lead cannot replace prior ores");else if(next!=host){require(next.is(LeadContent.LEAD_ORE)||next.is(LeadContent.DEEPSLATE_LEAD_ORE),"only lead added to remaining hosts");require(depth>LeadVeins.MIN_DEPTH&&depth<LeadVeins.MAX_DEPTH,"lead stays inside its local depth band");lead++;}checked++;
+                    if(expected!=host)require(next==expected,"lead cannot replace prior ores");else if(next!=host){require(next.is(LeadContent.LEAD_ORE)||next.is(LeadContent.DEEPSLATE_LEAD_ORE),"only lead added to remaining hosts");require(depth>SectionVeins.minDepth(SectionVeins.LEAD)&&depth<SectionVeins.maxDepth(SectionVeins.LEAD),"lead stays inside its local depth band");lead++;}checked++;
                 }
             }
             try{old.getMethod("decode",net.minecraft.nbt.CompoundTag.class).invoke(null,new OreLayer(1,0,0,8,0,0).encode());throw new AssertionError("old ore reader accepted8");}catch(java.lang.reflect.InvocationTargetException expected){require(expected.getCause() instanceof IllegalArgumentException,"prior equipment reader safely rejects8");}
@@ -65,7 +65,7 @@ public final class LeadSmoke {
         var origin=generator.getOrigin(level.getChunkSource().randomState());
         for(int dz=0;dz<2;dz++)for(int dx=0;dx<2;dx++){
             var chunk=level.getChunk(origin.x()+dx,origin.z()+dz);var base=((SparseColumn)chunk).blockbranch$terrain().base();require(base.ores().definition()==generator.oreDefinition(),"actual FULL column carries its saved ore definition");var restored=TerrainProfile.decode(base.encode(level.palettedContainerFactory()),level.palettedContainerFactory());
-            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=LeadVeins.MIN_DEPTH;depth<=LeadVeins.MAX_DEPTH;depth++){
+            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=SectionVeins.minDepth(SectionVeins.LEAD);depth<=SectionVeins.maxDepth(SectionVeins.LEAD);depth++){
                 int y=base.groundHeight(x,z)-depth;var pos=new BlockPos(chunk.getPos().getMinBlockX()+x,y,chunk.getPos().getMinBlockZ()+z);var value=base.state(x,y,z);if(!isLead(value))continue;
                 require(level.getBlockState(pos)==value&&restored.state(x,y,z)==value,"native lead agrees with snapshot");level.setBlock(pos,Blocks.AIR.defaultBlockState(),2);Files.writeString(marker,pos.getX()+","+pos.getY()+","+pos.getZ());level.getServer().saveEverything(false,true,true);Blockbranch.LOGGER.info("LEAD naturally generated lead witness={}",pos);return;
             }

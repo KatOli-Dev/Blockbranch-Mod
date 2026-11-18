@@ -137,7 +137,7 @@ public final class SummerDryQualification {
         var ownership=type.getDeclaredMethod("withSurfaceOwnership",boolean.class);ownership.setAccessible(true);
         var bind=type.getDeclaredMethod("bind",long.class,DrainageNetwork.class,ClimateField.class);bind.setAccessible(true);
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true));var c=new ClimateField(seed);
             var reader=type.getConstructor(HabitatPalette.class,boolean.class,boolean.class).newInstance(oldPalette,true,true);
             redwood.invoke(reader,true);ownership.invoke(reader,true);
             for(String method:new String[]{"withDryForests","withCoolDeserts","withLandIce"}){var flag=type.getDeclaredMethod(method,boolean.class);flag.setAccessible(true);flag.invoke(reader,true);}

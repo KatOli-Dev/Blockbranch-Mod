@@ -18,7 +18,7 @@ public final class CoolDesertCheck {
             require(Math.abs((p.coldestC()+p.warmestC())*.5-t)<1e-10,"Annual mean retained");
         }
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);
             int[] count=new int[3];int physical=0;
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){
                 var q=c.sample(x,z,d::sample);
@@ -29,7 +29,7 @@ public final class CoolDesertCheck {
             require(physical>0,"Finite seed has supported candidates");
             System.out.println("COOL_DESERT_FIXED_GRID seed="+seed+" samples=14400 admitted="+physical+" thermalGradientMinus10NominalPlus10="+Arrays.toString(count));
         }
-        var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true,true,true);var c=new ClimateField(424242);
+        var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(424242);
         require(CoolDesert.eligible(400000,-1200000,d,c),"Supported plateau witness, not an altitude ban");
         require(!CoolDesert.eligible(-1424000,16000,d,c),"Existing steep alpine candidate rejected");
         require(!CoolDesert.physicalSupport(400000,-944000,d),"Confirmed marine outlet cannot become dry desert");

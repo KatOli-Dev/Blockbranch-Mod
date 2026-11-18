@@ -13,8 +13,8 @@ public final class SurfaceOwnershipCheck {
         int samples = 0, addedMarine = 0;
         for (long seed : new long[]{424242, 1, -17}) {
             var shape = new TerrainShape(seed);
-            var old = new DrainageNetwork(shape, seed, true, true, true);
-            var now = new DrainageNetwork(shape, seed, true, true, true, true);
+            var old = new DrainageNetwork(shape, seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));
+            var now = new DrainageNetwork(shape, seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));
             var climate = new ClimateField(seed);
             for (int z = -1904000; z < 1920000; z += 32000) for (int x = -1904000; x < 1920000; x += 32000) {
                 var a = old.sample(x, z); var b = now.sample(x, z);

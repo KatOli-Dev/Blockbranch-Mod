@@ -5,7 +5,7 @@ public final class SurfaceRoutingCheck {
     public static void main(String[] args){
         long[] seeds={424242,1,-17},expected={4829185425249317569L,-382732763971511487L,-3418010469850627423L};
         for(int n=0;n<seeds.length;n++){
-            long seed=seeds[n],hash=1;var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,false);var formed=new DrainageNetwork(shape,seed);var c=new ClimateField(seed);int intentional=0;
+            long seed=seeds[n],hash=1;var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withCoastalLandforms(false));var formed=new DrainageNetwork(shape,seed);var c=new ClimateField(seed);int intentional=0;
             for(int z=-1900000;z<=1900000;z+=64000)for(int x=-1900000;x<=1900000;x+=64000)for(int offset:new int[]{0,1}){
                 int wx=x+offset,wz=z+offset;
                 boolean[] domains=domains(seed,wx,wz,d,c),current=domains(seed,wx,wz,formed,c);

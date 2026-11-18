@@ -21,3 +21,18 @@ loom.runs.configureEach {
         sourceSet.set(runtimeEnvironment.map { environment -> environment == 'client' ? 'integrationTestClient' : 'integrationTest' })
     }
 }
+
+// Analytic tasks run a test-source-set main() in its own JVM. analyticTask only registers one (manual
+// diagnostics); analyticCheck also wires it into `check`, which puts it in the JUnit suite (check-suite.gradle).
+// Both return the task provider for extra settings.
+ext.analyticTask = { String name, String main, String heap = null ->
+    tasks.register(name, JavaExec) {
+        dependsOn 'testClasses'; classpath = sourceSets.test.runtimeClasspath; mainClass = main
+        if (heap) maxHeapSize = heap
+    }
+}
+ext.analyticCheck = { String name, String main, String heap = null ->
+    def task = analyticTask(name, main, heap)
+    tasks.named('check') { dependsOn name }
+    task
+}

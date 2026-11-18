@@ -10,7 +10,7 @@ public final class FloodplainAssessment {
     public static void main(String[] args)throws Exception{
         var reports=new ArrayList<Object>();
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));
             var climate=new ClimateField(seed,true);int rivers=0,probed=0;
             var gradients=new TreeMap<String,Integer>();var heights=new TreeMap<String,Integer>();var witnesses=new ArrayList<Object>();var witnessKinds=new TreeMap<String,Integer>();
             for(int edge=0;edge<d.size();edge++){

@@ -10,17 +10,14 @@ tasks.register('verifyBorealSlopeOracle'){
  }
 }
 tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyBorealSlopeOracle'}
-tasks.register('checkBorealSlope',JavaExec){
- dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.BorealSlopeCheck';maxHeapSize='1G'
-}
+analyticCheck('checkBorealSlope','blockbranch.realistic.BorealSlopeCheck','1G')
 tasks.register('checkSavedGateRegistry',JavaExec){
  dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
  inputs.dir(layout.projectDirectory.dir('src/main/java'))
  mainClass='blockbranch.realistic.SavedGateRegistryCheck'
  systemProperty 'blockbranch.productionSources',layout.projectDirectory.dir('src/main/java').asFile.absolutePath
 }
-tasks.named('check'){dependsOn 'checkBorealSlope','checkSavedGateRegistry'}
+tasks.named('check'){dependsOn 'checkSavedGateRegistry'}
 
 // Native qualification over the sampled treeless boreal slope (seed 1).
 def slopeDir=layout.projectDirectory.dir(providers.gradleProperty('borealSlopeDirectory').getOrElse('build/boreal-slope-native'))

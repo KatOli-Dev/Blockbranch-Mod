@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 
 /** Local static berm/backshore approximation over the original sandy coast.
  * Does not change the continental field, drainage solve or ocean datum. */
@@ -8,15 +7,13 @@ final class SandyCoast {
     private record Frame(double distance,double width,double advance,double weight) {}
     private static final Frame NONE=new Frame(0,0,0,0);
     private final long seed;private final TerrainShape shape;private final DrainageNetwork drainage;private final ClimateField climate;
-    private final LinkedHashMap<Long,Frame> frames=new LinkedHashMap<>(256,.75f,true);
+    private final ExactMemo<Long,Frame> frames=new ExactMemo<>(256,16384);
     SandyCoast(long seed,TerrainShape shape,DrainageNetwork drainage){this.seed=seed;this.shape=shape;this.drainage=drainage;climate=new ClimateField(seed);}
 
     private Frame frame(int x,int z){
-        long key=(x&0xffffffffL)|((long)z<<32);
-        synchronized(frames){var found=frames.get(key);if(found!=null)return found;}
-        var value=createFrame(x,z);
-        synchronized(frames){frames.put(key,value);if(frames.size()>16384)frames.remove(frames.keySet().iterator().next());}
-        return value;
+        long key=ExactMemo.key(x,z);
+        var found=frames.find(key);if(found!=null)return found;
+        return frames.store(key,createFrame(x,z));
     }
     private Frame createFrame(int x,int z){
         double dx=(shape.continuousHeight(x+32,z)-shape.continuousHeight(x-32,z))/64,

@@ -42,11 +42,7 @@ tasks.named('runPublished268Snapshot'){doFirst{
  if(originalReopen)assert original.file('baseline.json').asFile.bytes==fixture.file('baseline-'+originalSeed+'.json').asFile.bytes:'Requires frozen original oracle.'
 }}
 
-tasks.register('checkSeasonalForest',JavaExec){
- dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SeasonalForestCheck';maxHeapSize='1G'
-}
-tasks.named('check'){dependsOn 'checkSeasonalForest'}
+analyticCheck('checkSeasonalForest','blockbranch.realistic.SeasonalForestCheck','1G')
 
 def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('seasonalForestDirectory').getOrElse('build/seasonal-forest-evidence/native'))
 def nativeSeed=providers.gradleProperty('seasonalForestSeed').getOrElse('424242')

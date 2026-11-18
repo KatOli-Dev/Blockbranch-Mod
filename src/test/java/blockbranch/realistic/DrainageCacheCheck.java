@@ -28,15 +28,12 @@ public final class DrainageCacheCheck {
             }
             System.out.println("DRAINAGE_CACHE seed="+seed+" probes="+probes.size()+" uniqueTraversal=65536 concurrentQueries=16384");
         }
-        String structural=System.getProperty("blockbranch.terrainStructuralComparison"),fixture=System.getProperty("blockbranch.realisticClientFixture");
-        try{
-            System.setProperty("blockbranch.terrainStructuralComparison","true");System.setProperty("blockbranch.realisticClientFixture","true");
-            var d=new DrainageNetwork(new TerrainShape(1),1);
+        {
+            var d=new DrainageNetwork(new TerrainShape(1),1,DrainageNetwork.Options.DEFAULT.withStructuralComparison(true));
             for(int i=0;i<128;i++){int x=-1332080+i,z=-1900080+i;var expected=(DrainageNetwork.Sample)reference.invoke(d,x,z,false);if(!d.sample(x,z).equals(expected)||!d.sample(x,z).equals(expected))throw new AssertionError("Comparison-world cache preserves its fixed structural mode");}
-        }finally{restore("blockbranch.terrainStructuralComparison",structural);restore("blockbranch.realisticClientFixture",fixture);}
+        }
         System.out.println("DRAINAGE_EXACT_CACHE_ORDER_EVICTION_CONCURRENCY_MODE_PASS");
     }
     private static Probe probe(Method method,DrainageNetwork d,int x,int z)throws Exception{return new Probe(x,z,(DrainageNetwork.Sample)method.invoke(d,x,z,true));}
     private static void verify(DrainageNetwork d,Probe p){if(!d.sample(p.x(),p.z()).equals(p.expected()))throw new AssertionError("Cached field differs at "+p.x()+","+p.z());}
-    private static void restore(String key,String value){if(value==null)System.clearProperty(key);else System.setProperty(key,value);}
 }

@@ -7,7 +7,7 @@ import java.util.TreeSet;
 public final class FrozenSeabedCheck {
     public static void main(String[] args) {
         for (long seed : new long[] {424242, 1, -17}) {
-            var d = new DrainageNetwork(new TerrainShape(seed), seed, true, true);
+            var d = new DrainageNetwork(new TerrainShape(seed), seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));
             var c = new ClimateField(seed);
             var materials = new TreeSet<Integer>();
             int samples = 0;

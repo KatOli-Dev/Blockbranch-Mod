@@ -50,7 +50,7 @@ public final class DrySeasonPolicyCheck {
             require(Math.abs(p-q)<1,"No native/negative-coordinate rainfall seam");
         }
         for(long seed:new long[]{424242,1,-17}) {
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var climate=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var climate=new ClimateField(seed);
             int warmStands=0,eligible=0;var points=new ArrayList<Object>();
             int[] sensitivity=new int[9],changed=new int[9];
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000) {

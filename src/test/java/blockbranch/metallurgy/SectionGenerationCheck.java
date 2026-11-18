@@ -6,19 +6,24 @@ import java.util.SplittableRandom;
 
 /**
  * Whole-section fast paths against the per-block originals, for every block of each sampled
- * section: {@link SectionVeins} against each {@code <Ore>Veins.contains}, and the
+ * section: {@link SectionVeins} masks against {@link SectionVeins#reference}, and the
  * {@link UndergroundStructure.Section} density against {@code density}, compared as raw bits.
+ * The published vein parameters are frozen here: each is a permanent world-generation input.
  */
 public final class SectionGenerationCheck {
     private static void check(boolean yes,String why){if(!yes)throw new AssertionError(why);}
-    private interface Vein { boolean contains(long seed,int x,int y,int z,int depth); }
-    private static final Vein[] ORACLES={TinVeins::contains,ZincVeins::contains,ManganeseVeins::contains,TungstenVeins::contains,
-        NickelVeins::contains,ChromiumVeins::contains,LeadVeins::contains,FoolsDiamondVeins::contains,SilverVeins::contains,
-        PlatinumVeins::contains,TitaniumVeins::contains,MagnetiteVeins::contains,ResoniteVeins::contains,BismuthVeins::contains,
-        UraniumVeins::contains};
+    private static final SectionVeins.Rule[] PUBLISHED={
+        new SectionVeins.Rule(0x54494E5F76310001L,12,56,192,.42,1.85),new SectionVeins.Rule(0x5A494E435F763101L,24,96,216,.48,1.85),
+        new SectionVeins.Rule(0x4D4E5F7631000001L,40,128,224,.32,1.7),new SectionVeins.Rule(0x575F763100000001L,112,184,224,.26,1.5),
+        new SectionVeins.Rule(0x4E495F7631000001L,48,128,208,.28,1.6),new SectionVeins.Rule(0x43525F7631000001L,72,160,224,.24,1.5),
+        new SectionVeins.Rule(0x50425F7631000001L,24,96,184,.38,1.8),new SectionVeins.Rule(0x464F4F4C5F763100L,96,144,208,.18,1.35),
+        new SectionVeins.Rule(0x41475F7631000001L,40,112,208,.28,1.6),new SectionVeins.Rule(0x50545F7631000001L,128,192,224,.16,1.4),
+        new SectionVeins.Rule(0x54495F7631000001L,80,160,224,.24,1.6),new SectionVeins.Rule(0x4D475F7631000001L,48,112,192,.28,1.6),
+        new SectionVeins.Rule(0x52535F7631000001L,48,144,208,.24,1.6),new SectionVeins.Rule(0x42495F7631000001L,24,96,192,.34,1.6),
+        new SectionVeins.Rule(0x55525F7631000001L,8000,9000,10000,.14,1.6)};
 
     public static void main(String[] args) throws Exception {
-        check(ORACLES.length==SectionVeins.RULES.length,"One oracle per rule");
+        check(java.util.Arrays.equals(PUBLISHED,SectionVeins.RULES),"Published vein parameters unchanged");
         var random=new SplittableRandom(20261108);
         long veinBlocks=0,hits=0,caveBlocks=0,voids=0;int sections=0;
         Method density=UndergroundStructure.class.getDeclaredMethod("sectionDensity",int.class,int.class,int.class,int.class,UndergroundStructure.Section.class);
@@ -37,10 +42,10 @@ public final class SectionGenerationCheck {
             boolean deep=sample%8==7;
             for(int i=0;i<256;i++)ground[i]=(deep?deepBase:base)+random.nextInt(-24,25);
             var veins=new SectionVeins(seed,x0,y0,z0,ground);
-            for(int ore=0;ore<ORACLES.length;ore++)
+            for(int ore=0;ore<SectionVeins.RULES.length;ore++)
                 for(int ly=0;ly<16;ly++)for(int lz=0;lz<16;lz++)for(int lx=0;lx<16;lx++){
                     int x=x0+lx,y=y0+ly,z=z0+lz;
-                    boolean expected=ORACLES[ore].contains(seed,x,y,z,ground[lz*16+lx]-y);
+                    boolean expected=SectionVeins.reference(ore,seed,x,y,z,ground[lz*16+lx]-y);
                     check(veins.contains(ore,lx,ly,lz)==expected,"Vein "+ore+" seed="+seed+" at "+x+","+y+","+z);
                     veinBlocks++;if(expected)hits++;
                 }

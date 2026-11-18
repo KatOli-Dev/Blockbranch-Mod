@@ -159,12 +159,11 @@ public final class ScreeBiomeSource extends BiomeSource {
         BiomeResolver full=dripstoneDefinition==0?surface:(x,y,z)->{double province=DripstoneHabitat.province(seed,x*4,z*4);return province>.2&&DripstoneHabitat.contains(seed,x*4,y*4,z*4,drainage.bedHeight(x*4,z*4),province)?palette.additional("dripstone_caves"):surface.getNoiseBiome(x,y,z);};
         java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.CaveBiomeLayer> caves=null;
         if(caveBiomeDefinition>0){
-            var cache=new java.util.LinkedHashMap<Long,blockbranch.cubic.CaveBiomeLayer>(64,.75f,true);
+            var cache=new ExactMemo<Long,blockbranch.cubic.CaveBiomeLayer>(64,64);
             caves=(cx,cz)->{
-                long key=(cx&0xffffffffL)|((long)cz<<32);
-                synchronized(cache){var found=cache.get(key);if(found!=null)return found;}
-                var result=new blockbranch.cubic.CaveBiomeLayer(seed,cx,cz,palette.additional("lush_caves"),palette.additional("sulfur_caves"),growth.apply(cx,cz));
-                synchronized(cache){var old=cache.get(key);if(old!=null)return old;cache.put(key,result);if(cache.size()>64)cache.remove(cache.keySet().iterator().next());}return result;
+                long key=ExactMemo.key(cx,cz);
+                var found=cache.find(key);if(found!=null)return found;
+                return cache.store(key,new blockbranch.cubic.CaveBiomeLayer(seed,cx,cz,palette.additional("lush_caves"),palette.additional("sulfur_caves"),growth.apply(cx,cz)));
             };
             var base=full;var selection=caves;
             full=(x,y,z)->selection.apply(x>>2,z>>2).biome(x,y,z,drainage.bedHeight(x*4,z*4),base.getNoiseBiome(x,y,z));
@@ -189,13 +188,11 @@ public final class ScreeBiomeSource extends BiomeSource {
     }
     public boolean bound(){return bound!=null;}
     private static BiomeResolver cachedSurface(BiomeResolver source){
-        var samples=new java.util.LinkedHashMap<Long,Holder<Biome>>(256,.75f,true);
+        var samples=new ExactMemo<Long,Holder<Biome>>(256,2048);
         return (x,y,z)->{
-            long key=(x&0xffffffffL)|((long)z<<32);
-            synchronized(samples){var cached=samples.get(key);if(cached!=null)return cached;}
-            var result=source.getNoiseBiome(x,0,z);
-            synchronized(samples){samples.put(key,result);if(samples.size()>2048)samples.remove(samples.keySet().iterator().next());}
-            return result;
+            long key=ExactMemo.key(x,z);
+            var cached=samples.find(key);if(cached!=null)return cached;
+            return samples.store(key,source.getNoiseBiome(x,0,z));
         };
     }
     public BiomeResolver surfaceResolver(){var b=bound;if(b==null)throw new IllegalStateException("Unbound surface source");return b.surface;}

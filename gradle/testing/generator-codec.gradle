@@ -1,0 +1,15 @@
+// Saved generator contract: the gate table against the frozen pre-table validator, and a native codec witness.
+analyticCheck('checkGeneratorSchemaParity','blockbranch.realistic.GeneratorSchemaParityCheck')
+
+// Decodes every registered Realistic preset and a fixed mutation corpus; compare witness.txt across commits.
+def codecWitnessDir=layout.projectDirectory.dir(providers.gradleProperty('generatorCodecWitnessDirectory').getOrElse('build/generator-codec-witness'))
+loom.runs.register('generatorCodecWitness'){
+ server();runDir(codecWitnessDir.asFile.absolutePath);vmArg('-Xmx2G');programArg('--nogui')
+ vmArg('-Dblockbranch.generatorCodecWitness=true');vmArg('-Dblockbranch.generatorCodecWitnessDirectory='+codecWitnessDir.asFile.absolutePath)
+}
+tasks.register('prepareGeneratorCodecWitness'){doLast{
+ def dir=codecWitnessDir.asFile;dir.mkdirs();new File(dir,'result.txt').delete()
+ new File(dir,'eula.txt').text='eula=true\n'
+ new File(dir,'server.properties').text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25671\nview-distance=2\nsimulation-distance=2\nlevel-name=witness\nlevel-type=minecraft\\:flat\n'
+}}
+tasks.named('runGeneratorCodecWitness'){dependsOn 'prepareGeneratorCodecWitness';doLast{assert codecWitnessDir.file('result.txt').asFile.text.startsWith('PASS')}}

@@ -7,7 +7,7 @@ import java.util.*;
 public final class MontaneDeadwoodCheck {
     private record P(int x,int y,int z){}
     public static void main(String[] args){
-        long seed=1;var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true,true);var c=new ClimateField(seed,true);
+        long seed=1;var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true).withAlluvial(true));var c=new ClimateField(seed,true);
         Map<P,Integer> old=null;P selected=null;
         search:for(int[] site:new int[][]{{16000,-240000},{48000,-304000},{-1744000,-1040000}})
             for(int dz=-4;dz<=4;dz++)for(int dx=-4;dx<=4;dx++){

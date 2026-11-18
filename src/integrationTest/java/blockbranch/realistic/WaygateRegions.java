@@ -5,7 +5,7 @@ final class WaygateRegions {
  static void run(RealisticGenerator generator,DesertWaygates current,net.minecraft.world.level.levelgen.RandomState random,net.minecraft.server.level.ServerLevel level)throws Exception{
   var bean=(com.sun.management.ThreadMXBean)java.lang.management.ManagementFactory.getThreadMXBean();long thread=Thread.currentThread().threadId();var reports=new ArrayList<Object>();
   for(long seed:new long[]{424242,1,-17}){
-   var d=seed==random.seed()?generator.drainage(random):new DrainageNetwork(new TerrainShape(seed),seed,true,true);var c=new ClimateField(seed);
+   var d=seed==random.seed()?generator.drainage(random):new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var c=new ClimateField(seed);
    var wells=seed==random.seed()?generator.wells(random):new DesertWell(seed,d,c,3);
    var wellBefore=Arrays.stream(wells.planArrays()).map(int[]::clone).toArray(int[][]::new);long start=System.nanoTime(),allocated=bean.getThreadAllocatedBytes(thread);var gates=DesertWaygates.build(seed,true,wells,d,c);long elapsed=System.nanoTime()-start;allocated=bean.getThreadAllocatedBytes(thread)-allocated;
    WellInteraction.require(Arrays.deepEquals(wellBefore,wells.planArrays()),"Waygates preserve all existing well plans");

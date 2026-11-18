@@ -82,7 +82,7 @@ public final class SeasonalForestQualification {
     private static Object selectors(HabitatPalette p){
         var rows=new ArrayList<Object>();
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true);var c=new ClimateField(seed,true);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));var c=new ClimateField(seed,true);
             var before=source(p,seed,d,c,false);var after=source(p,seed,d,c,true);int changed=0,retained=0;var owners=new TreeMap<String,Integer>();int[] counts=new int[9],differences=new int[9];
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){
                 var a=before.surfaceResolver().getNoiseBiome(x>>2,0,z>>2);var b=after.surfaceResolver().getNoiseBiome(x>>2,0,z>>2);

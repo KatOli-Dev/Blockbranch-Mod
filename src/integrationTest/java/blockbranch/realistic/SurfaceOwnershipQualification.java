@@ -156,7 +156,7 @@ public final class SurfaceOwnershipQualification {
         var redwood=type.getDeclaredMethod("withRedwoodForests",boolean.class);redwood.setAccessible(true);
         int samples=0,unowned=0,rockland=0,remaining=0,oldLandFallback=0,oldOceanFallback=0;
         for(long seed:new long[]{424242,1,-17}) {
-            var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,true,true,true);var now=new DrainageNetwork(shape,seed,true,true,true,true);var c=new ClimateField(seed);
+            var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));var now=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);
             var prior=(BiomeSource)type.getConstructor(HabitatPalette.class,boolean.class,boolean.class).newInstance(oldPalette,true,true);redwood.invoke(prior,true);bind.invoke(prior,seed,d,c);
             var published=(BiomeResolver)type.getMethod("surfaceResolver").invoke(prior);
             var retained=new ScreeBiomeSource(oldPalette,true,true).withRedwoodForests(true);retained.bind(seed,d,c);

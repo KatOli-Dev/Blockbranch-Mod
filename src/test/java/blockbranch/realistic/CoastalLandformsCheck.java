@@ -4,7 +4,7 @@ import java.util.*;
 public final class CoastalLandformsCheck {
  public static void main(String[]args){
   for(long seed:new long[]{424242,1,-17}){
-   var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed);var old=new DrainageNetwork(shape,seed,false);var climate=new ClimateField(seed);
+   var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed);var old=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withCoastalLandforms(false));var climate=new ClimateField(seed);
    int changed=0,rock=0,wet=0,unchanged=0,river=0;var p=blockbranch.realistic.StonyShoreFixtures.fixture(d,seed);var codes=new TreeSet<Integer>();int maxRise=0;
    for(int z=p.z()-192;z<=p.z()+192;z+=4)for(int x=p.x()-192;x<=p.x()+192;x+=4){var a=old.sample(x,z);var b=d.sample(x,z);int delta=b.height()-a.height();
     require(delta>=0&&delta<=CoastalLandforms.MAX_RISE,"Bounded positive coastal relief");maxRise=Math.max(maxRise,delta);require(a.waterLevel()==b.regionalWaterLevel()&&a.basin()==b.basin()&&a.closed()==b.closed(),"Original regional water reference and catchment preserved");

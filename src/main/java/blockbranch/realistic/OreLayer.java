@@ -107,23 +107,7 @@ public final class OreLayer {
     private boolean vein(blockbranch.metallurgy.SectionVeins veins,int ore,int lx,int y,int lz,int ground){
         if(veins!=null)return veins.contains(ore,lx&15,y&15,lz&15);
         int x=(cx<<4)+(lx&15),z=(cz<<4)+(lz&15),depth=ground-y;
-        return switch(ore){
-            case blockbranch.metallurgy.SectionVeins.TIN->blockbranch.metallurgy.TinVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.ZINC->blockbranch.metallurgy.ZincVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.MANGANESE->blockbranch.metallurgy.ManganeseVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.TUNGSTEN->blockbranch.metallurgy.TungstenVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.NICKEL->blockbranch.metallurgy.NickelVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.CHROMIUM->blockbranch.metallurgy.ChromiumVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.LEAD->blockbranch.metallurgy.LeadVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.FOOLS_DIAMOND->blockbranch.metallurgy.FoolsDiamondVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.SILVER->blockbranch.metallurgy.SilverVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.PLATINUM->blockbranch.metallurgy.PlatinumVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.TITANIUM->blockbranch.metallurgy.TitaniumVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.MAGNETITE->blockbranch.metallurgy.MagnetiteVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.RESONITE->blockbranch.metallurgy.ResoniteVeins.contains(seed,x,y,z,depth);
-            case blockbranch.metallurgy.SectionVeins.BISMUTH->blockbranch.metallurgy.BismuthVeins.contains(seed,x,y,z,depth);
-            default->throw new IllegalArgumentException("Unknown vein "+ore);
-        };
+        return blockbranch.metallurgy.SectionVeins.reference(ore,seed,x,y,z,depth);
     }
     private BlockState frozenV1(int localX,int y,int localZ,int ground,BlockState host,boolean caves){
         if(!enabled()||(!host.is(Blocks.STONE)&&!host.is(Blocks.DEEPSLATE)))return host;

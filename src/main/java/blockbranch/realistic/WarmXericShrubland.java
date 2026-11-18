@@ -26,7 +26,7 @@ public final class WarmXericShrubland {
     /** Reuse the bounded selected-quart/physical-block intersection. Its
      * eligibility callback is deliberately this subtype's, not cool desert's. */
     static BiPredicate<Integer,Integer> domain(DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selected){
-        return CoolDesert.selectedDomain(selected,(x,z)->eligible(x,z,d,c));
+        return SelectedDomain.of(selected,(x,z)->eligible(x,z,d,c));
     }
     /** Existing desert roles only: 1 pavement, 2 gravel, 3 sand, 4 fine soil,
      * 5 dead stems, 6 short dry grass, 7 live <1 m shrubs. Shrubs dominate live

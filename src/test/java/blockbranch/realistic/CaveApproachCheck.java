@@ -10,7 +10,7 @@ public final class CaveApproachCheck {
         require(!step.contains(128,19,128)&&!step.contains(129,20,128),"Clearance never removes either walking floor");
         long[] seeds={424242,1,-17};int[][] centres={{237582,-262158},{57336,-57376},{-122868,180198}};
         for(int s=0;s<3;s++){
-            long seed=seeds[s];var terrain=new DrainageNetwork(new TerrainShape(seed),seed,true,true);var field=new UndergroundStructure(seed);int found=0,eligible=0,extendedFound=0;
+            long seed=seeds[s];var terrain=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var field=new UndergroundStructure(seed);int found=0,eligible=0,extendedFound=0;
             for(int z=-3;z<=3;z++)for(int x=-3;x<=3;x++){
                 int cx=Math.floorDiv(centres[s][0],384)+x,cz=Math.floorDiv(centres[s][1],384)+z;
                 if(CaveApproach.eligibleSite(seed,cx,cz,terrain,(xx,zz)->false).present())eligible++;

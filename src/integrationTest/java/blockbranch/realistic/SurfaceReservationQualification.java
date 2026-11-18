@@ -9,7 +9,7 @@ public final class SurfaceReservationQualification {
   for(int i=0;i<50000;i++)check(cache.reserved(i-25000,i*31)==value(i-25000,i*31));
   java.util.stream.IntStream.range(0,50000).parallel().forEach(i->check(cache.reserved(i-25000,i*31)==value(i-25000,i*31)));
   var other=new SurfaceReservationCache((x,z)->!value(x,z));for(int i=0;i<5000;i++)check(other.reserved(i,i)==!cache.reserved(i,i));
-  var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
+  var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));
   int checked=0;for(int[]c:new int[][]{{228504,-267736},{0,0},{-701960,270984}})for(int z=-12;z<12;z++)for(int x=-12;x<12;x++){
    int wx=c[0]+x,wz=c[1]+z;var sample=d.sample(wx,wz);boolean expected=sample.bedrockCoast()||sample.waterLevel()!=DrainageNetwork.DRY||d.channelAt(wx,wz).edge()>=0;
    int elevation=sample.height()+1-TerrainShape.SEA_LEVEL;

@@ -152,8 +152,9 @@ remains original. New balancing needs explicit versions, not restored player edi
 
 The matrix identifies historical saved combinations, **including unexplored
 chunks**. It is not a recipe for editing metadata. Exact validation lives in
-[StructureGenerationSchema](../src/main/java/blockbranch/realistic/StructureGenerationSchema.java)
-and the generator/wrapper codecs.
+[StructureGenerationSchema](../src/main/java/blockbranch/realistic/StructureGenerationSchema.java),
+the layer table in [GeneratorSchema](../src/main/java/blockbranch/realistic/GeneratorSchema.java) and
+[RealisticGeneratorCodec](../src/main/java/blockbranch/realistic/RealisticGeneratorCodec.java).
 
 | Schema | Introduced scope |
 | --- | --- |
@@ -382,6 +383,15 @@ Humid-crown definition1 requires complete278 and writes279, with saved vegetatio
 
 Each generator schema number and each saved vegetation flag bit has exactly one meaning forever: a saved clear plan stores only the numeric definition, and only the world's saved generator names the feature that produced it, so plans are never portable across builds with different gates. A feature that finds its number or bit already taken renumbers itself (next schema number wrapping the complete earlier one, next flag bit with the clear ranges widened) instead of reusing it. Schema 271 and clear bit64 mean montane needleleaf structure only; schema 272 and bit128 mean boreal slope tolerance only; schema 273 means arched mangrove roots only and owns no flag bit; schema 274 and bit256 mean ordinary-forest oak crowns only; schema 275 and bit512 mean seasonal dry-forest crowns only; schema 276 and bit1024 mean mature old-growth-birch crowns only. Schema 277 and bit2048 mean mature old-growth-pine crowns only; schema 278 and bit4096 mean mature coastal winter-rain oak crowns only; schema 279 and bit8192 mean mature humid-woodland crowns only. An unreleased draft of the boreal change wrote 271 with bit64 before the montane merge; worlds written by that draft are unsupported: the codec rejects them at load (the draft's saved world was opened by the final montane build and refused, and `fresh272` rejects mutated schema/definition JSON, with the run output not committed), and that rejection is not a migration path or a promise to read them later. `checkSavedGateRegistry` scans production sources and fails on a duplicate wrapper-schema `VERSION` (classes with `BASE` and `VERSION`) or `FLAG` bit; it does not cover the older multi-number schemas or inline literals in `vegetationFlags()`.
 
+
+**Adding a generator gate.** Append a [GenerationGate](../src/main/java/blockbranch/realistic/GenerationGate.java)
+(permanent save key and range; enum order is the encoded field order), a `*Schema` class for its wrapper number (`BASE` = the previous latest), and
+one `Step` at the top of `GeneratorSchema.LAYERS`; point `GeneratorSchema.LATEST` at the new version. The codec,
+validation, saved number and lit-growth view follow from the table. A vegetation bit also goes into
+`GenerationSettings.vegetationFlags()`. `checkSavedGateRegistry` rejects reused numbers or bits;
+`checkGeneratorSchemaParity` compares the table with a frozen transcription of the hand-written validator it
+replaced, over the 43 transcribed gates (never edit the copy); `runGeneratorCodecWitness` diffs the saved codec
+contract between two commits.
 
 ## Structure piece contracts
 

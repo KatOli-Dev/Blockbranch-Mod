@@ -86,104 +86,19 @@ publishing {
 	}
 }
 
-apply(from = "gradle/testing/source-sets.gradle")
-
-apply(from = "gradle/testing/column-smoke.gradle")
-
-// Isolated build configuration for the realistic feature and its fixture world.
-apply(from = "gradle/testing/realistic.gradle")
-apply(from = "gradle/testing/wildlife.gradle")
-
-apply(from = "gradle/testing/terrain-audit.gradle")
-apply(from = "gradle/testing/initial-loading.gradle")
-
-apply(from = "gradle/testing/column-lifecycle.gradle")
-
-apply(from = "gradle/testing/ore-checks.gradle")
-
-apply(from = "gradle/testing/archive-guards.gradle")
-apply(from = "gradle/testing/documentation.gradle")
-
-apply(from = "gradle/testing/ring-transition.gradle")
-apply(from = "gradle/testing/structures.gradle")
-apply(from = "gradle/testing/integrated-walking.gradle")
-
-apply(from = "gradle/testing/historical-readers.gradle")
-
-apply(from = "gradle/testing/overworld-coverage.gradle")
-apply(from = "gradle/testing/integrated-overworld.gradle")
-apply(from = "gradle/testing/crypt-performance.gradle")
-apply(from = "gradle/testing/village-paths.gradle")
-
-apply(from = "gradle/testing/pyramid-visual.gradle")
-
-apply(from = "gradle/testing/mansion-visual.gradle")
-apply(from = "gradle/testing/mansion-perimeter-visual.gradle")
-
-apply(from = "gradle/testing/sanctuary-visual.gradle")
-apply(from = "gradle/testing/crypt-visual.gradle")
-
-apply(from = "gradle/testing/sanctuary-core.gradle")
-apply(from = "gradle/testing/mansion-replacement.gradle")
-
-apply(from = "gradle/testing/daylight.gradle")
-
-apply(from = "gradle/testing/metallurgy.gradle")
-
-apply(from = "gradle/testing/zinc-brass.gradle")
-
-apply(from = "gradle/testing/steel.gradle")
-
-apply(from = "gradle/testing/tungsten.gradle")
-
-apply(from = "gradle/testing/stainless.gradle")
-
-apply(from = "gradle/testing/stainless-equipment.gradle")
-
-apply(from = "gradle/testing/lead.gradle")
-
-apply(from = "gradle/testing/fools-diamond.gradle")
-
-apply(from = "gradle/testing/precious.gradle")
-
-apply(from = "gradle/testing/silver-equipment.gradle")
-
-apply(from = "gradle/testing/platinum-alloy.gradle")
-
-apply(from = "gradle/testing/platinum-equipment.gradle")
-
-apply(from = "gradle/testing/titanium.gradle")
-
-apply(from = "gradle/testing/titanium-equipment.gradle")
-
-apply(from = "gradle/testing/surface-ownership.gradle")
-apply(from = "gradle/testing/dry-season.gradle")
-apply(from = "gradle/testing/cool-desert.gradle")
-apply(from = "gradle/testing/abyssal-traces.gradle")
-apply(from = "gradle/testing/deep-basin.gradle")
-apply(from = "gradle/testing/land-ice.gradle")
-apply(from = "gradle/testing/summer-dry.gradle")
-apply(from = "gradle/testing/polar-ice.gradle")
-apply(from = "gradle/testing/leaf-litter.gradle")
-apply(from = "gradle/testing/warm-xeric.gradle")
-apply(from = "gradle/testing/seasonal-forest.gradle")
-apply(from = "gradle/testing/boreal-slope.gradle")
-apply(from = "gradle/testing/mangrove-roots.gradle")
-apply(from = "gradle/testing/lake-reed.gradle")
-apply(from = "gradle/testing/birch-crowns.gradle")
-apply(from = "gradle/testing/pine-crowns.gradle")
-apply(from = "gradle/testing/coastal-oak.gradle")
-apply(from = "gradle/testing/humid-crown.gradle")
-apply(from = "gradle/testing/lowland-surface.gradle")
-apply(from = "gradle/testing/broadleaf-crowns.gradle")
-apply(from = "gradle/testing/seasonal-crowns.gradle")
-apply(from = "gradle/testing/floodplain.gradle")
-apply(from = "gradle/testing/montane-forest.gradle")
-
-apply(from = "gradle/testing/magnetite.gradle")
-
-apply(from = "gradle/testing/resonite.gradle")
-
-apply(from = "gradle/testing/uranium.gradle")
-
-apply(from = "gradle/testing/bismuth.gradle")
+// Test, QA-run and guard definitions. Order matters: a script may configure tasks an earlier one registered,
+// and check-suite must stay last because it reads the final `check` dependencies.
+listOf(
+    "source-sets", "column-smoke", "realistic", "generator-codec", "wildlife", "terrain-audit", "initial-loading",
+    "column-lifecycle", "ore-checks", "archive-guards", "documentation", "ring-transition", "structures",
+    "integrated-walking", "historical-readers", "overworld-coverage", "integrated-overworld", "crypt-performance",
+    "village-paths", "pyramid-visual", "mansion-visual", "mansion-perimeter-visual", "sanctuary-visual",
+    "crypt-visual", "sanctuary-core", "mansion-replacement", "daylight", "metallurgy", "zinc-brass",
+    "steel", "tungsten", "stainless", "stainless-equipment", "lead", "fools-diamond", "precious",
+    "silver-equipment", "platinum-alloy", "platinum-equipment", "titanium", "titanium-equipment",
+    "surface-ownership", "dry-season", "cool-desert", "abyssal-traces", "deep-basin", "land-ice",
+    "summer-dry", "polar-ice", "leaf-litter", "warm-xeric", "seasonal-forest", "boreal-slope", "mangrove-roots",
+    "lake-reed", "birch-crowns", "pine-crowns", "coastal-oak", "humid-crown", "lowland-surface",
+    "broadleaf-crowns", "seasonal-crowns", "floodplain", "montane-forest", "magnetite", "resonite",
+    "uranium", "bismuth", "check-suite",
+).forEach { apply(from = "gradle/testing/$it.gradle") }

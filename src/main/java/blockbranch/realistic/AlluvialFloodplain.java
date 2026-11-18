@@ -21,10 +21,10 @@ final class AlluvialFloodplain {
     private final DrainageNetwork reference;
     // Exact block keys and immutable plans; cache hits never approximate slopes
     // or move a boundary. Positive/negative entries share the same fixed budget.
-    private final LinkedHashMap<Long,Plan> plans=new LinkedHashMap<>(512,.75f,true);
+    private final ExactMemo<Long,Plan> plans=new ExactMemo<>(512,16384);
     private static final int TILE=32,HALO=2*MAX_CUT,SPAN=TILE+2*HALO;
     private final LinkedHashMap<Long,byte[]> cutTiles=new LinkedHashMap<>(32,.75f,true);
-    private final LinkedHashMap<Long,Boolean> connected=new LinkedHashMap<>(512,.75f,true);
+    private final ExactMemo<Long,Boolean> connected=new ExactMemo<>(512,8192);
     AlluvialFloodplain(DrainageNetwork reference){this.reference=reference;}
     private Plan geometryPlan(int x,int z){
         var raw=rawPlan(x,z);if(!raw.changed())return raw;
@@ -54,20 +54,18 @@ final class AlluvialFloodplain {
         for(int z=height-1;z>=0;z--)for(int x=width-1;x>=0;x--){int i=z*width+x;if(x+1<width)units[i]=Math.min(units[i],units[i+1]+1);if(z+1<height)units[i]=Math.min(units[i],units[i+width]+1);}
     }
     private Plan rawPlan(int x,int z){
-        long key=(x&0xffffffffL)|((long)z<<32);
-        synchronized(plans){var found=plans.get(key);if(found!=null)return found;}
-        var value=compute(x,z);
-        synchronized(plans){plans.put(key,value);if(plans.size()>16384)plans.remove(plans.keySet().iterator().next());}
-        return value;
+        long key=ExactMemo.key(x,z);
+        var found=plans.find(key);if(found!=null)return found;
+        return plans.store(key,compute(x,z));
     }
     /** Geometry never consumes connectivity. The second pass reads each cell's
      * actual immutable geometry plan, including its own exclusions/reach/fit,
      * so a skipped obstacle cannot be replaced by a hypothetical radial cut. */
     Plan plan(int x,int z){
         var geometry=geometryPlan(x,z);if(!geometry.changed())return geometry;
-        long key=(x&0xffffffffL)|((long)z<<32);Boolean value;
-        synchronized(connected){value=connected.get(key);}
-        if(value==null){value=connected(x,z,geometry,REFERENCE_RISE);synchronized(connected){connected.put(key,value);if(connected.size()>8192)connected.remove(connected.keySet().iterator().next());}}
+        long key=ExactMemo.key(x,z);
+        var value=connected.find(key);
+        if(value==null)value=connected.store(key,connected(x,z,geometry,REFERENCE_RISE));
         return new Plan(geometry.height(),geometry.water(),geometry.cut(),value);
     }
     private boolean connected(int x,int z,Plan target,int rise){
@@ -156,6 +154,6 @@ final class AlluvialFloodplain {
         if(old.height()-plan.height()!=plan.cut()||old.waterLevel()!=DrainageNetwork.DRY)throw new IllegalStateException("Alluvial plan requires original physical sample");
         return new DrainageNetwork.Sample(plan.height(),old.waterLevel(),old.basin(),old.closed(),old.bedrockCoast(),old.regionalHeight(),old.regionalWaterLevel(),old.sandyBackshore());
     }
-    int cachedPlans(){synchronized(plans){return plans.size();}}
+    int cachedPlans(){return plans.size();}
     private static double smooth(double v){double t=Math.clamp(v,0,1);return t*t*t*(t*(t*6-15)+10);}
 }

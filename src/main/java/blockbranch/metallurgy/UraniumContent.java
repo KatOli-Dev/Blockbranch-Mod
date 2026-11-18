@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 import blockbranch.Blockbranch;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.*;
@@ -21,7 +22,6 @@ public final class UraniumContent {
  public static final TagKey<Item> RADIOACTIVE=tag("radioactive"),FRAGILE_ARMOR=tag("radiation_fragile_armor"),SHIELDING_ARMOR=tag("radiation_shielding_armor"),WEAPONS=tag("uranium_tipped_weapons");
  private static TagKey<Item> tag(String name){return TagKey.create(Registries.ITEM,Blockbranch.id(name));}
  private static Block ore(String name,Block base){var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,new Block(BlockBehaviour.Properties.ofFullCopy(base).setId(ResourceKey.create(Registries.BLOCK,id))));Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,exposed(new Item.Properties()).setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;}
- private static Item item(String name,Item.Properties properties){return Registry.register(BuiltInRegistries.ITEM,Blockbranch.id(name),new Item(properties.setId(ResourceKey.create(Registries.ITEM,Blockbranch.id(name)))));}
  private static Item.Properties exposed(Item.Properties p){return p.component(DataComponents.LORE,new ItemLore(java.util.List.of(net.minecraft.network.chat.Component.translatable("item.blockbranch.radioactive.effect"))));}
  // These are the native 26.3 registration parameters; native probes compare every bound component.
  private static Item weapon(String name,Item.Properties properties){properties.component(DataComponents.LORE,new ItemLore(java.util.List.of(net.minecraft.network.chat.Component.translatable("item.blockbranch.uranium_weapon.effect"),net.minecraft.network.chat.Component.translatable("item.blockbranch.radioactive.effect"))));return item(name,properties);}

@@ -5,11 +5,11 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(RealisticGenerator.class)
 abstract class StructureLoadAuditMixin {
- @Shadow @Final @Mutable private int structureDefinition;
+ @Shadow @Final @Mutable private GenerationSettings settings;
  @Inject(method="createState",at=@At("HEAD"))
  private void begin(CallbackInfoReturnable<net.minecraft.world.level.chunk.ChunkGeneratorStructureState> ci){
   if(!Boolean.getBoolean("blockbranch.structureLoadAudit"))return;
-  if(Boolean.getBoolean("blockbranch.structureLoadControl"))structureDefinition=0;
+  if(Boolean.getBoolean("blockbranch.structureLoadControl"))settings=settings.with(GenerationGate.STRUCTURE,0);
   StructureLoadAudit.begin();
  }
  @Inject(method="createState",at=@At("RETURN"))

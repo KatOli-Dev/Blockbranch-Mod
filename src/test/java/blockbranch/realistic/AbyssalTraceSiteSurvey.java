@@ -16,7 +16,7 @@ public final class AbyssalTraceSiteSurvey {
     public static void main(String[] args){
         System.out.println("STAGES=[all,depth+marine,selectedFineBed,slope<=.08,bothFine+slope]");
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var c=new ClimateField(seed);int[] grid=new int[5];var selected=new ArrayList<int[]>();
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);int[] grid=new int[5];var selected=new ArrayList<int[]>();
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){var a=stages(seed,x,z,d,c);add(grid,a);if(a[4]>0&&selected.size()<3)selected.add(new int[]{x,z});}
             System.out.println("GRID seed="+seed+" bounds=[-1920000,1920000) centeredStride=32000 denominator=14400 stages="+Arrays.toString(grid)+" firstEligible="+Arrays.deepToString(selected.toArray()));
             int[][] original=seed==1?new int[][]{{-1168000,-1904000},{-1136000,-1904000},{-1104000,-1904000}}:new int[][]{{-1904000,-1904000},{-1872000,-1904000},{-1840000,-1904000}};

@@ -19,292 +19,216 @@ import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 /** Procedural terrain with specific mountain, lake, river and ocean-shore habitats. */
 public final class RealisticGenerator extends ChunkGenerator {
-    // Independent saved opt-ins wrap the unchanged definition-82 terrain foundation.
-    public static final int MOSS_SAVE_VERSION=83,FORMATION_SAVE_VERSION=84,CAVE_BIOME_SAVE_VERSION=85,STRUCTURE_SAVE_VERSION=86,CALIBRATED_STRUCTURE_SAVE_VERSION=87,ATLAS_STRUCTURE_SAVE_VERSION=88;
-    // Group flat extension fields instead of exceeding RecordCodecBuilder's arity limit.
-    private record DiscoveryData(int definition,java.util.Optional<BuriedTreasureDiscovery> treasure,java.util.Optional<DesertWaygates> gates,java.util.Optional<ShipwreckDiscovery> ships,java.util.Optional<WetlandHuts> huts,java.util.Optional<SnowShelters> shelters,java.util.Optional<WarmOceanRuins> ruins,java.util.Optional<ColdOceanRuins> coldRuins,java.util.Optional<DeepColdOceanRuins> deepColdRuins,java.util.Optional<DeepWarmOceanRuins> deepWarmRuins,int nativeBodies,int nativeOrdinary,java.util.Optional<ReimaginedSites> reimagined,int overworld,int mansionWings,int pyramidGallery){
-        static final MapCodec<DiscoveryData> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
-            Codec.intRange(0,1).optionalFieldOf("small_discovery_definition",0).forGetter(DiscoveryData::definition),
-            BuriedTreasureDiscovery.CODEC.lenientOptionalFieldOf("treasure_cache").forGetter(DiscoveryData::treasure),
-            DesertWaygates.CODEC.optionalFieldOf("desert_waygates").forGetter(DiscoveryData::gates),
-            ShipwreckDiscovery.CODEC.optionalFieldOf("shipwrecks").forGetter(DiscoveryData::ships),
-            WetlandHuts.CODEC.optionalFieldOf("wetland_huts").forGetter(DiscoveryData::huts),
-            SnowShelters.CODEC.optionalFieldOf("snow_shelters").forGetter(DiscoveryData::shelters),
-            WarmOceanRuins.CODEC.optionalFieldOf("warm_ruins").forGetter(DiscoveryData::ruins),
-            ColdOceanRuins.CODEC.optionalFieldOf("cold_ruins").forGetter(DiscoveryData::coldRuins),
-            DeepColdOceanRuins.CODEC.optionalFieldOf("deep_cold_ruins").forGetter(DiscoveryData::deepColdRuins),
-            DeepWarmOceanRuins.CODEC.optionalFieldOf("deep_warm_ruins").forGetter(DiscoveryData::deepWarmRuins),
-            Codec.intRange(0,1).optionalFieldOf("native_hut_igloo",0).forGetter(DiscoveryData::nativeBodies),
-            Codec.intRange(0,1).optionalFieldOf("native_ordinary_structures",0).forGetter(DiscoveryData::nativeOrdinary),
-            ReimaginedSites.CODEC.optionalFieldOf("reimagined_layouts").forGetter(DiscoveryData::reimagined),
-            Codec.intRange(0,1).optionalFieldOf("native_overworld_structures",0).forGetter(DiscoveryData::overworld),
-            Codec.intRange(0,1).optionalFieldOf("mansion_wing_definition",0).forGetter(DiscoveryData::mansionWings),
-            Codec.intRange(0,1).optionalFieldOf("pyramid_gallery_definition",0).forGetter(DiscoveryData::pyramidGallery)
-        ).apply(i,DiscoveryData::new));
-        static DiscoveryData of(RealisticGenerator g){return new DiscoveryData(g.discoveryDefinition,g.discoveryDefinition>0&&g.treasure!=null&&g.treasure.canSave()?java.util.Optional.of(g.treasure):java.util.Optional.empty(),java.util.Optional.ofNullable(g.waygates),java.util.Optional.ofNullable(g.shipwrecks),java.util.Optional.ofNullable(g.wetlandHuts),java.util.Optional.ofNullable(g.snowShelters),java.util.Optional.ofNullable(g.warmRuins),java.util.Optional.ofNullable(g.coldRuins),java.util.Optional.ofNullable(g.deepColdRuins),java.util.Optional.ofNullable(g.deepWarmRuins),g.nativeHutIglooDefinition,g.nativeOrdinaryDefinition,java.util.Optional.ofNullable(g.reimaginedSites),g.overworldDefinition,g.mansionWingDefinition,g.pyramidGalleryDefinition);}
-        RealisticGenerator applyTo(RealisticGenerator g){return g.withDiscoveries(definition,treasure).withWaygates(gates).withShipwrecks(ships).withWetlandHuts(huts).withSnowShelters(shelters).withWarmRuins(ruins).withColdRuins(coldRuins).withDeepColdRuins(deepColdRuins).withDeepWarmRuins(deepWarmRuins).withNativeHutIgloo(nativeBodies).withNativeOrdinary(nativeOrdinary).withReimagined(reimagined).withOverworld(overworld).withMansionWings(mansionWings).withPyramidGallery(pyramidGallery);}
-    }
-    /** Flat saved field names and values stay compatible; this composition keeps
-     * the feature codec below RecordCodecBuilder's arity limit. */
-    private record DryForestSettings(int regional,int seasonal){
-        static final MapCodec<DryForestSettings> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
-            Codec.intRange(0,1).optionalFieldOf("dry_forest_definition",0).forGetter(DryForestSettings::regional),
-            Codec.intRange(0,1).optionalFieldOf("seasonal_forest_definition",0).forGetter(DryForestSettings::seasonal)
-        ).apply(i,DryForestSettings::new));
-    }
-    /** Flat fields preserve the original gravel gate while keeping codec arity bounded. */
-    private record ReliefSettings(int gravel,int alluvial,int montane,int borealSlope,int mangroveRoots,int broadleafCrowns,int seasonalCrowns,int birchCrowns,int pineCrowns,int coastalOakCrowns,int humidCrowns){
-        static final MapCodec<ReliefSettings> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
-            Codec.intRange(0,1).optionalFieldOf("gravel_relief_definition",0).forGetter(ReliefSettings::gravel),
-            Codec.intRange(0,1).optionalFieldOf("alluvial_floodplain_definition",0).forGetter(ReliefSettings::alluvial),
-            Codec.intRange(0,1).optionalFieldOf("montane_forest_definition",0).forGetter(ReliefSettings::montane),
-            Codec.intRange(0,1).optionalFieldOf("boreal_slope_definition",0).forGetter(ReliefSettings::borealSlope),
-            Codec.intRange(0,1).optionalFieldOf("mangrove_roots_definition",0).forGetter(ReliefSettings::mangroveRoots),
-            Codec.intRange(0,1).optionalFieldOf("broadleaf_crown_definition",0).forGetter(ReliefSettings::broadleafCrowns),
-            Codec.intRange(0,1).optionalFieldOf("seasonal_crown_definition",0).forGetter(ReliefSettings::seasonalCrowns),
-            Codec.intRange(0,1).optionalFieldOf("birch_crown_definition",0).forGetter(ReliefSettings::birchCrowns),
-            Codec.intRange(0,1).optionalFieldOf("pine_crown_definition",0).forGetter(ReliefSettings::pineCrowns),
-            Codec.intRange(0,1).optionalFieldOf("coastal_oak_crown_definition",0).forGetter(ReliefSettings::coastalOakCrowns),
-            Codec.intRange(0,1).optionalFieldOf("humid_crown_definition",0).forGetter(ReliefSettings::humidCrowns)
-        ).apply(i,ReliefSettings::new));
-    }
-    private record FeatureSettings(DiscoveryData discovery,ReliefSettings relief,int sanctuaryReplacement,int mansionReplacement,int biomeTransition,int redwoodForest,int surfaceOwnership,DryForestSettings dryForest,int coolDesert,int abyssalTraces,int deepBasin,int landIce,int summerDry,int continentalIce,int leafLitter,int warmXeric) {
-        static final MapCodec<FeatureSettings> CODEC=RecordCodecBuilder.mapCodec(i->i.group(
-            DiscoveryData.CODEC.forGetter(FeatureSettings::discovery),
-            ReliefSettings.CODEC.forGetter(FeatureSettings::relief),
-            Codec.intRange(0,1).optionalFieldOf("sanctuary_replacement_definition",0).forGetter(FeatureSettings::sanctuaryReplacement),
-            Codec.intRange(0,1).optionalFieldOf("mansion_replacement_definition",0).forGetter(FeatureSettings::mansionReplacement),
-            Codec.intRange(0,1).optionalFieldOf("biome_transition_definition",0).forGetter(FeatureSettings::biomeTransition),
-            Codec.intRange(0,1).optionalFieldOf("redwood_forest_definition",0).forGetter(FeatureSettings::redwoodForest),
-            Codec.intRange(0,1).optionalFieldOf("surface_ownership_definition",0).forGetter(FeatureSettings::surfaceOwnership),
-            DryForestSettings.CODEC.forGetter(FeatureSettings::dryForest),
-            Codec.intRange(0,1).optionalFieldOf("cool_desert_definition",0).forGetter(FeatureSettings::coolDesert),
-            Codec.intRange(0,1).optionalFieldOf("abyssal_trace_definition",0).forGetter(FeatureSettings::abyssalTraces),
-            Codec.intRange(0,1).optionalFieldOf("deep_basin_relief_definition",0).forGetter(FeatureSettings::deepBasin),
-            Codec.intRange(0,1).optionalFieldOf("land_ice_definition",0).forGetter(FeatureSettings::landIce),
-            Codec.intRange(0,1).optionalFieldOf("summer_dry_definition",0).forGetter(FeatureSettings::summerDry),
-            Codec.intRange(0,1).optionalFieldOf("continental_ice_definition",0).forGetter(FeatureSettings::continentalIce),
-            Codec.intRange(0,1).optionalFieldOf("leaf_litter_definition",0).forGetter(FeatureSettings::leafLitter),
-            Codec.intRange(0,1).optionalFieldOf("warm_xeric_definition",0).forGetter(FeatureSettings::warmXeric)
-        ).apply(i,FeatureSettings::new));
-        static FeatureSettings of(RealisticGenerator g){return new FeatureSettings(DiscoveryData.of(g),new ReliefSettings(g.gravelReliefDefinition,g.alluvialDefinition,g.montaneForestDefinition,g.borealSlopeDefinition,g.mangroveRootsDefinition,g.broadleafCrownDefinition,g.seasonalCrownDefinition,g.birchCrownDefinition,g.pineCrownDefinition,g.coastalOakCrownDefinition,g.humidCrownDefinition),g.sanctuaryReplacementDefinition,g.mansionReplacementDefinition,g.biomeTransitionDefinition,g.redwoodForestDefinition,g.surfaceOwnershipDefinition,new DryForestSettings(g.dryForestDefinition,g.seasonalForestDefinition),g.coolDesertDefinition,g.abyssalTraceDefinition,g.deepBasinReliefDefinition,g.landIceDefinition,g.summerDryDefinition,g.continentalIceDefinition,g.leafLitterDefinition,g.warmXericDefinition);}
-        RealisticGenerator applyTo(RealisticGenerator g){return discovery.applyTo(g).withGravelRelief(relief.gravel()).withAlluvial(relief.alluvial()).withMontaneForests(relief.montane()).withBorealSlope(relief.borealSlope()).withMangroveRoots(relief.mangroveRoots()).withBroadleafCrowns(relief.broadleafCrowns()).withSeasonalCrowns(relief.seasonalCrowns()).withBirchCrowns(relief.birchCrowns()).withPineCrowns(relief.pineCrowns()).withCoastalOakCrowns(relief.coastalOakCrowns()).withHumidCrowns(relief.humidCrowns()).withSanctuaryReplacement(sanctuaryReplacement).withMansionReplacement(mansionReplacement).withBiomeTransitions(biomeTransition).withRedwoodForests(redwoodForest) .withSurfaceOwnership(surfaceOwnership).withDryForests(dryForest.regional()).withSeasonalForests(dryForest.seasonal()).withCoolDeserts(coolDesert).withAbyssalTraces(abyssalTraces).withDeepBasinRelief(deepBasin).withLandIce(landIce).withSummerDryWoodlands(summerDry).withContinentalIce(continentalIce).withLeafLitter(leafLitter).withWarmXeric(warmXeric);}
-    }
-    public static final MapCodec<RealisticGenerator> CODEC = RecordCodecBuilder.<RealisticGenerator>mapCodec(instance -> instance.group(
-        HabitatPalette.CODEC.forGetter(generator -> generator.palette),
-        Codec.intRange(TerrainShape.SHAPE_VERSION,HumidCrownSchema.VERSION).fieldOf("shape_version").forGetter(RealisticGenerator::saveSchema),
-        Codec.BOOL.optionalFieldOf("icebergs",false).forGetter(generator -> generator.icebergsEnabled),
-        Codec.BOOL.optionalFieldOf("sandy_coasts",false).forGetter(generator -> generator.sandyCoastsEnabled),
-        Codec.BOOL.optionalFieldOf("underground",false).forGetter(generator -> generator.undergroundEnabled),
-        Codec.BOOL.optionalFieldOf("cave_approaches",false).forGetter(generator -> generator.approachesEnabled),
-        Codec.BOOL.optionalFieldOf("cave_entry_routes",false).forGetter(generator -> generator.entryRoutesEnabled),
-        Codec.intRange(0,OreLayer.DEFINITION).optionalFieldOf("ore_definition",0).forGetter(generator -> generator.oreDefinition),
-        Codec.intRange(0,2).optionalFieldOf("dripstone_definition",0).forGetter(generator -> generator.dripstoneDefinition),
-        Codec.intRange(0,2).validate(d->d==0||d==2?com.mojang.serialization.DataResult.success(d):com.mojang.serialization.DataResult.error(()->"Unsupported prototype lit cave definition")).optionalFieldOf("lit_cave_growth_definition",0).forGetter(generator -> generator.litCaveGrowthDefinition),
-        Codec.intRange(0,1).optionalFieldOf("cave_biome_definition",0).forGetter(generator -> generator.caveBiomeDefinition),
-        Codec.intRange(0,3).optionalFieldOf("structure_definition",0).forGetter(generator -> generator.structureDefinition),
-        StructurePlacementCache.CODEC.lenientOptionalFieldOf("structure_cache").forGetter(generator -> generator.structureDefinition==3?generator.structureCache:java.util.Optional.empty()),
-        Codec.intRange(0,1).optionalFieldOf("boreal_crown_definition",0).forGetter(RealisticGenerator::borealCrownDefinition),
-        FeatureSettings.CODEC.forGetter(FeatureSettings::of)
-    ).apply(instance,(palette,version,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,structures,cache,crowns,features)->features.applyTo(new RealisticGenerator(palette,icebergs,sandy,underground,approaches,entries,ores,dripstone,growth,caveBiomes,version,structures).withStructureCache(cache).withBorealCrowns(crowns)))).validate(g->!HumidCrownSchema.matches(g.inputSchema,g.humidCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Humid crown schema/definition mismatch"):!CoastalOakCrownSchema.matches(g.humidCrownBaseSchema(),g.coastalOakCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Coastal oak crown schema/definition mismatch"):g.coastalOakCrownDefinition>0&&g.summerDryDefinition==0?com.mojang.serialization.DataResult.error(()->"Coastal oak crowns require summer-dry woodland"):!PineCrownSchema.matches(g.coastalOakCrownBaseSchema(),g.pineCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Pine crown schema/definition mismatch"):!BirchCrownSchema.matches(g.pineCrownBaseSchema(),g.birchCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Birch crown schema/definition mismatch"):!SeasonalCrownSchema.matches(g.birchCrownBaseSchema(),g.seasonalCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Seasonal crown schema/definition mismatch"):!BroadleafCrownSchema.matches(g.seasonalCrownBaseSchema(),g.broadleafCrownDefinition)?com.mojang.serialization.DataResult.error(()->"Broadleaf crown schema/definition mismatch"):!MangroveRootsSchema.matches(g.broadleafBaseSchema(),g.mangroveRootsDefinition)?com.mojang.serialization.DataResult.error(()->"Mangrove roots schema/definition mismatch"):!BorealSlopeSchema.matches(g.mangroveRootsBaseSchema(),g.borealSlopeDefinition)?com.mojang.serialization.DataResult.error(()->"Boreal slope schema/definition mismatch"):!MontaneForestSchema.matches(g.borealSlopeBaseSchema(),g.montaneForestDefinition)?com.mojang.serialization.DataResult.error(()->"Montane forest schema/definition mismatch"):g.montaneForestDefinition>0&&!g.palette.additional().containsKey(MontaneForest.KEY)?com.mojang.serialization.DataResult.error(()->"Montane forest requires holder"):!AlluvialSchema.matches(g.montaneBaseSchema(),g.alluvialDefinition)?com.mojang.serialization.DataResult.error(()->"Alluvial schema/definition mismatch"):!SeasonalForestSchema.matches(g.alluvialBaseSchema(),g.seasonalForestDefinition)?com.mojang.serialization.DataResult.error(()->"Seasonal forest schema/definition mismatch"):!WarmXericSchema.matches(g.seasonalBaseSchema(),g.warmXericDefinition)?com.mojang.serialization.DataResult.error(()->"Warm xeric schema/definition mismatch"):g.warmXericDefinition>0&&!g.palette.additional().containsKey(WarmXericShrubland.KEY)?com.mojang.serialization.DataResult.error(()->"Warm xeric shrubs require holder"):!FoundationSchema.matches(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition)?com.mojang.serialization.DataResult.error(()->"Continental ice / leaf-litter schema/definition mismatch"):g.continentalIceDefinition>0&&!g.palette.additional().containsKey(ContinentalIceField.KEY)?com.mojang.serialization.DataResult.error(()->"Continental ice requires biome holder"):!SummerDrySchema.matches(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition)?com.mojang.serialization.DataResult.error(()->"Summer-dry schema/definition mismatch"):g.summerDryDefinition>0&&!g.palette.additional().containsKey(SummerDryWoodland.KEY)?com.mojang.serialization.DataResult.error(()->"Summer-dry woodland requires biome holder"):!LandIceSchema.matches(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition)?com.mojang.serialization.DataResult.error(()->"Land ice schema/definition mismatch"):g.landIceDefinition>0&&!g.palette.additional().containsKey(LandIceField.KEY)?com.mojang.serialization.DataResult.error(()->"Land ice requires biome holder"):!DeepBasinSchema.matches(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition)?com.mojang.serialization.DataResult.error(()->"Deep basin relief schema/definition mismatch"):!AbyssalTraceSchema.matches(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition)?com.mojang.serialization.DataResult.error(()->"Abyssal trace schema/definition mismatch"):!CoolDesertSchema.matches(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition)?com.mojang.serialization.DataResult.error(()->"Cool desert schema/definition mismatch"):g.coolDesertDefinition>0&&!g.palette.additional().containsKey(CoolDesert.KEY)?com.mojang.serialization.DataResult.error(()->"Cool desert requires biome holder"):!DryForestSchema.matches(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition)?com.mojang.serialization.DataResult.error(()->"Dry forest schema/definition mismatch"):g.dryForestDefinition>0&&!g.palette.additional().containsKey(DryForest.KEY)?com.mojang.serialization.DataResult.error(()->"Dry forest requires biome holder"):!SurfaceOwnershipSchema.matches(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition)?com.mojang.serialization.DataResult.error(()->"Surface ownership schema/definition mismatch"):g.surfaceOwnershipDefinition>0&&!g.palette.additional().containsKey(ColdRockland.KEY)?com.mojang.serialization.DataResult.error(()->"Surface ownership requires cold rockland holder"):!RedwoodForestSchema.matches(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition)?com.mojang.serialization.DataResult.error(()->"Redwood forest schema/definition mismatch"):g.redwoodForestDefinition>0&&!g.palette.additional().containsKey(RedwoodForest.KEY)?com.mojang.serialization.DataResult.error(()->"Redwood forests require their biome holder"):!BiomeTransitionSchema.matches(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition)?com.mojang.serialization.DataResult.error(()->"Biome transition schema/definition mismatch"):!MansionReplacementSchema.matches(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Mansion replacement schema/definition mismatch"):!SanctuaryReplacementSchema.matches(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition)?com.mojang.serialization.DataResult.error(()->"Sanctuary replacement schema/definition mismatch"):!GravelReliefSchema.matches(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition)?com.mojang.serialization.DataResult.error(()->"Gravel relief schema/definition mismatch"):g.pyramidGalleryDefinition>0&&g.reimaginedDefinition()==0?com.mojang.serialization.DataResult.error(()->"Pyramid galleries require reimagined layouts"):g.overworldDefinition>0&&!g.palette.additional().containsKey("deep_dark")?com.mojang.serialization.DataResult.error(()->"Overworld coverage requires deep_dark holder"):!StructureGenerationSchema.matches(PyramidGallerySchema.baseSchema(BorealCrownSchema.baseSchema(GravelReliefSchema.baseSchema(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition),g.continentalIceDefinition,g.leafLitterDefinition),g.summerDryDefinition),g.landIceDefinition),g.deepBasinReliefDefinition),g.abyssalTraceDefinition),g.coolDesertDefinition),g.dryForestDefinition),g.surfaceOwnershipDefinition),g.redwoodForestDefinition),g.biomeTransitionDefinition),g.mansionReplacementDefinition),g.sanctuaryReplacementDefinition),g.gravelReliefDefinition),g.borealCrownDefinition),g.pyramidGalleryDefinition),g.discoveryDefinition,g.shipwreckDefinition(),g.waygateDefinition(),g.wetlandHutDefinition(),g.snowShelterDefinition(),g.warmRuinDefinition(),g.coldRuinDefinition(),g.deepColdRuinDefinition(),g.deepWarmRuinDefinition(),g.nativeHutIglooDefinition(),g.nativeOrdinaryDefinition(),g.reimaginedDefinition(),g.overworldDefinition,g.mansionWingDefinition)?com.mojang.serialization.DataResult.error(()->"Structure feature schema mismatch"):(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition)>=ATLAS_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==3)?com.mojang.serialization.DataResult.error(()->"Structure atlas schema/definition mismatch"):(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition)==CALIBRATED_STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==2)?com.mojang.serialization.DataResult.error(()->"Calibrated structure schema/definition mismatch"):(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition)==STRUCTURE_SAVE_VERSION)!=(g.structureDefinition==1)?com.mojang.serialization.DataResult.error(()->"Structure schema/definition mismatch"):(WarmXericSchema.baseSchema(g.seasonalBaseSchema(),g.warmXericDefinition)>=CAVE_BIOME_SAVE_VERSION)!=(g.caveBiomeDefinition==1)?com.mojang.serialization.DataResult.error(()->"Cave biome schema/definition mismatch"):g.caveBiomeDefinition>0&&(g.dripstoneDefinition!=2||g.litCaveGrowthDefinition!=2||!g.palette.additional().containsKey("lush_caves")||!g.palette.additional().containsKey("sulfur_caves"))?com.mojang.serialization.DataResult.error(()->"Cave biomes require formation/moss definitions and both holders"):g.litCaveGrowthDefinition>0&&(!g.undergroundEnabled||!g.approachesEnabled)?com.mojang.serialization.DataResult.error(()->"Lit cave growth requires existing cave approaches"):g.dripstoneDefinition>0&&(!g.undergroundEnabled||!g.palette.additional().containsKey("dripstone_caves"))?com.mojang.serialization.DataResult.error(()->"Dripstone requires caves and its biome holder"):g.entryRoutesEnabled&&!g.approachesEnabled?com.mojang.serialization.DataResult.error(()->"Entry routes require approaches"):g.approachesEnabled&&!g.undergroundEnabled?com.mojang.serialization.DataResult.error(()->"Approaches require caves"):g.icebergsEnabled&&!g.palette.additional().containsKey("ice_spikes")?com.mojang.serialization.DataResult.error(()->"Iceberg habitat requires ice_spikes holder"):com.mojang.serialization.DataResult.success(g));
-    private int saveSchema(){return HumidCrownSchema.schema(CoastalOakCrownSchema.schema(PineCrownSchema.schema(BirchCrownSchema.schema(SeasonalCrownSchema.schema(BroadleafCrownSchema.schema(MangroveRootsSchema.schema(BorealSlopeSchema.schema(MontaneForestSchema.schema(AlluvialSchema.schema(SeasonalForestSchema.schema(WarmXericSchema.schema(FoundationSchema.schema(SummerDrySchema.schema(LandIceSchema.schema(DeepBasinSchema.schema(AbyssalTraceSchema.schema(CoolDesertSchema.schema(DryForestSchema.schema(SurfaceOwnershipSchema.schema(RedwoodForestSchema.schema(BiomeTransitionSchema.schema(MansionReplacementSchema.schema(SanctuaryReplacementSchema.schema(GravelReliefSchema.schema(BorealCrownSchema.schema(PyramidGallerySchema.schema(StructureGenerationSchema.versionFor(structureDefinition==3?ATLAS_STRUCTURE_SAVE_VERSION:structureDefinition==2?CALIBRATED_STRUCTURE_SAVE_VERSION:structureDefinition>0?STRUCTURE_SAVE_VERSION:caveBiomeDefinition>0?CAVE_BIOME_SAVE_VERSION:dripstoneDefinition==2?FORMATION_SAVE_VERSION:litCaveGrowthDefinition>0?MOSS_SAVE_VERSION:TerrainShape.SHAPE_VERSION,discoveryDefinition,shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),nativeHutIglooDefinition(),nativeOrdinaryDefinition(),reimaginedDefinition(),overworldDefinition,mansionWingDefinition),pyramidGalleryDefinition),borealCrownDefinition),gravelReliefDefinition),sanctuaryReplacementDefinition),mansionReplacementDefinition),biomeTransitionDefinition),redwoodForestDefinition),surfaceOwnershipDefinition),dryForestDefinition),coolDesertDefinition),abyssalTraceDefinition),deepBasinReliefDefinition),landIceDefinition),summerDryDefinition),continentalIceDefinition,leafLitterDefinition),warmXericDefinition),seasonalForestDefinition),alluvialDefinition),montaneForestDefinition),borealSlopeDefinition),mangroveRootsDefinition),broadleafCrownDefinition),seasonalCrownDefinition),birchCrownDefinition),pineCrownDefinition),coastalOakCrownDefinition),humidCrownDefinition);}
-    private int biomeTransitionDefinition,redwoodForestDefinition,surfaceOwnershipDefinition,dryForestDefinition,coolDesertDefinition,abyssalTraceDefinition,deepBasinReliefDefinition,landIceDefinition,summerDryDefinition,continentalIceDefinition,leafLitterDefinition,warmXericDefinition,seasonalForestDefinition,alluvialDefinition,montaneForestDefinition,borealSlopeDefinition,mangroveRootsDefinition,broadleafCrownDefinition,seasonalCrownDefinition,birchCrownDefinition,pineCrownDefinition,coastalOakCrownDefinition,humidCrownDefinition;
-    private int humidCrownBaseSchema(){return HumidCrownSchema.baseSchema(inputSchema,humidCrownDefinition);}
-    private int coastalOakCrownBaseSchema(){return CoastalOakCrownSchema.baseSchema(humidCrownBaseSchema(),coastalOakCrownDefinition);}
-    private int pineCrownBaseSchema(){return PineCrownSchema.baseSchema(coastalOakCrownBaseSchema(),pineCrownDefinition);}
-    private int birchCrownBaseSchema(){return BirchCrownSchema.baseSchema(pineCrownBaseSchema(),birchCrownDefinition);}
-    private int seasonalCrownBaseSchema(){return SeasonalCrownSchema.baseSchema(birchCrownBaseSchema(),seasonalCrownDefinition);}
-    private int broadleafBaseSchema(){return BroadleafCrownSchema.baseSchema(seasonalCrownBaseSchema(),broadleafCrownDefinition);}
-    private int mangroveRootsBaseSchema(){return MangroveRootsSchema.baseSchema(broadleafBaseSchema(),mangroveRootsDefinition);}
-    private int borealSlopeBaseSchema(){return BorealSlopeSchema.baseSchema(mangroveRootsBaseSchema(),borealSlopeDefinition);}
-    private int montaneBaseSchema(){return MontaneForestSchema.baseSchema(borealSlopeBaseSchema(),montaneForestDefinition);}
-    private int alluvialBaseSchema(){return AlluvialSchema.baseSchema(montaneBaseSchema(),alluvialDefinition);}
-    private RealisticGenerator withMangroveRoots(int definition){mangroveRootsDefinition=definition;return this;}
-    private RealisticGenerator withBroadleafCrowns(int definition){broadleafCrownDefinition=definition;return this;}
-    public int broadleafCrownDefinition(){return broadleafCrownDefinition;}
-    private RealisticGenerator withSeasonalCrowns(int definition){seasonalCrownDefinition=definition;return this;}
-    public int seasonalCrownDefinition(){return seasonalCrownDefinition;}
-    private RealisticGenerator withBirchCrowns(int definition){birchCrownDefinition=definition;return this;}
-    public int birchCrownDefinition(){return birchCrownDefinition;}
-    private RealisticGenerator withPineCrowns(int definition){pineCrownDefinition=definition;return this;}
-    public int pineCrownDefinition(){return pineCrownDefinition;}
-    private RealisticGenerator withCoastalOakCrowns(int definition){coastalOakCrownDefinition=definition;return this;}
-    public int coastalOakCrownDefinition(){return coastalOakCrownDefinition;}
-    private RealisticGenerator withHumidCrowns(int definition){humidCrownDefinition=definition;return this;}
-    public int humidCrownDefinition(){return humidCrownDefinition;}
-    public int mangroveRootsDefinition(){return mangroveRootsDefinition;}
-    private RealisticGenerator withBorealSlope(int definition){borealSlopeDefinition=definition;return this;}
-    public int borealSlopeDefinition(){return borealSlopeDefinition;}
-    private RealisticGenerator withMontaneForests(int definition){montaneForestDefinition=definition;((ScreeBiomeSource)biomeSource).withMontaneForests(definition>0);return this;}
-    public int montaneForestDefinition(){return montaneForestDefinition;}
-    private int seasonalBaseSchema(){return SeasonalForestSchema.baseSchema(alluvialBaseSchema(),seasonalForestDefinition);}
-    private RealisticGenerator withAlluvial(int definition){alluvialDefinition=definition;return this;}
-    public int alluvialDefinition(){return alluvialDefinition;}
-    private RealisticGenerator withSeasonalForests(int definition){seasonalForestDefinition=definition;((ScreeBiomeSource)biomeSource).withSeasonalForests(definition>0);return this;}
-    public int seasonalForestDefinition(){return seasonalForestDefinition;}
-    private RealisticGenerator withWarmXeric(int definition){warmXericDefinition=definition;((ScreeBiomeSource)biomeSource).withWarmXeric(definition>0);return this;}
-    public int warmXericDefinition(){return warmXericDefinition;}
-    private RealisticGenerator withContinentalIce(int definition){continentalIceDefinition=definition;return this;}
-    public int continentalIceDefinition(){return continentalIceDefinition;}
-    public ClimateField climate(net.minecraft.world.level.levelgen.RandomState random){return terrain(random).climate();}
-    private RealisticGenerator withSummerDryWoodlands(int definition){summerDryDefinition=definition;((ScreeBiomeSource)biomeSource).withSummerDryWoodlands(definition>0);return this;}
-    public int summerDryDefinition(){return summerDryDefinition;}
-    private RealisticGenerator withLeafLitter(int definition){leafLitterDefinition=definition;return this;}
-    public int leafLitterDefinition(){return leafLitterDefinition;}
-    private RealisticGenerator withLandIce(int definition){landIceDefinition=definition;((ScreeBiomeSource)biomeSource).withLandIce(definition>0);return this;}
-    public int landIceDefinition(){return landIceDefinition;}
-    private RealisticGenerator withDeepBasinRelief(int definition){deepBasinReliefDefinition=definition;return this;}
-    public int deepBasinReliefDefinition(){return deepBasinReliefDefinition;}
-    private RealisticGenerator withAbyssalTraces(int definition){abyssalTraceDefinition=definition;return this;}
-    public int abyssalTraceDefinition(){return abyssalTraceDefinition;}
-    private RealisticGenerator withCoolDeserts(int definition){coolDesertDefinition=definition;((ScreeBiomeSource)biomeSource).withCoolDeserts(definition>0);return this;}
-    public int coolDesertDefinition(){return coolDesertDefinition;}
-    private RealisticGenerator withDryForests(int definition){dryForestDefinition=definition;((ScreeBiomeSource)biomeSource).withDryForests(definition>0);return this;}
-    public int dryForestDefinition(){return dryForestDefinition;}
-    private RealisticGenerator withSurfaceOwnership(int definition){surfaceOwnershipDefinition=definition;((ScreeBiomeSource)biomeSource).withSurfaceOwnership(definition>0);return this;}
-    public int surfaceOwnershipDefinition(){return surfaceOwnershipDefinition;}
-    private RealisticGenerator withRedwoodForests(int definition){redwoodForestDefinition=definition;((ScreeBiomeSource)biomeSource).withRedwoodForests(definition>0);return this;}
-    public int redwoodForestDefinition(){return redwoodForestDefinition;}
-    /** Bits 0..13 retain transitions/redwoods/dry forest/summer-dry woodland/polar climate/seasonal forest/montane needleleaf/boreal slope tolerance/broadleaf oak crowns/seasonal dry-forest crowns/birch crowns/pine crowns/coastal-oak crowns/humid crowns in saved tree-clear plans. */
-    public int vegetationFlags(){return biomeTransitionDefinition|(redwoodForestDefinition>0?RedwoodForest.FLAG:0)|(dryForestDefinition>0?DryForest.FLAG:0)|(summerDryDefinition>0?SummerDryWoodland.FLAG:0)|(continentalIceDefinition>0?16:0)|(seasonalForestDefinition>0?SeasonalForestExpansion.FLAG:0)|(montaneForestDefinition>0?MontaneForest.FLAG:0)|(borealSlopeDefinition>0?BorealSlope.FLAG:0)|(broadleafCrownDefinition>0?BroadleafCrowns.FLAG:0)|(seasonalCrownDefinition>0?SeasonalCrowns.FLAG:0)|(birchCrownDefinition>0?BirchCrowns.FLAG:0)|(pineCrownDefinition>0?PineCrowns.FLAG:0)|(coastalOakCrownDefinition>0?CoastalOakCrowns.FLAG:0)|(humidCrownDefinition>0?HumidCrowns.FLAG:0);}
-    private RealisticGenerator withBiomeTransitions(int definition){biomeTransitionDefinition=definition;return this;}
-    public int biomeTransitionDefinition(){return biomeTransitionDefinition;}
-    private int mansionReplacementDefinition;
-    private RealisticGenerator withMansionReplacement(int definition){if(definition<0||definition>1)throw new IllegalArgumentException("Unsupported mansion replacement definition");mansionReplacementDefinition=definition;return this;}
-    public int mansionReplacementDefinition(){return mansionReplacementDefinition;}
-    private int sanctuaryReplacementDefinition;
-    private RealisticGenerator withSanctuaryReplacement(int definition){if(definition<0||definition>1)throw new IllegalArgumentException("Unsupported sanctuary replacement definition");sanctuaryReplacementDefinition=definition;return this;}
-    public int sanctuaryReplacementDefinition(){return sanctuaryReplacementDefinition;}
-    private int gravelReliefDefinition;
-    private RealisticGenerator withGravelRelief(int definition){
-        if(definition<0||definition>1)throw new IllegalArgumentException("Unsupported gravel relief definition");
-        gravelReliefDefinition=definition;return this;
-    }
-    public int gravelReliefDefinition(){return gravelReliefDefinition;}
-    private int borealCrownDefinition;
-    private RealisticGenerator withBorealCrowns(int definition){borealCrownDefinition=definition;return this;}
-    public int borealCrownDefinition(){return borealCrownDefinition;}
-    private volatile DesertWaygates waygates;
-    private long waygateSeed,waygateInitNanos;private boolean waygateBound,waygateRestored;
-    private RealisticGenerator withWaygates(java.util.Optional<DesertWaygates> gates){waygates=gates.orElse(null);return this;}
-    public int waygateDefinition(){return waygates==null?0:1;}
-    public long waygateInitializationNanos(){return waygateInitNanos;}
-    public boolean waygateCacheRestored(){return waygateRestored;}
-    public synchronized DesertWaygates waygates(RandomState random){
-        if(waygates==null)throw new IllegalStateException("Waygates disabled");if(waygateBound&&waygateSeed==random.seed())return waygates;
-        long start=System.nanoTime();var source=wells(random);waygateRestored=waygates.valid(random.seed(),sandyCoastsEnabled);
-        if(!waygateRestored){var t=terrain(random);waygates=DesertWaygates.build(random.seed(),sandyCoastsEnabled,source,t.drainage(),t.climate());}
-        waygateSeed=random.seed();waygateBound=true;waygateInitNanos=System.nanoTime()-start;return waygates;
-    }
+    public static final int MOSS_SAVE_VERSION=GeneratorSchema.MOSS_SAVE_VERSION,FORMATION_SAVE_VERSION=GeneratorSchema.FORMATION_SAVE_VERSION,
+        CAVE_BIOME_SAVE_VERSION=GeneratorSchema.CAVE_BIOME_SAVE_VERSION,STRUCTURE_SAVE_VERSION=GeneratorSchema.STRUCTURE_SAVE_VERSION,
+        CALIBRATED_STRUCTURE_SAVE_VERSION=GeneratorSchema.CALIBRATED_STRUCTURE_SAVE_VERSION,ATLAS_STRUCTURE_SAVE_VERSION=GeneratorSchema.ATLAS_STRUCTURE_SAVE_VERSION;
+    /** Saved form; see {@link RealisticGeneratorCodec}. Validation is the {@link GeneratorSchema} table. */
+    public static final MapCodec<RealisticGenerator> CODEC = RealisticGeneratorCodec.GENERATOR;
+
     private final HabitatPalette palette;
-    private final int structureDefinition;
+    /** Every saved opt-in, fixed at construction and shared by all worldgen threads. */
+    private final GenerationSettings settings;
+    /** The decoded {@code shape_version}; validation unwraps it against {@link #settings}. */
+    private final int inputSchema;
+
+    // Saved structure-placement caches. Each is a candidate until bound to a seed on first use.
+    private final SeedBoundState<BuriedTreasureDiscovery> treasure;
+    private final SeedBoundState<DesertWaygates> waygates;
+    private final SeedBoundState<ShipwreckDiscovery> shipwrecks;
+    private final SeedBoundState<WetlandHuts> wetlandHuts;
+    private final SeedBoundState<SnowShelters> snowShelters;
+    private final SeedBoundState<WarmOceanRuins> warmRuins;
+    private final SeedBoundState<ColdOceanRuins> coldRuins;
+    private final SeedBoundState<DeepColdOceanRuins> deepColdRuins;
+    private final SeedBoundState<DeepWarmOceanRuins> deepWarmRuins;
+    private final SeedBoundState<ReimaginedSites> reimaginedSites;
+    private volatile java.util.Optional<StructurePlacementCache> structureCache;
     private volatile DesertWell wells;
-    private int discoveryDefinition;
-    private volatile BuriedTreasureDiscovery treasure;
-    private boolean treasureRestored,treasureBound;
-    private long treasureSeed,treasureInitializationNanos;
-    public long treasureInitializationNanos(){return treasureInitializationNanos;}
-    public boolean treasureRestored(){return treasureRestored;}
-    private RealisticGenerator withDiscoveries(int definition,java.util.Optional<BuriedTreasureDiscovery> cache){discoveryDefinition=definition;if(definition>0)treasure=cache.orElse(null);return this;}
-    public int discoveryDefinition(){return discoveryDefinition;}
-    public synchronized BuriedTreasureDiscovery treasures(RandomState random){
-        if(treasureBound&&treasureSeed==random.seed())return treasure;
-        long started=System.nanoTime();
-        treasureRestored=treasure!=null&&treasure.valid(random.seed(),sandyCoastsEnabled);
-        if(!treasureRestored){var field=terrain(random);treasure=BuriedTreasureDiscovery.build(random.seed(),sandyCoastsEnabled,field.drainage(),field.climate());}
-        var field=terrain(random);treasure.bind(field.drainage(),field.climate());treasureSeed=random.seed();treasureBound=true;treasureInitializationNanos=System.nanoTime()-started;return treasure;
-    }
-    private volatile WarmOceanRuins warmRuins;private boolean ruinBound,ruinRestored;private long ruinSeed,ruinInitNanos;
-    private RealisticGenerator withWarmRuins(java.util.Optional<WarmOceanRuins> state){warmRuins=state.orElse(null);return this;}
-    public int warmRuinDefinition(){return warmRuins==null?0:1;}
-    public long warmRuinInitializationNanos(){return ruinInitNanos;}public boolean warmRuinCacheRestored(){return ruinRestored;}
-    public synchronized WarmOceanRuins warmRuins(RandomState random){if(warmRuins==null)throw new IllegalStateException("Warm ruins disabled");if(ruinBound&&ruinSeed==random.seed())return warmRuins;long begin=System.nanoTime();ruinRestored=warmRuins.valid(random.seed());var built=warmRuins.bindSaved(random.seed(),this,random);warmRuins=built;ruinSeed=random.seed();ruinBound=true;ruinInitNanos=System.nanoTime()-begin;return built;}
-    private volatile ColdOceanRuins coldRuins;private boolean coldBound,coldRestored;private long coldSeed,coldInitNanos;
-    private RealisticGenerator withColdRuins(java.util.Optional<ColdOceanRuins> state){coldRuins=state.orElse(null);return this;}
-    public int coldRuinDefinition(){return coldRuins==null?0:1;}
-    public long coldRuinInitializationNanos(){return coldInitNanos;}public boolean coldRuinCacheRestored(){return coldRestored;}
-    public synchronized ColdOceanRuins coldRuins(RandomState random){if(coldRuins==null)throw new IllegalStateException("Cold ruins disabled");if(coldBound&&coldSeed==random.seed())return coldRuins;long begin=System.nanoTime();coldRestored=coldRuins.valid(random.seed());var built=coldRuins.bindSaved(random.seed(),this,random);coldRuins=built;coldSeed=random.seed();coldBound=true;coldInitNanos=System.nanoTime()-begin;return built;}
-    private volatile DeepColdOceanRuins deepColdRuins;private boolean deepColdBound,deepColdRestored;private long deepColdSeed,deepColdInitNanos;
-    private RealisticGenerator withDeepColdRuins(java.util.Optional<DeepColdOceanRuins> state){deepColdRuins=state.orElse(null);return this;}
-    public int deepColdRuinDefinition(){return deepColdRuins==null?0:1;}
-    public long deepColdRuinInitializationNanos(){return deepColdInitNanos;}public boolean deepColdRuinCacheRestored(){return deepColdRestored;}
-    public synchronized DeepColdOceanRuins deepColdRuins(RandomState random){if(deepColdRuins==null)throw new IllegalStateException("Deep cold ruins disabled");if(deepColdBound&&deepColdSeed==random.seed())return deepColdRuins;long begin=System.nanoTime();deepColdRestored=deepColdRuins.valid(random.seed());var built=deepColdRuins.bindSaved(random.seed(),this,random);deepColdRuins=built;deepColdSeed=random.seed();deepColdBound=true;deepColdInitNanos=System.nanoTime()-begin;return built;}
-    private volatile ReimaginedSites reimaginedSites;private boolean reimaginedBound;private long reimaginedSeed;
-    private RealisticGenerator withReimagined(java.util.Optional<ReimaginedSites> sites){reimaginedSites=sites.orElse(null);return this;}
-    public int reimaginedDefinition(){return reimaginedSites==null?0:reimaginedSites.definition();}
-    public synchronized ReimaginedSites reimagined(RandomState random){if(reimaginedSites==null)throw new IllegalStateException("Reimagined layouts disabled");if(reimaginedBound&&reimaginedSeed==random.seed())return reimaginedSites;var built=reimaginedSites.bind(random.seed(),this,random);reimaginedSites=built;reimaginedSeed=random.seed();reimaginedBound=true;return built;}
-    private int mansionWingDefinition;
-    private RealisticGenerator withMansionWings(int definition){mansionWingDefinition=definition;return this;}
-    public int mansionWingDefinition(){return mansionWingDefinition;}
-    private int pyramidGalleryDefinition;
-    private RealisticGenerator withPyramidGallery(int definition){pyramidGalleryDefinition=definition;return this;}
-    public int pyramidGalleryDefinition(){return pyramidGalleryDefinition;}
-    private int overworldDefinition;
-    private RealisticGenerator withOverworld(int definition){overworldDefinition=definition;((ScreeBiomeSource)biomeSource).withDeepDark(definition>0);return this;}
-    public int overworldDefinition(){return overworldDefinition;}
-    private int nativeOrdinaryDefinition;
-    private RealisticGenerator withNativeOrdinary(int definition){nativeOrdinaryDefinition=definition;return this;}
-    public int nativeOrdinaryDefinition(){return nativeOrdinaryDefinition;}
-    private int nativeHutIglooDefinition;
-    private RealisticGenerator withNativeHutIgloo(int definition){nativeHutIglooDefinition=definition;return this;}
-    public int nativeHutIglooDefinition(){return nativeHutIglooDefinition;}
-    private volatile DeepWarmOceanRuins deepWarmRuins;private boolean deepWarmBound,deepWarmRestored;private long deepWarmSeed,deepWarmInitNanos;
-    private RealisticGenerator withDeepWarmRuins(java.util.Optional<DeepWarmOceanRuins> state){deepWarmRuins=state.orElse(null);return this;}
-    public int deepWarmRuinDefinition(){return deepWarmRuins==null?0:1;}
-    public long deepWarmRuinInitializationNanos(){return deepWarmInitNanos;}public boolean deepWarmRuinCacheRestored(){return deepWarmRestored;}
-    public synchronized DeepWarmOceanRuins deepWarmRuins(RandomState random){if(deepWarmRuins==null)throw new IllegalStateException("Deep warm ruins disabled");if(deepWarmBound&&deepWarmSeed==random.seed())return deepWarmRuins;long begin=System.nanoTime();deepWarmRestored=deepWarmRuins.valid(random.seed());var built=deepWarmRuins.bindSaved(random.seed(),this,random);deepWarmRuins=built;deepWarmSeed=random.seed();deepWarmBound=true;deepWarmInitNanos=System.nanoTime()-begin;return built;}
-    private volatile SnowShelters snowShelters;private boolean snowBound,snowRestored;private long snowSeed,snowInitNanos;
-    private RealisticGenerator withSnowShelters(java.util.Optional<SnowShelters> state){snowShelters=state.orElse(null);return this;}
-    public int snowShelterDefinition(){return snowShelters==null?0:1;}
-    public long snowShelterInitializationNanos(){return snowInitNanos;}public boolean snowShelterCacheRestored(){return snowRestored;}
-    public synchronized SnowShelters snowShelters(RandomState random){if(snowShelters==null)throw new IllegalStateException("Snow shelters disabled");if(snowBound&&snowSeed==random.seed())return snowShelters;long begin=System.nanoTime();snowRestored=snowShelters.valid(random.seed());var built=snowShelters.bindSaved(random.seed(),this,random);snowShelters=built;snowSeed=random.seed();snowBound=true;snowInitNanos=System.nanoTime()-begin;return built;}
-    private volatile WetlandHuts wetlandHuts;private boolean hutRestored,hutBound;private long hutSeed,hutInitNanos;
-    private RealisticGenerator withWetlandHuts(java.util.Optional<WetlandHuts> state){wetlandHuts=state.orElse(null);return this;}
-    public int wetlandHutDefinition(){return wetlandHuts==null?0:1;}
-    public long wetlandHutInitializationNanos(){return hutInitNanos;}public boolean wetlandHutCacheRestored(){return hutRestored;}
-    public synchronized WetlandHuts wetlandHuts(RandomState random){if(wetlandHuts==null)throw new IllegalStateException("Huts disabled");if(hutBound&&hutSeed==random.seed())return wetlandHuts;long t=System.nanoTime();hutRestored=wetlandHuts.valid(random.seed());if(!hutRestored)wetlandHuts=WetlandHuts.bind(random.seed(),this,random);hutSeed=random.seed();hutBound=true;hutInitNanos=System.nanoTime()-t;return wetlandHuts;}
-    private volatile ShipwreckDiscovery shipwrecks;
-    private boolean shipwreckBound,shipwreckRestored;private long shipwreckSeed,shipwreckInitNanos;
-    private RealisticGenerator withShipwrecks(java.util.Optional<ShipwreckDiscovery> state){shipwrecks=state.orElse(null);return this;}
-    // Feature-combination flag; the required discovery codec separately guards template revision.
-    public int shipwreckDefinition(){return shipwrecks==null?0:1;}
-    public long shipwreckInitializationNanos(){return shipwreckInitNanos;}
-    public boolean shipwreckCacheRestored(){return shipwreckRestored;}
-    public synchronized ShipwreckDiscovery shipwrecks(RandomState random){
-        if(shipwrecks==null)throw new IllegalStateException("Shipwrecks not enabled");if(shipwreckBound&&shipwreckSeed==random.seed())return shipwrecks;
-        long started=System.nanoTime();var source=treasures(random);shipwreckRestored=shipwrecks.valid(random.seed(),source);if(!shipwreckRestored)shipwrecks=ShipwreckDiscovery.build(random.seed(),source,shipwrecks.templateRevision());
-        var t=terrain(random);shipwrecks.bind(t.drainage(),t.climate(),source);shipwreckSeed=random.seed();shipwreckBound=true;shipwreckInitNanos=System.nanoTime()-started;return shipwrecks;
-    }
-    private volatile java.util.Optional<StructurePlacementCache> structureCache=java.util.Optional.empty();
-    private RealisticGenerator withStructureCache(java.util.Optional<StructurePlacementCache> cache){if(structureDefinition==3)structureCache=cache;return this;}
-    boolean completedWetlandHutCacheNeedsSave(){return wetlandHuts!=null&&wetlandHuts.canSave()&&!hutRestored;}
-    public boolean structureCacheNeedsSave(){return wells!=null&&!wells.restoredFromSave()&&cachedStructureBytes()>0||discoveryDefinition>0&&treasure!=null&&treasure.canSave()&&!treasureRestored||waygates!=null&&waygates.canSave()&&!waygateRestored||shipwrecks!=null&&shipwrecks.canSave()&&!shipwreckRestored||wetlandHuts!=null&&wetlandHuts.canSave()&&!hutRestored||snowShelters!=null&&snowShelters.canSave()&&!snowRestored||warmRuins!=null&&warmRuins.canSave()&&!ruinRestored||coldRuins!=null&&coldRuins.canSave()&&!coldRestored||deepColdRuins!=null&&deepColdRuins.canSave()&&!deepColdRestored||deepWarmRuins!=null&&deepWarmRuins.canSave()&&!deepWarmRestored;}
-    public int cachedStructureBytes(){return structureCache.map(StructurePlacementCache::retainedBytes).orElse(0);}
     private long wellSeed;
+
+    public GenerationSettings settings(){return settings;}
+    /** Drainage inputs from the saved gates. QA-only mixins may adjust the result (structural comparison). */
+    DrainageNetwork.Options drainageOptions(){
+        return DrainageNetwork.Options.DEFAULT.withSandyCoasts(sandyCoastsEnabled()).withGravelRelief(gravelReliefDefinition()==1)
+            .withSurfaceOwnership(surfaceOwnershipDefinition()==1).withDeepBasinRelief(deepBasinReliefDefinition()==1)
+            .withLandIce(landIceDefinition()==1).withContinentalIce(continentalIceDefinition()==1).withAlluvial(alluvialDefinition()==1);
+    }
+    HabitatPalette palette(){return palette;}
+    int saveSchema(){return GeneratorSchema.saveSchema(settings,discoveries());}
+    GeneratorSchema.Discoveries discoveries(){
+        return new GeneratorSchema.Discoveries(shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),
+            warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),reimaginedDefinition());
+    }
+    GeneratorSchema.Input schemaInput(){return new GeneratorSchema.Input(inputSchema,settings,discoveries(),palette.additional()::containsKey);}
+    RealisticGeneratorCodec.SavedCaches savedCaches(){
+        var savedTreasure=discoveryDefinition()>0&&treasure.present()&&treasure.value().canSave()?java.util.Optional.of(treasure.value()):java.util.Optional.<BuriedTreasureDiscovery>empty();
+        return new RealisticGeneratorCodec.SavedCaches(savedTreasure,java.util.Optional.ofNullable(waygates.value()),
+            java.util.Optional.ofNullable(shipwrecks.value()),java.util.Optional.ofNullable(wetlandHuts.value()),
+            java.util.Optional.ofNullable(snowShelters.value()),java.util.Optional.ofNullable(warmRuins.value()),
+            java.util.Optional.ofNullable(coldRuins.value()),java.util.Optional.ofNullable(deepColdRuins.value()),
+            java.util.Optional.ofNullable(deepWarmRuins.value()),java.util.Optional.ofNullable(reimaginedSites.value()),
+            structureDefinition()==3?structureCache:java.util.Optional.empty());
+    }
+
+    // Saved definitions, read by generation code and by checks.
+    public int oreDefinition(){return settings.get(GenerationGate.ORE);}
+    public int dripstoneDefinition(){return settings.get(GenerationGate.DRIPSTONE);}
+    public int litCaveGrowthDefinition(){return settings.get(GenerationGate.LIT_CAVE_GROWTH);}
+    public int caveBiomeDefinition(){return settings.get(GenerationGate.CAVE_BIOME);}
+    public int structureDefinition(){return settings.get(GenerationGate.STRUCTURE);}
+    public int borealCrownDefinition(){return settings.get(GenerationGate.BOREAL_CROWN);}
+    public int discoveryDefinition(){return settings.get(GenerationGate.SMALL_DISCOVERY);}
+    public int nativeHutIglooDefinition(){return settings.get(GenerationGate.NATIVE_HUT_IGLOO);}
+    public int nativeOrdinaryDefinition(){return settings.get(GenerationGate.NATIVE_ORDINARY);}
+    public int overworldDefinition(){return settings.get(GenerationGate.OVERWORLD);}
+    public int mansionWingDefinition(){return settings.get(GenerationGate.MANSION_WINGS);}
+    public int pyramidGalleryDefinition(){return settings.get(GenerationGate.PYRAMID_GALLERY);}
+    public int gravelReliefDefinition(){return settings.get(GenerationGate.GRAVEL_RELIEF);}
+    public int alluvialDefinition(){return settings.get(GenerationGate.ALLUVIAL);}
+    public int montaneForestDefinition(){return settings.get(GenerationGate.MONTANE_FOREST);}
+    public int borealSlopeDefinition(){return settings.get(GenerationGate.BOREAL_SLOPE);}
+    public int mangroveRootsDefinition(){return settings.get(GenerationGate.MANGROVE_ROOTS);}
+    public int broadleafCrownDefinition(){return settings.get(GenerationGate.BROADLEAF_CROWN);}
+    public int seasonalCrownDefinition(){return settings.get(GenerationGate.SEASONAL_CROWN);}
+    public int birchCrownDefinition(){return settings.get(GenerationGate.BIRCH_CROWN);}
+    public int pineCrownDefinition(){return settings.get(GenerationGate.PINE_CROWN);}
+    public int coastalOakCrownDefinition(){return settings.get(GenerationGate.COASTAL_OAK_CROWN);}
+    public int humidCrownDefinition(){return settings.get(GenerationGate.HUMID_CROWN);}
+    public int sanctuaryReplacementDefinition(){return settings.get(GenerationGate.SANCTUARY_REPLACEMENT);}
+    public int mansionReplacementDefinition(){return settings.get(GenerationGate.MANSION_REPLACEMENT);}
+    public int biomeTransitionDefinition(){return settings.get(GenerationGate.BIOME_TRANSITION);}
+    public int redwoodForestDefinition(){return settings.get(GenerationGate.REDWOOD_FOREST);}
+    public int surfaceOwnershipDefinition(){return settings.get(GenerationGate.SURFACE_OWNERSHIP);}
+    public int dryForestDefinition(){return settings.get(GenerationGate.DRY_FOREST);}
+    public int seasonalForestDefinition(){return settings.get(GenerationGate.SEASONAL_FOREST);}
+    public int coolDesertDefinition(){return settings.get(GenerationGate.COOL_DESERT);}
+    public int abyssalTraceDefinition(){return settings.get(GenerationGate.ABYSSAL_TRACE);}
+    public int deepBasinReliefDefinition(){return settings.get(GenerationGate.DEEP_BASIN_RELIEF);}
+    public int landIceDefinition(){return settings.get(GenerationGate.LAND_ICE);}
+    public int summerDryDefinition(){return settings.get(GenerationGate.SUMMER_DRY);}
+    public int continentalIceDefinition(){return settings.get(GenerationGate.CONTINENTAL_ICE);}
+    public int leafLitterDefinition(){return settings.get(GenerationGate.LEAF_LITTER);}
+    public int warmXericDefinition(){return settings.get(GenerationGate.WARM_XERIC);}
+    public boolean icebergsEnabled(){return settings.enabled(GenerationGate.ICEBERGS);}
+    boolean sandyCoastsEnabled(){return settings.enabled(GenerationGate.SANDY_COASTS);}
+    public boolean undergroundEnabled(){return settings.enabled(GenerationGate.UNDERGROUND);}
+    public boolean approachesEnabled(){return settings.enabled(GenerationGate.CAVE_APPROACHES);}
+    public boolean entryRoutesEnabled(){return settings.enabled(GenerationGate.CAVE_ENTRY_ROUTES);}
+    /** Saved vegetation flags; see {@link GenerationSettings#vegetationFlags()}. */
+    public int vegetationFlags(){return settings.vegetationFlags();}
+
+    // Cache-carried discovery definitions: present caches are enabled structure families.
+    public int waygateDefinition(){return waygates.present()?1:0;}
+    public int shipwreckDefinition(){return shipwrecks.present()?1:0;}
+    public int wetlandHutDefinition(){return wetlandHuts.present()?1:0;}
+    public int snowShelterDefinition(){return snowShelters.present()?1:0;}
+    public int warmRuinDefinition(){return warmRuins.present()?1:0;}
+    public int coldRuinDefinition(){return coldRuins.present()?1:0;}
+    public int deepColdRuinDefinition(){return deepColdRuins.present()?1:0;}
+    public int deepWarmRuinDefinition(){return deepWarmRuins.present()?1:0;}
+    public int reimaginedDefinition(){var sites=reimaginedSites.value();return sites==null?0:sites.definition();}
+
+    public ClimateField climate(net.minecraft.world.level.levelgen.RandomState random){return terrain(random).climate();}
+
+    public long waygateInitializationNanos(){return waygates.initializationNanos();}
+    public boolean waygateCacheRestored(){return waygates.restored();}
+    public synchronized DesertWaygates waygates(RandomState random){
+        return waygates.bind(random.seed(),saved->{
+            var source=wells(random);
+            if(saved.valid(random.seed(),sandyCoastsEnabled()))return new SeedBoundState.Binding<>(saved,true);
+            var t=terrain(random);
+            return new SeedBoundState.Binding<>(DesertWaygates.build(random.seed(),sandyCoastsEnabled(),source,t.drainage(),t.climate()),false);
+        });
+    }
+    public long treasureInitializationNanos(){return treasure.initializationNanos();}
+    public boolean treasureRestored(){return treasure.restored();}
+    /** Unlike the other caches, treasure is built on demand even without a saved candidate. */
+    public synchronized BuriedTreasureDiscovery treasures(RandomState random){
+        return treasure.bind(random.seed(),saved->{
+            boolean restored=saved!=null&&saved.valid(random.seed(),sandyCoastsEnabled());
+            var field=terrain(random);
+            var bound=restored?saved:BuriedTreasureDiscovery.build(random.seed(),sandyCoastsEnabled(),field.drainage(),field.climate());
+            bound.bind(field.drainage(),field.climate());
+            return new SeedBoundState.Binding<>(bound,restored);
+        });
+    }
+    public long warmRuinInitializationNanos(){return warmRuins.initializationNanos();}
+    public boolean warmRuinCacheRestored(){return warmRuins.restored();}
+    public synchronized WarmOceanRuins warmRuins(RandomState random){
+        return warmRuins.bind(random.seed(),saved->{boolean restored=saved.valid(random.seed());return new SeedBoundState.Binding<>(saved.bindSaved(random.seed(),this,random),restored);});
+    }
+    public long coldRuinInitializationNanos(){return coldRuins.initializationNanos();}
+    public boolean coldRuinCacheRestored(){return coldRuins.restored();}
+    public synchronized ColdOceanRuins coldRuins(RandomState random){
+        return coldRuins.bind(random.seed(),saved->{boolean restored=saved.valid(random.seed());return new SeedBoundState.Binding<>(saved.bindSaved(random.seed(),this,random),restored);});
+    }
+    public long deepColdRuinInitializationNanos(){return deepColdRuins.initializationNanos();}
+    public boolean deepColdRuinCacheRestored(){return deepColdRuins.restored();}
+    public synchronized DeepColdOceanRuins deepColdRuins(RandomState random){
+        return deepColdRuins.bind(random.seed(),saved->{boolean restored=saved.valid(random.seed());return new SeedBoundState.Binding<>(saved.bindSaved(random.seed(),this,random),restored);});
+    }
+    public long deepWarmRuinInitializationNanos(){return deepWarmRuins.initializationNanos();}
+    public boolean deepWarmRuinCacheRestored(){return deepWarmRuins.restored();}
+    public synchronized DeepWarmOceanRuins deepWarmRuins(RandomState random){
+        return deepWarmRuins.bind(random.seed(),saved->{boolean restored=saved.valid(random.seed());return new SeedBoundState.Binding<>(saved.bindSaved(random.seed(),this,random),restored);});
+    }
+    public synchronized ReimaginedSites reimagined(RandomState random){
+        return reimaginedSites.bind(random.seed(),saved->new SeedBoundState.Binding<>(saved.bind(random.seed(),this,random),false));
+    }
+    public long snowShelterInitializationNanos(){return snowShelters.initializationNanos();}
+    public boolean snowShelterCacheRestored(){return snowShelters.restored();}
+    public synchronized SnowShelters snowShelters(RandomState random){
+        return snowShelters.bind(random.seed(),saved->{boolean restored=saved.valid(random.seed());return new SeedBoundState.Binding<>(saved.bindSaved(random.seed(),this,random),restored);});
+    }
+    public long wetlandHutInitializationNanos(){return wetlandHuts.initializationNanos();}
+    public boolean wetlandHutCacheRestored(){return wetlandHuts.restored();}
+    public synchronized WetlandHuts wetlandHuts(RandomState random){
+        return wetlandHuts.bind(random.seed(),saved->saved.valid(random.seed())
+            ?new SeedBoundState.Binding<>(saved,true)
+            :new SeedBoundState.Binding<>(WetlandHuts.bind(random.seed(),this,random),false));
+    }
+    // Feature-combination flag; the required discovery codec separately guards template revision.
+    public long shipwreckInitializationNanos(){return shipwrecks.initializationNanos();}
+    public boolean shipwreckCacheRestored(){return shipwrecks.restored();}
+    public synchronized ShipwreckDiscovery shipwrecks(RandomState random){
+        return shipwrecks.bind(random.seed(),saved->{
+            var source=treasures(random);
+            boolean restored=saved.valid(random.seed(),source);
+            var bound=restored?saved:ShipwreckDiscovery.build(random.seed(),source,saved.templateRevision());
+            var t=terrain(random);
+            bound.bind(t.drainage(),t.climate(),source);
+            return new SeedBoundState.Binding<>(bound,restored);
+        });
+    }
+    boolean completedWetlandHutCacheNeedsSave(){return wetlandHuts.needsSave();}
+    public boolean structureCacheNeedsSave(){
+        var w=wells;
+        if(w!=null&&!w.restoredFromSave()&&cachedStructureBytes()>0)return true;
+        if(discoveryDefinition()>0&&treasure.needsSave())return true;
+        for(var state:java.util.List.of(waygates,shipwrecks,wetlandHuts,snowShelters,warmRuins,coldRuins,deepColdRuins,deepWarmRuins))
+            if(state.needsSave())return true;
+        return false;
+    }
+    public int cachedStructureBytes(){return structureCache.map(StructurePlacementCache::retainedBytes).orElse(0);}
     public boolean structureAtlasPrepared(){return wells!=null&&wells.atlas()!=null;}
-    public int structureDefinition(){return structureDefinition;}
     public synchronized DesertWell wells(RandomState random){
         if(wells==null||wellSeed!=random.seed()){
-            var t=terrain(random);var cached=structureDefinition==3?structureCache.map(c->c.restore(t.seed(),sandyCoastsEnabled)).orElse(null):null;
+            int structureDefinition=structureDefinition();
+            var t=terrain(random);var cached=structureDefinition==3?structureCache.map(c->c.restore(t.seed(),sandyCoastsEnabled())).orElse(null):null;
             wells=new DesertWell(t.seed(),t.drainage(),t.climate(),Math.max(1,structureDefinition),cached);wellSeed=t.seed();
-            if(structureDefinition==3)structureCache=StructurePlacementCache.capture(t.seed(),sandyCoastsEnabled,wells);
+            if(structureDefinition==3)structureCache=StructurePlacementCache.capture(t.seed(),sandyCoastsEnabled(),wells);
         }
         return wells;
     }
-    private final boolean undergroundEnabled;
-    private final boolean approachesEnabled;
-    private final boolean entryRoutesEnabled;
-    private final int oreDefinition,dripstoneDefinition,litCaveGrowthDefinition,caveBiomeDefinition,inputSchema;
     // A profile has no back-reference to its chunk. Weak keys and the hard cap
     // bound cancelled/out-of-order native stages without retaining a world.
     private final java.util.Map<ChunkAccess,blockbranch.cubic.TerrainProfile> preparedProfiles=new java.util.WeakHashMap<>();
     private final java.util.Map<Holder<Biome>,Integer> oreRegions=new java.util.concurrent.ConcurrentHashMap<>();
-    private final boolean icebergsEnabled;
-    private final boolean sandyCoastsEnabled;
     private final Holder<Biome> biome;
     private final Holder<Biome> screeBiome;
     private final Holder<Biome> reedbedBiome;
@@ -324,7 +248,8 @@ public final class RealisticGenerator extends ChunkGenerator {
     private final Holder<Biome> shelfBiome;
     private final Holder<Biome> deepOceanBiome;
     private volatile TerrainState terrainState;
-    private record TerrainState(long seed, TerrainShape shape, DrainageNetwork drainage,ClimateField climate,GroundEcology.Field groundEcology,UndergroundStructure underground,IcebergField icebergs,java.util.LinkedHashMap<Long,blockbranch.cubic.CanopyLayer> canopies,java.util.LinkedHashMap<Long,CaveApproach> approaches,java.util.LinkedHashMap<Long,blockbranch.cubic.DripstoneLayer> dripstone,java.util.LinkedHashMap<Long,blockbranch.cubic.LitCaveLayer> litCaves) {}
+    private record TerrainState(long seed, TerrainShape shape, DrainageNetwork drainage,ClimateField climate,GroundEcology.Field groundEcology,UndergroundStructure underground,IcebergField icebergs,ExactMemo<Long,blockbranch.cubic.CanopyLayer> canopies,ExactMemo<Long,CaveApproach> approaches,ExactMemo<Long,blockbranch.cubic.DripstoneLayer> dripstone,ExactMemo<Long,blockbranch.cubic.LitCaveLayer> litCaves) {
+    }
 
     // Minecraft may request base columns from several generation threads. Build
     // once, publish the immutable graph, and never use a process-global seed cache.
@@ -335,20 +260,17 @@ public final class RealisticGenerator extends ChunkGenerator {
             current = terrainState;
             if (current == null || current.seed() != random.seed()) {
                 var shape = new TerrainShape(random.seed());
-                var drainage=new DrainageNetwork(shape,random.seed(),true,sandyCoastsEnabled,gravelReliefDefinition==1,surfaceOwnershipDefinition==1,deepBasinReliefDefinition==1,landIceDefinition==1,continentalIceDefinition==1,alluvialDefinition==1);var climate=new ClimateField(random.seed(),continentalIceDefinition==1);
-                current = new TerrainState(random.seed(),shape,drainage,climate,new GroundEcology.Field(drainage::sample,climate),new UndergroundStructure(random.seed()),new IcebergField(random.seed(),drainage,climate),new java.util.LinkedHashMap<>(128,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true),new java.util.LinkedHashMap<>(64,.75f,true));
+                var drainage=new DrainageNetwork(shape,random.seed(),drainageOptions());var climate=new ClimateField(random.seed(),continentalIceDefinition()==1);
+                current = new TerrainState(random.seed(),shape,drainage,climate,new GroundEcology.Field(drainage::sample,climate),new UndergroundStructure(random.seed()),new IcebergField(random.seed(),drainage,climate),new ExactMemo<>(128,128),new ExactMemo<>(64,64),new ExactMemo<>(64,64),new ExactMemo<>(64,64));
                 // A resolver may outlive a subsequent bind. Give its lazy moss planner a
                 // fixed-seed view, sharing this immutable graph and its bounded caches.
                 // It never references this generator, a Level, or a chunk owner.
                 java.util.function.BiFunction<Integer,Integer,blockbranch.cubic.LitCaveLayer> growth=null;
-                if(caveBiomeDefinition>0){
-                    var view=new RealisticGenerator(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition);
-                    // The view shares canopy caches, so it must use their saved crown and transition definitions.
-                    view.borealCrownDefinition=borealCrownDefinition;
-                    view.biomeTransitionDefinition=biomeTransitionDefinition;view.redwoodForestDefinition=redwoodForestDefinition;view.surfaceOwnershipDefinition=surfaceOwnershipDefinition;view.dryForestDefinition=dryForestDefinition;view.coolDesertDefinition=coolDesertDefinition;view.abyssalTraceDefinition=abyssalTraceDefinition;view.deepBasinReliefDefinition=deepBasinReliefDefinition;view.landIceDefinition=landIceDefinition;view.summerDryDefinition=summerDryDefinition;view.continentalIceDefinition=continentalIceDefinition;view.leafLitterDefinition=leafLitterDefinition;view.warmXericDefinition=warmXericDefinition;view.seasonalForestDefinition=seasonalForestDefinition;view.alluvialDefinition=alluvialDefinition;view.montaneForestDefinition=montaneForestDefinition;view.borealSlopeDefinition=borealSlopeDefinition;view.mangroveRootsDefinition=mangroveRootsDefinition;view.broadleafCrownDefinition=broadleafCrownDefinition;view.seasonalCrownDefinition=seasonalCrownDefinition;view.birchCrownDefinition=birchCrownDefinition;view.pineCrownDefinition=pineCrownDefinition;view.coastalOakCrownDefinition=coastalOakCrownDefinition;view.humidCrownDefinition=humidCrownDefinition;
-                    view.gravelReliefDefinition=gravelReliefDefinition;
+                if(caveBiomeDefinition()>0){
+                    // The view shares canopy caches, so it keeps the saved crown and vegetation definitions.
+                    var view=new RealisticGenerator(palette,settings.litCaveGrowthView());
                     view.terrainState=current;
-                    ((ScreeBiomeSource)view.biomeSource).withMontaneForests(montaneForestDefinition>0).withSeasonalForests(seasonalForestDefinition>0).withWarmXeric(warmXericDefinition>0).withSummerDryWoodlands(summerDryDefinition>0).withLandIce(landIceDefinition>0).withRedwoodForests(redwoodForestDefinition>0).withSurfaceOwnership(surfaceOwnershipDefinition>0).withDryForests(dryForestDefinition>0).withCoolDeserts(coolDesertDefinition>0).bind(current.seed(),current.drainage(),current.climate());
+                    ((ScreeBiomeSource)view.biomeSource).bind(current.seed(),current.drainage(),current.climate());
                     growth=(cx,cz)->view.litCaveLayer(cx,cz,random,null);
                 }
                 ((ScreeBiomeSource)biomeSource).bind(current.seed(),current.drainage(),current.climate(),growth);
@@ -358,31 +280,18 @@ public final class RealisticGenerator extends ChunkGenerator {
         }
     }
 
-    public int caveBiomeDefinition(){return caveBiomeDefinition;}
-    public int litCaveGrowthDefinition(){return litCaveGrowthDefinition;}
-    public int dripstoneDefinition(){return dripstoneDefinition;}
-    public int oreDefinition(){return oreDefinition;}
-    public boolean entryRoutesEnabled(){return entryRoutesEnabled;}
-    public boolean approachesEnabled(){return approachesEnabled;}
     CaveApproach plannedApproach(int cellX,int cellZ,RandomState random){
-        var state=terrain(random);long key=(cellX&0xffffffffL)|((long)cellZ<<32);
-        synchronized(state.approaches()){var found=state.approaches().get(key);if(found!=null)return found;}
+        var state=terrain(random);long key=ExactMemo.key(cellX,cellZ);
+        var found=state.approaches().find(key);if(found!=null)return found;
         var planned=CaveApproach.plan(random.seed(),cellX,cellZ,state.drainage(),(x,z)->{
             int ground=state.drainage().sample(x,z).height();var root=canopy(x,z,random).state(x,ground+1,z);
             return root!=null&&!blockbranch.cubic.UndergroundLayer.approachMaterial(root);
         });
-        if(entryRoutesEnabled)planned=planned.extend(state.drainage(),state.underground());
-        synchronized(state.approaches()){
-            state.approaches().put(key,planned);
-            if(state.approaches().size()>64)state.approaches().remove(state.approaches().keySet().iterator().next());
-        }
-        return planned;
+        if(entryRoutesEnabled())planned=planned.extend(state.drainage(),state.underground());
+        return state.approaches().store(key,planned);
     }
-    private CaveApproach approach(int x,int z,RandomState random){return approachesEnabled?plannedApproach(Math.floorDiv(x,CaveApproach.CELL),Math.floorDiv(z,CaveApproach.CELL),random):CaveApproach.NONE;}
-    public boolean undergroundEnabled(){return undergroundEnabled;}
-    private boolean cave(int x,int y,int z,int ground,RandomState r){return undergroundEnabled&&terrain(r).underground().voidAt(x,y,z,ground);}
-    boolean sandyCoastsEnabled(){return sandyCoastsEnabled;}
-    public boolean icebergsEnabled(){return icebergsEnabled;}
+    private CaveApproach approach(int x,int z,RandomState random){return approachesEnabled()?plannedApproach(Math.floorDiv(x,CaveApproach.CELL),Math.floorDiv(z,CaveApproach.CELL),random):CaveApproach.NONE;}
+    private boolean cave(int x,int y,int z,int ground,RandomState r){return undergroundEnabled()&&terrain(r).underground().voidAt(x,y,z,ground);}
     public boolean keepsIcebergWaterOpen(int x,int z,RandomState random){if(!icebergsEnabled())return false;var f=terrain(random);return IcebergField.habitat(f.seed(),x,z,f.drainage(),f.climate());}
     public IcebergField icebergs(RandomState random){return terrain(random).icebergs();}
     private blockbranch.cubic.FloatingIceLayer floatingIce(int x,int z,RandomState random){return icebergsEnabled()?icebergs(random).column(x>>4,z>>4):blockbranch.cubic.FloatingIceLayer.EMPTY;}
@@ -396,13 +305,21 @@ public final class RealisticGenerator extends ChunkGenerator {
     /** Capture a fixed-seed view before starting the helper. The callback captures
      * this TerrainState and a value flag, never a generator, RandomState or Level. */
     HutPlanningTerrain hutPlanningTerrain(RandomState random) {
-        var field=terrain(random);var rockland=((ScreeBiomeSource)biomeSource).coldRocklandSurface();var dryForest=((ScreeBiomeSource)biomeSource).dryForestSurface();var summerDry=((ScreeBiomeSource)biomeSource).summerDrySurface();var montane=((ScreeBiomeSource)biomeSource).montaneForestSurface();boolean icebergs=icebergsEnabled(),whorled=borealCrownDefinition==1,traces=abyssalTraceDefinition>0,arches=mangroveRootsDefinition>0;int transitions=vegetationFlags();
+        var field=terrain(random);
+        var rockland=((ScreeBiomeSource)biomeSource).coldRocklandSurface();
+        var dryForest=((ScreeBiomeSource)biomeSource).dryForestSurface();
+        var summerDry=((ScreeBiomeSource)biomeSource).summerDrySurface();
+        var montane=((ScreeBiomeSource)biomeSource).montaneForestSurface();
+        boolean icebergs=icebergsEnabled(),whorled=borealCrownDefinition()==1,traces=abyssalTraceDefinition()>0,arches=mangroveRootsDefinition()>0;
+        int transitions=vegetationFlags();
         return new HutPlanningTerrain(field.drainage(),field.climate(),(x,z)->canopy(field,x,z,icebergs,whorled,transitions,rockland,dryForest,summerDry,montane,traces,arches));
     }
-    blockbranch.cubic.CanopyLayer canopy(int x,int z,RandomState random) {return canopy(terrain(random),x,z,icebergsEnabled(),borealCrownDefinition==1,vegetationFlags(),((ScreeBiomeSource)biomeSource).coldRocklandSurface(),((ScreeBiomeSource)biomeSource).dryForestSurface(),((ScreeBiomeSource)biomeSource).summerDrySurface(),((ScreeBiomeSource)biomeSource).montaneForestSurface(),abyssalTraceDefinition>0,mangroveRootsDefinition>0);}
+    blockbranch.cubic.CanopyLayer canopy(int x,int z,RandomState random) {
+        return canopy(terrain(random),x,z,icebergsEnabled(),borealCrownDefinition()==1,vegetationFlags(),((ScreeBiomeSource)biomeSource).coldRocklandSurface(),((ScreeBiomeSource)biomeSource).dryForestSurface(),((ScreeBiomeSource)biomeSource).summerDrySurface(),((ScreeBiomeSource)biomeSource).montaneForestSurface(),abyssalTraceDefinition()>0,mangroveRootsDefinition()>0);
+    }
     private static blockbranch.cubic.CanopyLayer canopy(TerrainState field,int x,int z,boolean icebergs,boolean whorled,int transitions,java.util.function.BiPredicate<Integer,Integer> rockland,java.util.function.BiPredicate<Integer,Integer> dryForest,java.util.function.BiPredicate<Integer,Integer> summerDry,java.util.function.BiPredicate<Integer,Integer> montane,boolean abyssalTraces,boolean mangroveArches) {
-        int cx=x>>4,cz=z>>4;long key=(cx&0xffffffffL)|((long)cz<<32);
-        synchronized(field.canopies()) { var cached=field.canopies().get(key);if(cached!=null) return cached; }
+        int cx=x>>4,cz=z>>4;long key=ExactMemo.key(cx,cz);
+        var cached=field.canopies().find(key);if(cached!=null) return cached;
         var packed=WoodlandTrees.column(field.seed(),cx,cz,field.drainage(),field.climate(),whorled,transitions,dryForest,summerDry,montane);
         packed=SwampCanopy.merge(packed,MangroveTrees.column(field.seed(),cx,cz,field.drainage(),field.climate(),mangroveArches));
         packed=SwampCanopy.merge(packed,FrozenOcean.column(field.seed(),cx,cz,field.drainage(),field.climate(),icebergs));
@@ -425,42 +342,30 @@ public final class RealisticGenerator extends ChunkGenerator {
             packed=java.util.Arrays.stream(packed).filter(v->!masked[(v>>>blockbranch.cubic.CanopyLayer.STATE_BITS)&255]).toArray();
         }
         var created=packed.length==0 ? blockbranch.cubic.CanopyLayer.EMPTY : new blockbranch.cubic.CanopyLayer(packed);
-        synchronized(field.canopies()) {
-            field.canopies().put(key,created);
-            if(field.canopies().size()>128) field.canopies().remove(field.canopies().keySet().iterator().next());
-        }
-        return created;
+        return field.canopies().store(key,created);
     }
 
     boolean coldOceansEnabled(){return palette.additional().containsKey("cold_ocean")&&palette.additional().containsKey("deep_cold_ocean");}
-    public RealisticGenerator(HabitatPalette palette){this(palette,false);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled) {this(palette,icebergsEnabled,false);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled) {
-        this(palette,icebergsEnabled,sandyCoastsEnabled,false);
+    /** A new generator with every gate absent except those in {@code settings}; no saved caches. */
+    public RealisticGenerator(HabitatPalette palette,GenerationSettings settings){
+        this(palette,GeneratorSchema.inputSchemaFor(settings),settings,RealisticGeneratorCodec.SavedCaches.NONE);
     }
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled) {
-        this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,false);
-    }
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,false);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,0);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,0);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition,int dripstoneDefinition) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,0);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition,int dripstoneDefinition,int litCaveGrowthDefinition) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition,0);}
-    public RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition,int dripstoneDefinition,int litCaveGrowthDefinition,int caveBiomeDefinition) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition,caveBiomeDefinition,caveBiomeDefinition>0?CAVE_BIOME_SAVE_VERSION:dripstoneDefinition==2?FORMATION_SAVE_VERSION:litCaveGrowthDefinition>0?MOSS_SAVE_VERSION:TerrainShape.SHAPE_VERSION);}
-    private RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition,int dripstoneDefinition,int litCaveGrowthDefinition,int caveBiomeDefinition,int inputSchema) {this(palette,icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition,caveBiomeDefinition,inputSchema,0);}
-    private RealisticGenerator(HabitatPalette palette,boolean icebergsEnabled,boolean sandyCoastsEnabled,boolean undergroundEnabled,boolean approachesEnabled,boolean entryRoutesEnabled,int oreDefinition,int dripstoneDefinition,int litCaveGrowthDefinition,int caveBiomeDefinition,int inputSchema,int structureDefinition) {
-        this.structureDefinition=structureDefinition;
+    /** Decoded from a save or preset; {@link RealisticGeneratorCodec} validates the combination afterwards. */
+    RealisticGenerator(HabitatPalette palette,int inputSchema,GenerationSettings settings,RealisticGeneratorCodec.SavedCaches caches){
+        this.settings=settings;
         this.inputSchema=inputSchema;
-        if(caveBiomeDefinition<0||caveBiomeDefinition>1)throw new IllegalArgumentException("Unsupported cave biome definition");this.caveBiomeDefinition=caveBiomeDefinition;
-        if(litCaveGrowthDefinition!=0&&litCaveGrowthDefinition!=2)throw new IllegalArgumentException("Unsupported lit cave definition");this.litCaveGrowthDefinition=litCaveGrowthDefinition;
-        if(dripstoneDefinition<0||dripstoneDefinition>2)throw new IllegalArgumentException("Unsupported dripstone definition");this.dripstoneDefinition=dripstoneDefinition;
-        if(oreDefinition<0||oreDefinition>OreLayer.DEFINITION)throw new IllegalArgumentException("Unsupported ore definition");
-        this.oreDefinition=oreDefinition;
-        this.entryRoutesEnabled=entryRoutesEnabled;
-        super(new ScreeBiomeSource(palette,icebergsEnabled,sandyCoastsEnabled,dripstoneDefinition,caveBiomeDefinition));
-        this.undergroundEnabled=undergroundEnabled;this.approachesEnabled=approachesEnabled;
-        this.sandyCoastsEnabled=sandyCoastsEnabled;
-        this.icebergsEnabled=icebergsEnabled;
+        super(biomeSource(palette,settings));
+        this.treasure=new SeedBoundState<>(settings.enabled(GenerationGate.SMALL_DISCOVERY)?caches.treasure().orElse(null):null,null,BuriedTreasureDiscovery::canSave);
+        this.waygates=new SeedBoundState<>(caches.waygates().orElse(null),"Waygates disabled",DesertWaygates::canSave);
+        this.shipwrecks=new SeedBoundState<>(caches.shipwrecks().orElse(null),"Shipwrecks not enabled",ShipwreckDiscovery::canSave);
+        this.wetlandHuts=new SeedBoundState<>(caches.wetlandHuts().orElse(null),"Huts disabled",WetlandHuts::canSave);
+        this.snowShelters=new SeedBoundState<>(caches.snowShelters().orElse(null),"Snow shelters disabled",SnowShelters::canSave);
+        this.warmRuins=new SeedBoundState<>(caches.warmRuins().orElse(null),"Warm ruins disabled",WarmOceanRuins::canSave);
+        this.coldRuins=new SeedBoundState<>(caches.coldRuins().orElse(null),"Cold ruins disabled",ColdOceanRuins::canSave);
+        this.deepColdRuins=new SeedBoundState<>(caches.deepColdRuins().orElse(null),"Deep cold ruins disabled",DeepColdOceanRuins::canSave);
+        this.deepWarmRuins=new SeedBoundState<>(caches.deepWarmRuins().orElse(null),"Deep warm ruins disabled",DeepWarmOceanRuins::canSave);
+        this.reimaginedSites=new SeedBoundState<>(caches.reimagined().orElse(null),"Reimagined layouts disabled",sites->false);
+        this.structureCache=settings.get(GenerationGate.STRUCTURE)==3?caches.structureCache():java.util.Optional.empty();
         this.palette=palette;
         this.biome=palette.margins().fallback();
         this.screeBiome=palette.margins().scree();
@@ -482,10 +387,26 @@ public final class RealisticGenerator extends ChunkGenerator {
         this.tundraBiome=palette.land().tundra();
     }
 
+    /** The biome source receives every surface-ownership gate once, before it is bound to a seed. */
+    private static ScreeBiomeSource biomeSource(HabitatPalette palette,GenerationSettings s){
+        return new ScreeBiomeSource(palette,s.enabled(GenerationGate.ICEBERGS),s.enabled(GenerationGate.SANDY_COASTS),
+                s.get(GenerationGate.DRIPSTONE),s.get(GenerationGate.CAVE_BIOME))
+            .withMontaneForests(s.enabled(GenerationGate.MONTANE_FOREST))
+            .withSeasonalForests(s.enabled(GenerationGate.SEASONAL_FOREST))
+            .withWarmXeric(s.enabled(GenerationGate.WARM_XERIC))
+            .withSummerDryWoodlands(s.enabled(GenerationGate.SUMMER_DRY))
+            .withLandIce(s.enabled(GenerationGate.LAND_ICE))
+            .withRedwoodForests(s.enabled(GenerationGate.REDWOOD_FOREST))
+            .withSurfaceOwnership(s.enabled(GenerationGate.SURFACE_OWNERSHIP))
+            .withDryForests(s.enabled(GenerationGate.DRY_FOREST))
+            .withCoolDeserts(s.enabled(GenerationGate.COOL_DESERT))
+            .withDeepDark(s.enabled(GenerationGate.OVERWORLD));
+    }
+
     @Override public CompletableFuture<ChunkAccess> createBiomes(RandomState random, Blender blender,
             StructureManager structures, ChunkAccess chunk) {
         terrain(random); // Bind before the superclass requests a biome resolver.
-        if(caveBiomeDefinition==0)return super.createBiomes(random,blender,structures,chunk);
+        if(caveBiomeDefinition()==0)return super.createBiomes(random,blender,structures,chunk);
         // Native BIOMES precedes terrain construction. Prepare the same immutable
         // profile on a generation worker, so source queries reuse its approved
         // moss plan instead of separately recomputing surface materials.
@@ -518,71 +439,80 @@ public final class RealisticGenerator extends ChunkGenerator {
 
     @Override public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> structures, RandomState random, long seed) {
         // Precompute the finite atlas during generator initialization, before chunk work is admitted.
-        if(structureDefinition==3)wells(random);
+        if(structureDefinition()==3)wells(random);
         var sets=new java.util.ArrayList<Holder<StructureSet>>();
-        if(discoveryDefinition>0){
-            var planned=treasures(random);
-            var nativeSet=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.BURIED_TREASURE))).findFirst().orElseThrow();
-            var holder=nativeSet.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.BURIED_TREASURE)).findFirst().orElseThrow().structure();
-            sets.add(Holder.direct(new StructureSet(holder,planned.placement())));
+        if(discoveryDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.BURIED_TREASURE,treasures(random).placement()));
+        if(shipwreckDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.SHIPWRECK_BEACHED,shipwrecks(random).placement()));
+        if(waygateDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.RUINED_PORTAL_DESERT,waygates(random).placement()));
+        if(wetlandHutDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.SWAMP_HUT,wetlandHuts(random).placement()));
+        if(snowShelterDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.IGLOO,snowShelters(random).placement()));
+        if(warmRuinDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.OCEAN_RUIN_WARM,warmRuins(random).placement()));
+        if(coldRuinDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.OCEAN_RUIN_COLD,coldRuins(random).placement()));
+        if(deepColdRuinDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.OCEAN_RUIN_COLD,deepColdRuins(random).placement()));
+        if(deepWarmRuinDefinition()>0)sets.add(replacedSet(structures,BuiltinStructures.OCEAN_RUIN_WARM,deepWarmRuins(random).placement()));
+        if(reimaginedDefinition()>0){
+            var plans=reimagined(random);
+            for(int kind=1;kind<=5;kind++){
+                sets.add(replacedSet(structures,ReimaginedStructures.key(kind),plans.placement(kind)));
+            }
         }
-        if(shipwreckDefinition()>0){
-            var planned=shipwrecks(random);
-            var nativeSet=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SHIPWRECK_BEACHED))).findFirst().orElseThrow();
-            var holder=nativeSet.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SHIPWRECK_BEACHED)).findFirst().orElseThrow().structure();
-            sets.add(Holder.direct(new StructureSet(holder,planned.placement())));
-        }
-        if(waygateDefinition()>0){var gates=waygates(random);var nativeSet=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.RUINED_PORTAL_DESERT))).findFirst().orElseThrow();var holder=nativeSet.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.RUINED_PORTAL_DESERT)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,gates.placement())));}
-        if(wetlandHutDefinition()>0){var huts=wetlandHuts(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SWAMP_HUT))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SWAMP_HUT)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,huts.placement())));}
-        if(snowShelterDefinition()>0){var shelters=snowShelters(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,shelters.placement())));}
-        if(warmRuinDefinition()>0){var ruins=warmRuins(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,ruins.placement())));}
-        if(coldRuinDefinition()>0){var ruins=coldRuins(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,ruins.placement())));}
-        if(deepColdRuinDefinition()>0){var ruins=deepColdRuins(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,ruins.placement())));}
-        if(deepWarmRuinDefinition()>0){var ruins=deepWarmRuins(random);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,ruins.placement())));}
-        if(reimaginedDefinition()>0){var plans=reimagined(random);for(int kind=1;kind<=5;kind++){var key=ReimaginedStructures.key(kind);var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(key))).findFirst().orElseThrow();var holder=set.value().structures().stream().filter(e->e.structure().is(key)).findFirst().orElseThrow().structure();sets.add(Holder.direct(new StructureSet(holder,plans.placement(kind))));}}
-        if(overworldDefinition>0)OverworldStructures.addSets(structures,sets,this);
+        if(overworldDefinition()>0)OverworldStructures.addSets(structures,sets,this);
         return ChunkGeneratorStructureState.createForFlat(random, seed, getOrigin(random), biomeSource, sets.stream());
     }
     @Override public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk, StructureManager structures) {
-        if(overworldDefinition>0)OverworldStructures.decorate(level,chunk,structures,this);
-        var random=level.getLevel().getChunkSource().randomState();if(structureDefinition>0){if(nativeOrdinaryDefinition>0)NativeOrdinaryStructures.placeWell(wells(random),level,chunk.getPos(),this);else wells(random).place(level,chunk.getPos());}
-        if(discoveryDefinition>0&&treasures(random).containsChunk(chunk.getPos().x(),chunk.getPos().z())){
-            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.BURIED_TREASURE).value();
+        if(overworldDefinition()>0)OverworldStructures.decorate(level,chunk,structures,this);
+        var random=level.getLevel().getChunkSource().randomState();
+        if(structureDefinition()>0){
+            if(nativeOrdinaryDefinition()>0)NativeOrdinaryStructures.placeWell(wells(random),level,chunk.getPos(),this);
+            else wells(random).place(level,chunk.getPos());
+        }
+        if(discoveryDefinition()>0&&treasures(random).containsChunk(chunk.getPos().x(),chunk.getPos().z())){
+            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.BURIED_TREASURE).value();
             var start=structures.getStartForStructure(nativeStructure,chunk);
-            if(start!=null&&start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());
+            if(start!=null&&start.isValid())start.placeInChunk(level,structures,this,chunkRandom(random,chunk),chunkBox(chunk),chunk.getPos());
         }
-        if(shipwreckDefinition()>0&&(nativeOrdinaryDefinition>0||shipwrecks(random).touchesChunk(chunk.getPos().x(),chunk.getPos().z()))){
-            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SHIPWRECK_BEACHED).value();
-            for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());
-        }
-        if(wetlandHutDefinition()>0&&wetlandHuts(random).forStart(chunk.getPos().x(),chunk.getPos().z()).isPresent()){
-            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SWAMP_HUT).value();
-            for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());
-        }
-        if(snowShelterDefinition()>0&&snowShelters(random).forStart(chunk.getPos().x(),chunk.getPos().z()).isPresent()){
-            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO).value();
-            for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());
-        }
-        if(warmRuinDefinition()>0){var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM).value();for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());}
-        if(coldRuinDefinition()>0){var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD).value();for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());}
-        if(waygateDefinition()>0&&(nativeOrdinaryDefinition>0||waygates(random).touches(chunk.getPos().x(),chunk.getPos().z()))){
-            var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.RUINED_PORTAL_DESERT).value();
-            for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());
-        }
-        if(reimaginedDefinition()>0)for(int kind=1;kind<=5;kind++){var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(ReimaginedStructures.key(kind)).value();for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))if(start.isValid())start.placeInChunk(level,structures,this,net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack())),new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ()),chunk.getPos());}
+        if(shipwreckDefinition()>0&&(nativeOrdinaryDefinition()>0||shipwrecks(random).touchesChunk(chunk.getPos().x(),chunk.getPos().z())))placeNative(level,chunk,structures,random,BuiltinStructures.SHIPWRECK_BEACHED);
+        if(wetlandHutDefinition()>0&&wetlandHuts(random).forStart(chunk.getPos().x(),chunk.getPos().z()).isPresent())placeNative(level,chunk,structures,random,BuiltinStructures.SWAMP_HUT);
+        if(snowShelterDefinition()>0&&snowShelters(random).forStart(chunk.getPos().x(),chunk.getPos().z()).isPresent())placeNative(level,chunk,structures,random,BuiltinStructures.IGLOO);
+        if(warmRuinDefinition()>0)placeNative(level,chunk,structures,random,BuiltinStructures.OCEAN_RUIN_WARM);
+        if(coldRuinDefinition()>0)placeNative(level,chunk,structures,random,BuiltinStructures.OCEAN_RUIN_COLD);
+        if(waygateDefinition()>0&&(nativeOrdinaryDefinition()>0||waygates(random).touches(chunk.getPos().x(),chunk.getPos().z())))placeNative(level,chunk,structures,random,BuiltinStructures.RUINED_PORTAL_DESERT);
+        if(reimaginedDefinition()>0)for(int kind=1;kind<=5;kind++)placeNative(level,chunk,structures,random,ReimaginedStructures.key(kind));
+    }
+    /** The native structure behind key, placed by a Blockbranch plan instead of its vanilla set. */
+    private static Holder<StructureSet> replacedSet(HolderLookup<StructureSet> structures,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.levelgen.structure.Structure> key,
+            net.minecraft.world.level.levelgen.structure.placement.StructurePlacement placement) {
+        var set=structures.listElements().filter(h->h.value().structures().stream().anyMatch(e->e.structure().is(key))).findFirst().orElseThrow();
+        var holder=set.value().structures().stream().filter(e->e.structure().is(key)).findFirst().orElseThrow().structure();
+        return Holder.direct(new StructureSet(holder,placement));
+    }
+    /** Places every valid start of a native structure in this chunk, each with a fresh chunk-seeded random. */
+    private void placeNative(WorldGenLevel level, ChunkAccess chunk, StructureManager structures, RandomState random,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.levelgen.structure.Structure> key) {
+        var nativeStructure=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(key).value();
+        for(var start:structures.startsForStructure(chunk.getPos().x(),chunk.getPos().z(),nativeStructure))
+            if(start.isValid())start.placeInChunk(level,structures,this,chunkRandom(random,chunk),chunkBox(chunk),chunk.getPos());
+    }
+    private static net.minecraft.util.RandomSource chunkRandom(RandomState random, ChunkAccess chunk) {
+        return net.minecraft.util.RandomSource.create(OakBirchWoodland.mix(random.seed()^chunk.getPos().pack()));
+    }
+    /** The chunk's full column between the generator floor and ceiling. */
+    private static net.minecraft.world.level.levelgen.structure.BoundingBox chunkBox(ChunkAccess chunk) {
+        return new net.minecraft.world.level.levelgen.structure.BoundingBox(chunk.getPos().getMinBlockX(),TerrainShape.FLOOR,chunk.getPos().getMinBlockZ(),chunk.getPos().getMaxBlockX(),TerrainShape.CEILING-1,chunk.getPos().getMaxBlockZ());
     }
     private record Located(net.minecraft.core.BlockPos pos,Holder<net.minecraft.world.level.levelgen.structure.Structure> holder,net.minecraft.world.level.levelgen.structure.StructureStart start,ChunkAccess chunk){}
     @Override public com.mojang.datafixers.util.Pair<net.minecraft.core.BlockPos,Holder<net.minecraft.world.level.levelgen.structure.Structure>> findNearestMapStructure(net.minecraft.server.level.ServerLevel level,net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.structure.Structure> targets,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         var registry=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
-        boolean treasure=discoveryDefinition>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.BURIED_TREASURE));
-        boolean gate=waygateDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.RUINED_PORTAL_DESERT));
-        boolean wreck=shipwreckDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SHIPWRECK_BEACHED));
-        boolean hut=wetlandHutDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SWAMP_HUT));
-        boolean snow=snowShelterDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO));
-        boolean coldRuin=coldRuinDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD));
-        boolean ruin=warmRuinDefinition()>0&&targets.contains(registry.getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM));
+        boolean treasure=discoveryDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.BURIED_TREASURE));
+        boolean gate=waygateDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.RUINED_PORTAL_DESERT));
+        boolean wreck=shipwreckDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.SHIPWRECK_BEACHED));
+        boolean hut=wetlandHutDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.SWAMP_HUT));
+        boolean snow=snowShelterDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.IGLOO));
+        boolean coldRuin=coldRuinDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.OCEAN_RUIN_COLD));
+        boolean ruin=warmRuinDefinition()>0&&targets.contains(registry.getOrThrow(BuiltinStructures.OCEAN_RUIN_WARM));
         boolean reimagined=reimaginedDefinition()>0&&java.util.stream.IntStream.rangeClosed(1,5).anyMatch(k->targets.contains(registry.getOrThrow(ReimaginedStructures.key(k))));
-        if(!treasure&&!gate&&!wreck&&!hut&&!snow&&!ruin&&!coldRuin&&!reimagined&&overworldDefinition==0)return super.findNearestMapStructure(level,targets,origin,radius,skipKnown);
+        if(!treasure&&!gate&&!wreck&&!hut&&!snow&&!ruin&&!coldRuin&&!reimagined&&overworldDefinition()==0)return super.findNearestMapStructure(level,targets,origin,radius,skipKnown);
         Located best=treasure?locateTreasure(level,targets,origin,radius,skipKnown):null;
         Located other=gate?locateWaygate(level,targets,origin,radius,skipKnown):null;
         if(other!=null&&(best==null||other.pos.distSqr(origin)<best.pos.distSqr(origin)))best=other;
@@ -596,8 +526,11 @@ public final class RealisticGenerator extends ChunkGenerator {
         if(sea!=null&&(best==null||sea.pos.distSqr(origin)<best.pos.distSqr(origin)))best=sea;
         Located cold=coldRuin?locateColdRuin(level,origin,radius,skipKnown):null;
         if(cold!=null&&(best==null||cold.pos.distSqr(origin)<best.pos.distSqr(origin)))best=cold;
-        if(reimagined)for(int kind=1;kind<=5;kind++)if(targets.contains(registry.getOrThrow(ReimaginedStructures.key(kind)))){var candidate=locateReimagined(level,origin,radius,skipKnown,kind);if(candidate!=null&&(best==null||candidate.pos.distSqr(origin)<best.pos.distSqr(origin)))best=candidate;}
-        if(overworldDefinition>0){
+        if(reimagined)for(int kind=1;kind<=5;kind++)if(targets.contains(registry.getOrThrow(ReimaginedStructures.key(kind)))){
+            var candidate=locateReimagined(level,origin,radius,skipKnown,kind);
+            if(candidate!=null&&(best==null||candidate.pos.distSqr(origin)<best.pos.distSqr(origin)))best=candidate;
+        }
+        if(overworldDefinition()>0){
             var nativeSite=OverworldStructures.locate(level,targets,origin,radius,skipKnown);
             if(nativeSite!=null&&(best==null||nativeSite.pos().distSqr(origin)<best.pos.distSqr(origin)))best=new Located(nativeSite.pos(),nativeSite.holder(),nativeSite.start(),nativeSite.chunk());
         }
@@ -608,19 +541,38 @@ public final class RealisticGenerator extends ChunkGenerator {
     private Located locateReimagined(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown,int kind){
         if(!level.structureManager().shouldGenerateStructures())return null;
         var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(ReimaginedStructures.key(kind));double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;int owner=-1;
-        for(var region:reimagined(level.getChunkSource().randomState()).ordered(kind,origin,nearest)){if(region.lower(origin)>nearest)break;var candidate=region.plan();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        for(var region:reimagined(level.getChunkSource().randomState()).ordered(kind,origin,nearest)){
+            if(region.lower(origin)>nearest)break;
+            var candidate=region.plan();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private Located locateTreasure(net.minecraft.server.level.ServerLevel level,net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.structure.Structure> targets,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
-        if(discoveryDefinition==0)return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.BURIED_TREASURE);
+        if(discoveryDefinition()==0)return null;
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.BURIED_TREASURE);
         if(!targets.contains(holder))return null;
         if(!level.structureManager().shouldGenerateStructures())return null;
         long range=Math.min(6000000L,Math.max(0L,radius)*2048L);
         var planner=treasures(level.getChunkSource().randomState());
         double nearestDistance=range;net.minecraft.world.level.levelgen.structure.StructureStart bestStart=null;ChunkAccess bestChunk=null;net.minecraft.core.BlockPos best=null;
         for(var group:planner.orderedGroups(origin,range)){
-            if(group.lowerDistance(origin)>nearestDistance)break;var candidate=group.site();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearestDistance)continue;
+            if(group.lowerDistance(origin)>nearestDistance)break;
+            var candidate=group.site();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearestDistance)continue;
             var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);
             if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearestDistance=distance;bestStart=start;bestChunk=chunk;best=new net.minecraft.core.BlockPos(p.x(),64,p.z());}
         }
@@ -629,46 +581,128 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
     private Located locateWarmRuin(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(deepWarmRuinDefinition()>0)return locateCombinedWarmRuin(level,origin,radius,skipKnown);
-        if(!level.structureManager().shouldGenerateStructures())return null;var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM);double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;int owner=-1;
-        for(var region:warmRuins(level.getChunkSource().randomState()).ordered(origin,nearest)){if(region.lower(origin)>nearest)break;var candidate=region.plan();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        if(!level.structureManager().shouldGenerateStructures())return null;
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.OCEAN_RUIN_WARM);
+        double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);
+        Located best=null;
+        int owner=-1;
+        for(var region:warmRuins(level.getChunkSource().randomState()).ordered(origin,nearest)){
+            if(region.lower(origin)>nearest)break;
+            var candidate=region.plan();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private Located locateColdRuin(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(deepColdRuinDefinition()>0)return locateCombinedColdRuin(level,origin,radius,skipKnown);
-        if(!level.structureManager().shouldGenerateStructures())return null;var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD);double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;int owner=-1;
-        for(var region:coldRuins(level.getChunkSource().randomState()).ordered(origin,nearest)){if(region.lower(origin)>nearest)break;var candidate=region.plan();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        if(!level.structureManager().shouldGenerateStructures())return null;
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.OCEAN_RUIN_COLD);
+        double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);
+        Located best=null;
+        int owner=-1;
+        for(var region:coldRuins(level.getChunkSource().randomState()).ordered(origin,nearest)){
+            if(region.lower(origin)>nearest)break;
+            var candidate=region.plan();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private record ColdRegion(double lower,int owner,java.util.function.Supplier<java.util.Optional<ColdOceanRuins.Plan>> plan){}
     private Located locateCombinedColdRuin(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(!level.structureManager().shouldGenerateStructures())return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_COLD);
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.OCEAN_RUIN_COLD);
         double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);var regions=new java.util.ArrayList<ColdRegion>();
         for(var r:coldRuins(level.getChunkSource().randomState()).ordered(origin,nearest))regions.add(new ColdRegion(r.lower(origin),r.owner(),r::plan));
         for(var r:deepColdRuins(level.getChunkSource().randomState()).ordered(origin,nearest))regions.add(new ColdRegion(r.lower(origin),r.owner(),()->r.plan().map(p->new ColdOceanRuins.Plan(p.x(),p.y(),p.z(),p.variant(),p.region()))));
         regions.sort(java.util.Comparator.comparingDouble(ColdRegion::lower).thenComparingInt(ColdRegion::owner));Located best=null;int owner=-1;
-        for(var r:regions){if(r.lower()>nearest)break;var candidate=r.plan().get();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        for(var r:regions){
+            if(r.lower()>nearest)break;
+            var candidate=r.plan().get();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private record WarmRegion(double lower,int owner,java.util.function.Supplier<java.util.Optional<WarmOceanRuins.Plan>> plan){}
     private Located locateCombinedWarmRuin(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(!level.structureManager().shouldGenerateStructures())return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.OCEAN_RUIN_WARM);
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.OCEAN_RUIN_WARM);
         double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);var regions=new java.util.ArrayList<WarmRegion>();
         for(var r:warmRuins(level.getChunkSource().randomState()).ordered(origin,nearest))regions.add(new WarmRegion(r.lower(origin),r.owner(),r::plan));
         for(var r:deepWarmRuins(level.getChunkSource().randomState()).ordered(origin,nearest))regions.add(new WarmRegion(r.lower(origin),r.owner(),()->r.plan().map(p->new WarmOceanRuins.Plan(p.x(),p.y(),p.z(),p.variant(),p.region()))));
         regions.sort(java.util.Comparator.comparingDouble(WarmRegion::lower).thenComparingInt(WarmRegion::owner));Located best=null;int owner=-1;
-        for(var r:regions){if(r.lower()>nearest)break;var candidate=r.plan().get();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        for(var r:regions){
+            if(r.lower()>nearest)break;
+            var candidate=r.plan().get();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private Located locateSnowShelter(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
-        if(!level.structureManager().shouldGenerateStructures())return null;var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.IGLOO);double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;int owner=-1;
-        for(var region:snowShelters(level.getChunkSource().randomState()).ordered(origin,nearest)){if(region.lower(origin)>nearest)break;var candidate=region.plan();if(candidate.isEmpty())continue;var p=candidate.get();double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());if(distance>nearest||distance==nearest&&p.region()<owner)continue;var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;owner=p.region();best=new Located(p.center(),holder,start,chunk);}}
+        if(!level.structureManager().shouldGenerateStructures())return null;
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.IGLOO);
+        double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);
+        Located best=null;
+        int owner=-1;
+        for(var region:snowShelters(level.getChunkSource().randomState()).ordered(origin,nearest)){
+            if(region.lower(origin)>nearest)break;
+            var candidate=region.plan();
+            if(candidate.isEmpty())continue;
+            var p=candidate.get();
+            double distance=Math.hypot(p.x()-(double)origin.getX(),p.z()-(double)origin.getZ());
+            if(distance>nearest||distance==nearest&&p.region()<owner)continue;
+            var chunk=level.getChunk(p.x()>>4,p.z()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+            var start=level.structureManager().getStartForStructure(holder.value(),chunk);
+            if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){
+                nearest=distance;
+                owner=p.region();
+                best=new Located(p.center(),holder,start,chunk);
+            }
+        }
         return best;
     }
     private Located locateWetlandHut(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(!level.structureManager().shouldGenerateStructures())return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SWAMP_HUT);
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.SWAMP_HUT);
         double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;
         int bestLake=-1;
         for(var group:wetlandHuts(level.getChunkSource().randomState()).orderedGroups(origin,nearest)){
@@ -681,10 +715,15 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
     private Located locateShipwreck(net.minecraft.server.level.ServerLevel level,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(!level.structureManager().shouldGenerateStructures())return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.SHIPWRECK_BEACHED);
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.SHIPWRECK_BEACHED);
         double nearest=Math.min(6000000L,Math.max(0L,radius)*2048L);Located best=null;
         for(var group:shipwrecks(level.getChunkSource().randomState()).orderedGroups(origin,(long)Math.ceil(nearest))){
-            if(group.lowerDistance(origin)>nearest)break;var plan=group.plan();if(plan.isEmpty())continue;var p=plan.get().center();double distance=Math.hypot(p.getX()-(double)origin.getX(),p.getZ()-(double)origin.getZ());if(distance>nearest)continue;
+            if(group.lowerDistance(origin)>nearest)break;
+            var plan=group.plan();
+            if(plan.isEmpty())continue;
+            var p=plan.get().center();
+            double distance=Math.hypot(p.getX()-(double)origin.getX(),p.getZ()-(double)origin.getZ());
+            if(distance>nearest)continue;
             var chunk=level.getChunk(p.getX()>>4,p.getZ()>>4,net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);var start=level.structureManager().getStartForStructure(holder.value(),chunk);
             if(start!=null&&start.isValid()&&(!skipKnown||start.canBeReferenced())){nearest=distance;best=new Located(p,holder,start,chunk);}
         }
@@ -692,7 +731,7 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
     private Located locateWaygate(net.minecraft.server.level.ServerLevel level,net.minecraft.core.HolderSet<net.minecraft.world.level.levelgen.structure.Structure> targets,net.minecraft.core.BlockPos origin,int radius,boolean skipKnown){
         if(waygateDefinition()==0)return null;
-        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(net.minecraft.world.level.levelgen.structure.BuiltinStructures.RUINED_PORTAL_DESERT);
+        var holder=level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).getOrThrow(BuiltinStructures.RUINED_PORTAL_DESERT);
         if(!targets.contains(holder))return null;
         if(!level.structureManager().shouldGenerateStructures())return null;
         double range=Math.min(6000000L,Math.max(0L,radius)*2048L);
@@ -719,7 +758,7 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
 
     void prepareCaveProfile(ChunkAccess chunk,RandomState random){
-        if(caveBiomeDefinition==0)return;
+        if(caveBiomeDefinition()==0)return;
         synchronized(preparedProfiles){var found=preparedProfiles.get(chunk);if(found!=null&&found.underground().seed()==random.seed())return;}
         // Native BIOMES also visits prerequisite columns that may never reach
         // terrain construction. Without an approach, both moss planners return
@@ -768,7 +807,8 @@ public final class RealisticGenerator extends ChunkGenerator {
                     : CoastalBeach.contains(sx,sz,drainage,terrain(random).climate(),false) ? palette.additional("beach") : sandyShoreBiome;
                 for(int y=0;y<4;y++) biomes.set(x,y,z,shoreBiome);
             }
-            boolean channel=!habitat&&!wetland&&!lake&&!river&&!shore&&(RiverChannel.contains(chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage)||RoutedRiver.bankContains(random.seed(),chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage,terrain(random).climate()));channels[z*4+x]=channel;
+            boolean channel=!habitat&&!wetland&&!lake&&!river&&!shore&&(RiverChannel.contains(chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage)||RoutedRiver.bankContains(random.seed(),chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage,terrain(random).climate()));
+            channels[z*4+x]=channel;
             if(channel)for(int y=0;y<4;y++)biomes.set(x,y,z,RoutedRiver.contains(random.seed(),chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage,terrain(random).climate())?palette.additional("river"):riverChannelBiome);
             if(channel&&FrozenRiver.contains(chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("frozen_river"));
             boolean shelf=!habitat&&!wetland&&!lake&&!river&&!shore&&!channel&&MarineShelf.contains(chunk.getPos().getMinBlockX()+x*4,chunk.getPos().getMinBlockZ()+z*4,drainage);shelves[z*4+x]=shelf;
@@ -838,12 +878,16 @@ public final class RealisticGenerator extends ChunkGenerator {
             if(Grove.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate(),terrain(random).groundEcology()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("grove"));
             boolean swamp=Swamp.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate());swamps[z*4+x]=swamp;
             if(MangroveSwamp.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("mangrove_swamp"));
-            if(swamp){for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("swamp"));int i=z*4+x;meadows[i]=woods[i]=forests[i]=birchForests[i]=warms[i]=humids[i]=steppes[i]=boreals[i]=coldSteppes[i]=deserts[i]=savannas[i]=jungles[i]=sandyDeserts[i]=plains[i]=sunflowers[i]=false;}
+            if(swamp){
+                for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("swamp"));
+                int i=z*4+x;
+                meadows[i]=woods[i]=forests[i]=birchForests[i]=warms[i]=humids[i]=steppes[i]=boreals[i]=coldSteppes[i]=deserts[i]=savannas[i]=jungles[i]=sandyDeserts[i]=plains[i]=sunflowers[i]=false;
+            }
             if(badlandKind>0)for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(Badlands.key(badlandKind)));
             if(icebergsEnabled()&&IcebergField.habitat(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("ice_spikes"));
             if(WarmOcean.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("warm_ocean"));
             if(DappledForest.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("dappled_forest"));
-            if(redwoodForestDefinition>0&&wood&&RedwoodForest.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(RedwoodForest.KEY));
+            if(redwoodForestDefinition()>0&&wood&&RedwoodForest.contains(random.seed(),cellX,cellZ,drainage,terrain(random).climate()))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(RedwoodForest.KEY));
             if(StonyShore.contains(cellX,cellZ,drainage))for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional("stony_shore"));
             int coldKind=ColdUplands.kind(random.seed(),cellX,cellZ,drainage,terrain(random).climate());
             if(coldKind>0)for(int y=0;y<4;y++)biomes.set(x,y,z,palette.additional(ColdUplands.key(coldKind)));
@@ -890,88 +934,115 @@ public final class RealisticGenerator extends ChunkGenerator {
         }
         var profile=new blockbranch.cubic.TerrainProfile(TerrainShape.FLOOR, TerrainShape.CEILING, heights, water,
             scree, reedbed, riverMargin, sandyShore, meadow, woodland,steppe,boreal,warm,coldSteppe,desert,canopyLayer,floatingIce(chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ(),random), biomes, factory.blockStatesStrategy());
-        if(continentalIceDefinition>0)profile=profile.withPerennialIce(perennialIce(chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ(),random));
-        var caves=undergroundEnabled?new blockbranch.cubic.UndergroundLayer(random.seed(),chunk.getPos().x(),chunk.getPos().z(),approach(chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ(),random)):blockbranch.cubic.UndergroundLayer.NONE;
+        if(continentalIceDefinition()>0)profile=profile.withPerennialIce(perennialIce(chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ(),random));
+        var caves=undergroundEnabled()?new blockbranch.cubic.UndergroundLayer(random.seed(),chunk.getPos().x(),chunk.getPos().z(),approach(chunk.getPos().getMinBlockX(),chunk.getPos().getMinBlockZ(),random)):blockbranch.cubic.UndergroundLayer.NONE;
         int emerald=0,gold=0;
-        if(oreDefinition>0)for(int z=0;z<4;z++)for(int x=0;x<4;x++){
+        if(oreDefinition()>0)for(int z=0;z<4;z++)for(int x=0;x<4;x++){
             int region=oreRegion(profile.biomes().get(x,0,z));
             if((region&1)!=0)emerald|=1<<(z*4+x);if((region&2)!=0)gold|=1<<(z*4+x);
         }
-        var layered=!undergroundEnabled&&oreDefinition==0?profile:profile.withLayers(caves,oreDefinition>0?new OreLayer(random.seed(),chunk.getPos().x(),chunk.getPos().z(),oreDefinition,emerald,gold):OreLayer.NONE);
-        var decorated=dripstoneDefinition==0?layered:layered.withDripstone(dripstoneLayer(chunk.getPos().x(),chunk.getPos().z(),random,layered));
-        var grown=litCaveGrowthDefinition==0?decorated:decorated.withLitCaves(litCaveLayer(chunk.getPos().x(),chunk.getPos().z(),random,decorated));
-        if(caveBiomeDefinition==0)return grown;
+        var layered=!undergroundEnabled()&&oreDefinition()==0?profile:profile.withLayers(caves,oreDefinition()>0?new OreLayer(random.seed(),chunk.getPos().x(),chunk.getPos().z(),oreDefinition(),emerald,gold):OreLayer.NONE);
+        var decorated=dripstoneDefinition()==0?layered:layered.withDripstone(dripstoneLayer(chunk.getPos().x(),chunk.getPos().z(),random,layered));
+        var grown=litCaveGrowthDefinition()==0?decorated:decorated.withLitCaves(litCaveLayer(chunk.getPos().x(),chunk.getPos().z(),random,decorated));
+        if(caveBiomeDefinition()==0)return grown;
         var caveBiomes=new blockbranch.cubic.CaveBiomeLayer(random.seed(),chunk.getPos().x(),chunk.getPos().z(),palette.additional("lush_caves"),palette.additional("sulfur_caves"),grown.litCaves());
-        if(overworldDefinition>0)caveBiomes=caveBiomes.withDeepDark(palette.additional("deep_dark"),OverworldStructures.deepDarkMask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),drainage(random)));
+        if(overworldDefinition()>0)caveBiomes=caveBiomes.withDeepDark(palette.additional("deep_dark"),OverworldStructures.deepDarkMask(random.seed(),chunk.getPos().x(),chunk.getPos().z(),drainage(random)));
         return grown.withCaveBiomes(caveBiomes);
     }
 
     private blockbranch.cubic.DripstoneLayer dripstoneLayer(int cx,int cz,RandomState random,blockbranch.cubic.TerrainProfile profile){
-        if(dripstoneDefinition==0)return blockbranch.cubic.DripstoneLayer.NONE;var state=terrain(random);long key=(cx&0xffffffffL)|((long)cz<<32);
-        synchronized(state.dripstone()){var cached=state.dripstone().get(key);if(cached!=null)return cached;}
-        var result=profile==null?independentDripstonePlan(cx,cz,random):blockbranch.cubic.DripstoneLayer.plan(profile,random.seed(),cx,cz,palette.additional("dripstone_caves"),dripstoneDefinition);
-        synchronized(state.dripstone()){var previous=state.dripstone().get(key);if(previous!=null)return previous;state.dripstone().put(key,result);if(state.dripstone().size()>64)state.dripstone().remove(state.dripstone().keySet().iterator().next());}return result;
+        if(dripstoneDefinition()==0)return blockbranch.cubic.DripstoneLayer.NONE;var state=terrain(random);long key=ExactMemo.key(cx,cz);
+        var cached=state.dripstone().find(key);if(cached!=null)return cached;
+        var result=profile==null?independentDripstonePlan(cx,cz,random):blockbranch.cubic.DripstoneLayer.plan(profile,random.seed(),cx,cz,palette.additional("dripstone_caves"),dripstoneDefinition());
+        return state.dripstone().store(key,result);
     }
     blockbranch.cubic.DripstoneLayer independentDripstonePlan(int cx,int cz,RandomState random){
-        return blockbranch.cubic.DripstoneLayer.plan(independentDripstoneSampler(cx,cz,random),random.seed(),cx,cz,palette.additional("dripstone_caves"),dripstoneDefinition);
+        return blockbranch.cubic.DripstoneLayer.plan(independentDripstoneSampler(cx,cz,random),random.seed(),cx,cz,palette.additional("dripstone_caves"),dripstoneDefinition());
     }
     /** Same physical sampler as profile-backed planning. The habitat datum is the rock surface
      * (the original bed under a continental sheet, whose ice is overburden and a nonhost),
      * irrespective of which API runs first. */
     blockbranch.cubic.DripstoneLayer.Sampler independentDripstoneSampler(int cx,int cz,RandomState random){
-        int[] ground=new int[256],rocks=continentalIceDefinition>0?new int[256]:ground;for(int z=0;z<16;z++)for(int x=0;x<16;x++){int wx=cx*16+x,wz=cz*16+z;ground[z*16+x]=drainage(random).sample(wx,wz).height();rocks[z*16+x]=ground[z*16+x]-drainage(random).continentalIceThickness(wx,wz);}
+        int[] ground=new int[256],rocks=continentalIceDefinition()>0?new int[256]:ground;
+        for(int z=0;z<16;z++)for(int x=0;x<16;x++){
+            int wx=cx*16+x,wz=cz*16+z;
+            ground[z*16+x]=drainage(random).sample(wx,wz).height();
+            rocks[z*16+x]=ground[z*16+x]-drainage(random).continentalIceThickness(wx,wz);
+        }
         int emerald=0,gold=0;for(int z=0;z<4;z++)for(int x=0;x<4;x++){int flags=oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(cx*4+x,0,cz*4+z));if((flags&1)!=0)emerald|=1<<(z*4+x);if((flags&2)!=0)gold|=1<<(z*4+x);}
-        var ores=oreDefinition==0?OreLayer.NONE:new OreLayer(random.seed(),cx,cz,oreDefinition,emerald,gold).bind(java.util.Arrays.stream(rocks).min().orElseThrow(),java.util.Arrays.stream(rocks).max().orElseThrow());
+        var ores=oreDefinition()==0?OreLayer.NONE:new OreLayer(random.seed(),cx,cz,oreDefinition(),emerald,gold).bind(java.util.Arrays.stream(rocks).min().orElseThrow(),java.util.Arrays.stream(rocks).max().orElseThrow());
         var under=new blockbranch.cubic.UndergroundLayer(random.seed(),cx,cz,approach(cx*16,cz*16,random));
         return new blockbranch.cubic.DripstoneLayer.Sampler(){
             public int groundHeight(int x,int z){return rocks[(z&15)*16+(x&15)];}
             public boolean protectedRoute(){return under.hasApproach();}
-            public BlockState state(int x,int y,int z){if(continentalIceDefinition>0){var ice=landIceBlock(cx*16+x,y,cz*16+z,random);if(ice!=null)return ice;}int h=groundHeight(x,z),rock=rocks[(z&15)*16+(x&15)];var value=blockbranch.cubic.TerrainProfile.material(TerrainShape.FLOOR,TerrainShape.CEILING,y,h,Integer.MIN_VALUE,0);if(under.approachClears(x,y,z,rock)&&blockbranch.cubic.UndergroundLayer.approachMaterial(value)||(value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&under.voidAt(x,y,z,rock))return Blocks.AIR.defaultBlockState();return ores.state(x,y,z,rock,value,true);}
+            public BlockState state(int x,int y,int z){
+                if(continentalIceDefinition()>0){
+                    var ice=landIceBlock(cx*16+x,y,cz*16+z,random);
+                    if(ice!=null)return ice;
+                }
+                int h=groundHeight(x,z),rock=rocks[(z&15)*16+(x&15)];
+                var value=blockbranch.cubic.TerrainProfile.material(TerrainShape.FLOOR,TerrainShape.CEILING,y,h,Integer.MIN_VALUE,0);
+                if(under.approachClears(x,y,z,rock)&&blockbranch.cubic.UndergroundLayer.approachMaterial(value)||(value.is(Blocks.STONE)||value.is(Blocks.DEEPSLATE))&&under.voidAt(x,y,z,rock))return Blocks.AIR.defaultBlockState();
+                return ores.state(x,y,z,rock,value,true);
+            }
         };
     }
     private blockbranch.cubic.LitCaveLayer litCaveLayer(int cx,int cz,RandomState random,blockbranch.cubic.TerrainProfile profile){
-        var state=terrain(random);long key=(cx&0xffffffffL)|((long)cz<<32);synchronized(state.litCaves()){var found=state.litCaves().get(key);if(found!=null)return found;}
+        var state=terrain(random);long key=ExactMemo.key(cx,cz);var found=state.litCaves().find(key);if(found!=null)return found;
         var planned=profile==null?independentLitCavePlan(cx,cz,random):blockbranch.cubic.LitCaveLayer.plan(profile,random.seed(),cx,cz,(wx,wz)->GroundEcology.borealMossSite(state.groundEcology().sample(wx,wz)));
-        synchronized(state.litCaves()){var old=state.litCaves().get(key);if(old!=null)return old;state.litCaves().put(key,planned);if(state.litCaves().size()>64)state.litCaves().remove(state.litCaves().keySet().iterator().next());}return planned;
+        return state.litCaves().store(key,planned);
     }
     blockbranch.cubic.LitCaveLayer independentLitCavePlan(int cx,int cz,RandomState random){
         var entry=approach(cx*16,cz*16,random);if(!entry.intersectsColumn(cx,cz))return new blockbranch.cubic.LitCaveLayer(random.seed(),cx,cz,new int[0]);
         int emerald=0,gold=0;for(int z=0;z<4;z++)for(int x=0;x<4;x++){int flags=oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(cx*4+x,0,cz*4+z));if((flags&1)!=0)emerald|=1<<(z*4+x);if((flags&2)!=0)gold|=1<<(z*4+x);}
-        var ores=oreDefinition==0?OreLayer.NONE:new OreLayer(random.seed(),cx,cz,oreDefinition,emerald,gold);
+        var ores=oreDefinition()==0?OreLayer.NONE:new OreLayer(random.seed(),cx,cz,oreDefinition(),emerald,gold);
         var ecology=terrain(random).groundEcology();
         return blockbranch.cubic.LitCaveLayer.plan(new blockbranch.cubic.LitCaveLayer.Sampler(){
             public boolean hasApproach(){return true;}
             public boolean suitable(int x,int z){return GroundEcology.borealMossSite(ecology.sample(cx*16+x,cz*16+z));}
             public int ground(int x,int z){return drainage(random).sample(cx*16+x,cz*16+z).height();}
-            public int top(int x,int z){int wx=cx*16+x,wz=cz*16+z,low=ground(x,z)-blockbranch.cubic.LitCaveLayer.MAX_DEPTH;int top=uncarvedBaseHeight(wx,wz,Heightmap.Types.WORLD_SURFACE,blockbranch.cubic.ColumnLimits.BUILD,random);for(int y=top-1;y>=low;y--)if(!surfaceState(wx,y,wz,random).isAir())return y+1;return low;}
-            public BlockState state(int x,int y,int z){return ores.state(x,y,z,continentalIceDefinition>0?rockHeight(cx*16+x,cz*16+z,random):ground(x,z),surfaceState(cx*16+x,y,cz*16+z,random),undergroundEnabled);}
+            public int top(int x,int z){
+                int wx=cx*16+x,wz=cz*16+z,low=ground(x,z)-blockbranch.cubic.LitCaveLayer.MAX_DEPTH;
+                int top=uncarvedBaseHeight(wx,wz,Heightmap.Types.WORLD_SURFACE,blockbranch.cubic.ColumnLimits.BUILD,random);
+                for(int y=top-1;y>=low;y--)if(!surfaceState(wx,y,wz,random).isAir())return y+1;
+                return low;
+            }
+            public BlockState state(int x,int y,int z){return ores.state(x,y,z,continentalIceDefinition()>0?rockHeight(cx*16+x,cz*16+z,random):ground(x,z),surfaceState(cx*16+x,y,cz*16+z,random),undergroundEnabled());}
             public boolean approachAt(int x,int y,int z){return entry.contains(cx*16+x,y,cz*16+z);}
         },random.seed(),cx,cz);
     }
 
-    private int oreRegion(Holder<Biome> biome){return oreRegions.computeIfAbsent(biome,holder->{int mask=0;for(var group:holder.value().getGenerationSettings().features())for(var placed:group){var key=placed.unwrapKey();if(key.isEmpty())continue;String path=key.get().identifier().getPath();if(path.equals("ore_emerald"))mask|=1;if(path.equals("ore_gold_extra"))mask|=2;}return mask;});}
+    private int oreRegion(Holder<Biome> biome){
+        return oreRegions.computeIfAbsent(biome,holder->{int mask=0;for(var group:holder.value().getGenerationSettings().features())for(var placed:group){var key=placed.unwrapKey();if(key.isEmpty())continue;String path=key.get().identifier().getPath();if(path.equals("ore_emerald"))mask|=1;if(path.equals("ore_gold_extra"))mask|=2;}return mask;});
+    }
 
-    private boolean warmXericSurface(int x,int z,RandomState random){if(warmXericDefinition==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).warmXericSurface().test(x,z);}
+    private boolean warmXericSurface(int x,int z,RandomState random){if(warmXericDefinition()==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).warmXericSurface().test(x,z);}
     private int warmXericCover(int x,int z,RandomState random){return WarmXericShrubland.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z));}
-    private boolean coolDesertSurface(int x,int z,RandomState random){if(coolDesertDefinition==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).coolDesertSurface().test(x,z);}
+    private boolean coolDesertSurface(int x,int z,RandomState random){if(coolDesertDefinition()==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).coolDesertSurface().test(x,z);}
     private int coolDesertCover(int x,int z,RandomState random){return CoolDesert.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z));}
     java.util.function.BiPredicate<Integer,Integer> montaneForestOwner(RandomState random){terrain(random);return ((ScreeBiomeSource)biomeSource).montaneForestSurface();}
-    boolean montaneForestSurface(int x,int z,RandomState random){return montaneForestDefinition>0&&montaneForestOwner(random).test(x,z);}
+    boolean montaneForestSurface(int x,int z,RandomState random){return montaneForestDefinition()>0&&montaneForestOwner(random).test(x,z);}
     java.util.function.BiPredicate<Integer,Integer> summerDryOwner(RandomState random){terrain(random);return ((ScreeBiomeSource)biomeSource).summerDrySurface();}
-    private boolean summerDrySurface(int x,int z,RandomState random){if(summerDryDefinition==0)return false;return summerDryOwner(random).test(x,z);}
-    private int summerDryCover(int x,int z,RandomState random){var f=terrain(random);var trees=canopy(x,z,random);int h=f.drainage().sample(x,z).height();var site=f.groundEcology().sample(x,z).shade(trees.topY(x,z)>h+2);return litterWoodland(SummerDryWoodland.cover(random.seed(),x,z,site,trees.state(x,h+1,z)==null,leafLitterDefinition>0),x,z,random);}
+    private boolean summerDrySurface(int x,int z,RandomState random){if(summerDryDefinition()==0)return false;return summerDryOwner(random).test(x,z);}
+    private int summerDryCover(int x,int z,RandomState random){
+        var f=terrain(random);
+        var trees=canopy(x,z,random);
+        int h=f.drainage().sample(x,z).height();
+        var site=f.groundEcology().sample(x,z).shade(trees.topY(x,z)>h+2);
+        return litterWoodland(SummerDryWoodland.cover(random.seed(),x,z,site,trees.state(x,h+1,z)==null,leafLitterDefinition()>0),x,z,random);
+    }
     java.util.function.BiPredicate<Integer,Integer> dryForestOwner(RandomState random){terrain(random);return ((ScreeBiomeSource)biomeSource).dryForestSurface();}
     java.util.function.BiPredicate<Integer,Integer> dryForestOwner(RandomState random,boolean seasonal){terrain(random);return ((ScreeBiomeSource)biomeSource).dryForestSurface(seasonal);}
     private boolean dryForestSurface(int x,int z,RandomState random){
-        if(dryForestDefinition==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).dryForestSurface().test(x,z);
+        if(dryForestDefinition()==0)return false;terrain(random);return ((ScreeBiomeSource)biomeSource).dryForestSurface().test(x,z);
     }
     private int dryForestCover(int x,int z,RandomState random){
         var f=terrain(random);var trees=canopy(x,z,random);int h=f.drainage().sample(x,z).height();
         var site=f.groundEcology().sample(x,z).shade(trees.topY(x,z)>h+2);
-        return litterWoodland(DryForest.cover(random.seed(),x,z,site,trees.state(x,h+1,z)==null,leafLitterDefinition>0),x,z,random);
+        return litterWoodland(DryForest.cover(random.seed(),x,z,site,trees.state(x,h+1,z)==null,leafLitterDefinition()>0),x,z,random);
     }
     private boolean coldRocklandSurface(int x,int z,RandomState random) {
-        if(surfaceOwnershipDefinition==0)return false;
+        if(surfaceOwnershipDefinition()==0)return false;
         terrain(random);return ((ScreeBiomeSource)biomeSource).coldRocklandSurface().test(x,z);
     }
 
@@ -1007,7 +1078,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         // The quart kelp mask may cross a physical sandy-shore edge. Definition
         // 1 gives that block one cover owner; do not encode both sorted marine
         // sediment and shore sand. Keep historical definitions' saved routing.
-        if(surfaceOwnershipDefinition>0&&sandyShoreCover(x,z,random)>0)return 0;
+        if(surfaceOwnershipDefinition()>0&&sandyShoreCover(x,z,random)>0)return 0;
         if(TemperateOcean.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate())||TemperateOcean.kelpHeight(random.seed(),x,z,drainage,terrain(random).climate())>0)return TemperateOcean.cover(random.seed(),x,z,drainage,terrain(random).climate());
         if(LukewarmOcean.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate()))return LukewarmOcean.cover(random.seed(),x,z,drainage,terrain(random).climate());
         if(DeepOcean.surfaceContains(x,z,drainage)){
@@ -1036,7 +1107,7 @@ public final class RealisticGenerator extends ChunkGenerator {
      * Existing vegetation/soil and stem footing win. This static dry snapshot
      * is not deposition, water-table saturation or a seasonal-marsh ecology. */
     private int alluvialFineCover(int x,int z,RandomState random){
-        if(alluvialDefinition==0)return 0;
+        if(alluvialDefinition()==0)return 0;
         var d=drainage(random);var plan=d.alluvialPlan(x,z);
         if(!plan.changed()||!plan.connectedCore())return 0;
         if(coldUplandCover(x,z,random)>0||badlandsCover(x,z,random)>0
@@ -1060,7 +1131,7 @@ public final class RealisticGenerator extends ChunkGenerator {
 
     int meadowCover(int x,int z,RandomState random) {
         var field=terrain(random);
-        if(biomeTransitionDefinition==1&&ForestGrasslandTransition.active(random.seed(),x,z,field.drainage(),field.climate())){
+        if(biomeTransitionDefinition()==1&&ForestGrasslandTransition.active(random.seed(),x,z,field.drainage(),field.climate())){
             boolean forest=ForestGrasslandTransition.forestFloor(random.seed(),x,z);
             if(forest)return 0;
             var sample=field.drainage().sample(x,z);var trees=canopy(x,z,random);
@@ -1091,10 +1162,10 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
 
     int woodlandCover(int x,int z,RandomState random){return litterWoodland(unvariedWoodlandCover(x,z,random),x,z,random);}
-    private int litterWoodland(int cover,int x,int z,RandomState random){return leafLitterDefinition==0||cover!=7&&cover!=9?cover:LeafLitter.woodland(random.seed(),x,z,cover,terrain(random).groundEcology().sample(x,z));}
+    private int litterWoodland(int cover,int x,int z,RandomState random){return leafLitterDefinition()==0||cover!=7&&cover!=9?cover:LeafLitter.woodland(random.seed(),x,z,cover,terrain(random).groundEcology().sample(x,z));}
     private int unvariedWoodlandCover(int x,int z,RandomState random) {
         var field=terrain(random);
-        if(biomeTransitionDefinition==1&&ForestGrasslandTransition.active(random.seed(),x,z,field.drainage(),field.climate())){
+        if(biomeTransitionDefinition()==1&&ForestGrasslandTransition.active(random.seed(),x,z,field.drainage(),field.climate())){
             boolean forest=ForestGrasslandTransition.forestFloor(random.seed(),x,z);
             if(!forest)return 0;
             var sample=field.drainage().sample(x,z);var trees=canopy(x,z,random);
@@ -1127,7 +1198,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         }
         if(HumidWoodland.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate()))return HumidWoodland.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
         if(!OakBirchWoodland.surfacePotential(random.seed(),x,z,drainage,terrain(random).climate()))return 0;
-        if(redwoodForestDefinition>0&&RedwoodForest.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate())){
+        if(redwoodForestDefinition()>0&&RedwoodForest.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate())){
             var site=terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2);
             int cover=RedwoodForest.cover(random.seed(),x,z,site,canopy(x,z,random).state(x,sample.height()+1,z)==null);
             return RedwoodForest.withLargeFern(random.seed(),x,z,site,cover,canopy(x,z,random).state(x,sample.height()+2,z)==null);
@@ -1135,7 +1206,11 @@ public final class RealisticGenerator extends ChunkGenerator {
         if(BirchForest.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate()))return BirchForest.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
         if(Forest.surfacePotential(random.seed(),x,z,drainage,terrain(random).climate()))return Forest.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
         int variant=TemperateForestVariants.surfaceKind(random.seed(),x,z,drainage,terrain(random).climate());
-        if(variant>0){var site=terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2);boolean clear=canopy(x,z,random).state(x,sample.height()+1,z)==null;return variant==TemperateForestVariants.OLD_BIRCH?TemperateForestVariants.birchCover(random.seed(),x,z,site,clear):TemperateForestVariants.flowerCover(random.seed(),x,z,site,clear);}
+        if(variant>0){
+            var site=terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2);
+            boolean clear=canopy(x,z,random).state(x,sample.height()+1,z)==null;
+            return variant==TemperateForestVariants.OLD_BIRCH?TemperateForestVariants.birchCover(random.seed(),x,z,site,clear):TemperateForestVariants.flowerCover(random.seed(),x,z,site,clear);
+        }
         if(DappledForest.surfaceContains(random.seed(),x,z,drainage,terrain(random).climate()))return DappledForest.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
         int darkCherry=DarkCherryWoodland.surfaceKind(random.seed(),x,z,drainage,terrain(random).climate());
         if(darkCherry>0)return DarkCherryWoodland.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null,darkCherry);
@@ -1152,10 +1227,29 @@ public final class RealisticGenerator extends ChunkGenerator {
     int borealCover(int x,int z,RandomState random) {
         if(StonyShore.surfaceContains(x,z,drainage(random)))return 0;
         if(meadowCover(x,z,random)>0||woodlandCover(x,z,random)>0||steppeCover(x,z,random)>0)return 0;
-        if(Grove.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){var sample=drainage(random).sample(x,z);if(sample.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;var above=canopy(x,z,random).state(x,sample.height()+1,z);return Grove.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),above==null,above!=null&&above.is(Blocks.SNOW));}
-        if(SnowyPlains.surfaceContains(x,z,drainage(random),terrain(random).climate())){var s=drainage(random).sample(x,z);if(s.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;var above=canopy(x,z,random).state(x,s.height()+1,z);return SnowyPlains.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z),terrain(random).climate().sample(x,z,drainage(random)::sample),above!=null&&above.is(Blocks.SNOW));}
-        if(SnowyTaiga.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){var sample=drainage(random).sample(x,z);if(sample.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;var above=canopy(x,z,random).state(x,sample.height()+1,z);return SnowyTaiga.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),above==null,above!=null&&above.is(Blocks.SNOW));}
-        if(Taiga.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){var sample=drainage(random).sample(x,z);if(sample.waterLevel()==DrainageNetwork.DRY&&drainage(random).channelAt(x,z).edge()<0)return Taiga.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);return 0;}
+        if(Grove.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){
+            var sample=drainage(random).sample(x,z);
+            if(sample.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;
+            var above=canopy(x,z,random).state(x,sample.height()+1,z);
+            return Grove.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),above==null,above!=null&&above.is(Blocks.SNOW));
+        }
+        if(SnowyPlains.surfaceContains(x,z,drainage(random),terrain(random).climate())){
+            var s=drainage(random).sample(x,z);
+            if(s.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;
+            var above=canopy(x,z,random).state(x,s.height()+1,z);
+            return SnowyPlains.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z),terrain(random).climate().sample(x,z,drainage(random)::sample),above!=null&&above.is(Blocks.SNOW));
+        }
+        if(SnowyTaiga.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){
+            var sample=drainage(random).sample(x,z);
+            if(sample.waterLevel()!=DrainageNetwork.DRY||drainage(random).channelAt(x,z).edge()>=0)return 0;
+            var above=canopy(x,z,random).state(x,sample.height()+1,z);
+            return SnowyTaiga.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),above==null,above!=null&&above.is(Blocks.SNOW));
+        }
+        if(Taiga.surfaceContains(random.seed(),x,z,drainage(random),terrain(random).climate())){
+            var sample=drainage(random).sample(x,z);
+            if(sample.waterLevel()==DrainageNetwork.DRY&&drainage(random).channelAt(x,z).edge()<0)return Taiga.cover(random.seed(),x,z,terrain(random).groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
+            return 0;
+        }
         if(MangroveSwamp.exact(random.seed(),x,z,drainage(random),terrain(random).climate()))return 0;
         if(Swamp.surfaceSoilContains(random.seed(),x,z,drainage(random),terrain(random).climate()))return 0;
         var field=terrain(random);var sample=field.drainage().sample(x,z);
@@ -1164,7 +1258,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         if(OldGrowthTaiga.surfaceKind(random.seed(),x,z,field.drainage(),field.climate())>0)return OldGrowthFloor.cover(random.seed(),x,z,field.groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
         return BorealWoodland.cover(random.seed(),x,z,BorealWoodland.surfaceContains(random.seed(),x,z,field.drainage(),field.climate()),true,field.groundEcology().sample(x,z).shade(canopy(x,z,random).topY(x,z)>sample.height()+2),canopy(x,z,random).state(x,sample.height()+1,z)==null);
     }
-    int warmCover(int x,int z,RandomState random){int cover=unvariedWarmCover(x,z,random);return leafLitterDefinition==0||cover!=3?cover:LeafLitter.warm(random.seed(),x,z,cover,terrain(random).groundEcology().sample(x,z));}
+    int warmCover(int x,int z,RandomState random){int cover=unvariedWarmCover(x,z,random);return leafLitterDefinition()==0||cover!=3?cover:LeafLitter.warm(random.seed(),x,z,cover,terrain(random).groundEcology().sample(x,z));}
     private int unvariedWarmCover(int x,int z,RandomState random) {
         if(StonyShore.surfaceContains(x,z,drainage(random)))return 0;
         if(TropicalForestVariants.surfaceKind(random.seed(),x,z,drainage(random),terrain(random).climate())>0)return 0;
@@ -1201,9 +1295,9 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
     private int rockHeight(int x,int z,RandomState random){var d=drainage(random);return d.sample(x,z).height()-d.continentalIceThickness(x,z);}
     private BlockState landIceBlock(int x,int y,int z,RandomState random){
-        if(continentalIceDefinition>0){var d=drainage(random);int depth=d.continentalIceThickness(x,z);if(depth>0){int top=d.sample(x,z).height();if(y<=top&&y>top-depth)return(y==top?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState();}
+        if(continentalIceDefinition()>0){var d=drainage(random);int depth=d.continentalIceThickness(x,z);if(depth>0){int top=d.sample(x,z).height();if(y<=top&&y>top-depth)return(y==top?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState();}
             else if(y==d.sample(x,z).waterLevel()-1&&d.permanentFreshwaterLid(x,z))return Blocks.PACKED_ICE.defaultBlockState();}
-        if(landIceDefinition==0)return null;var d=drainage(random);int depth=d.landIceThickness(x,z);if(depth==0)return null;int top=d.sample(x,z).height();
+        if(landIceDefinition()==0)return null;var d=drainage(random);int depth=d.landIceThickness(x,z);if(depth==0)return null;int top=d.sample(x,z).height();
         return y>top||y<=top-depth?null:(y==top?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState();
     }
     private blockbranch.cubic.PerennialIceLayer perennialIce(int x,int z,RandomState random){
@@ -1245,13 +1339,29 @@ public final class RealisticGenerator extends ChunkGenerator {
         var sample=drainage(random).sample(x,z);int ground=sample.height();
         var trees=canopy(x,z,random);var ice=floatingIce(x,z,random);
         int top=Integer.MIN_VALUE;BlockState topState=null;
-        int lid=continentalIceDefinition>0&&drainage(random).permanentFreshwaterLid(x,z)?sample.waterLevel()-1:Integer.MIN_VALUE;
+        int lid=continentalIceDefinition()>0&&drainage(random).permanentFreshwaterLid(x,z)?sample.waterLevel()-1:Integer.MIN_VALUE;
         int overlay=Math.max(Math.max(trees.topY(x,z),ice.top(x,z)),lid);
-        if(overlay!=Integer.MIN_VALUE)for(int y=overlay;y>ground+2;y--){var s=y==lid?Blocks.PACKED_ICE.defaultBlockState():ice.state(x,y,z);if(s==null)s=trees.state(x,y,z);if(s!=null&&blockbranch.horizon.HorizonColumns.visible(s)){top=y;topState=s;break;}}
+        if(overlay!=Integer.MIN_VALUE)for(int y=overlay;y>ground+2;y--){
+            var s=y==lid?Blocks.PACKED_ICE.defaultBlockState():ice.state(x,y,z);
+            if(s==null)s=trees.state(x,y,z);
+            if(s!=null&&blockbranch.horizon.HorizonColumns.visible(s)){
+                top=y;
+                topState=s;
+                break;
+            }
+        }
         // Follow the top run down (leaves only below leaves, so a trunk ends it) to find
         // where a canopy stops; the client draws the gap beneath it.
         int runBottom=top;
-        if(topState!=null){boolean leaves=topState.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock;for(int y=top-1;y>ground;y--){var s=y==lid?Blocks.PACKED_ICE.defaultBlockState():ice.state(x,y,z);if(s==null)s=trees.state(x,y,z);if(s==null||!(leaves?s.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock:blockbranch.horizon.HorizonColumns.visible(s)))break;runBottom=y;}}
+        if(topState!=null){
+            boolean leaves=topState.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock;
+            for(int y=top-1;y>ground;y--){
+                var s=y==lid?Blocks.PACKED_ICE.defaultBlockState():ice.state(x,y,z);
+                if(s==null)s=trees.state(x,y,z);
+                if(s==null||!(leaves?s.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock:blockbranch.horizon.HorizonColumns.visible(s)))break;
+                runBottom=y;
+            }
+        }
         int groundTop=ground;BlockState groundState=null;
         for(int y=ground+2;y>=ground-2;y--){var s=uncarvedState(x,y,z,random);if(blockbranch.horizon.HorizonColumns.visible(s)){groundTop=y;groundState=s;break;}}
         if(groundState==null)groundState=Blocks.STONE.defaultBlockState();
@@ -1305,7 +1415,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         var solidIce=landIceBlock(x,y,z,random);if(solidIce!=null)return solidIce;
         var floating=floatingIce(x,z,random).state(x,y,z);if(floating!=null)return floating;
         var tree=canopy(x,z,random).state(x,y,z);if(tree!=null) return tree;
-        if(continentalIceDefinition>0&&drainage(random).continentalIceThickness(x,z)>0){var s=drainage(random).sample(x,z);return material(y,s.height(),s.waterLevel());}
+        if(continentalIceDefinition()>0&&drainage(random).continentalIceThickness(x,z)>0){var s=drainage(random).sample(x,z);return material(y,s.height(),s.waterLevel());}
         var sample=drainage(random).sample(x,z);
         if(coldRocklandSurface(x,z,random))return material(y,sample.height(),sample.waterLevel(),screeDepth(x,z,random));
         if(warmXericSurface(x,z,random))return material(y,sample.height(),sample.waterLevel(),0,0,0,0,0,0,0,0,0,0,warmXericCover(x,z,random));
@@ -1358,17 +1468,17 @@ public final class RealisticGenerator extends ChunkGenerator {
     }
 
     @Override public int getBaseHeight(int x,int z,Heightmap.Types type,LevelHeightAccessor bounds,RandomState random) {
-        if(overworldDefinition>0&&OverworldStructures.terrainQueries())return OverworldStructures.baseHeight(this,random,x,z,type,bounds);
-        if(continentalIceDefinition>0){
+        if(overworldDefinition()>0&&OverworldStructures.terrainQueries())return OverworldStructures.baseHeight(this,random,x,z,type,bounds);
+        if(continentalIceDefinition()>0){
             var d=drainage(random);var s=d.sample(x,z);int min=Math.max(getMinY(),bounds.getMinY()),max=Math.min(TerrainShape.CEILING-1,bounds.getMaxY());
             int depth=d.continentalIceThickness(x,z),y=Math.min(max,s.height());
             if(depth>0&&y>=min&&y>s.height()-depth&&type.isOpaque().test((y==s.height()?Blocks.SNOW_BLOCK:Blocks.PACKED_ICE).defaultBlockState()))return y+1;
             if(depth==0&&s.waterLevel()-1>=min&&s.waterLevel()-1<=max&&d.permanentFreshwaterLid(x,z)&&type.isOpaque().test(Blocks.PACKED_ICE.defaultBlockState()))return s.waterLevel();
         }
         int top=uncarvedBaseHeight(x,z,type,bounds,random);
-        if(!undergroundEnabled)return top;
+        if(!undergroundEnabled())return top;
         int min=Math.max(getMinY(),bounds.getMinY());
-        var decoration=blockbranch.cubic.DripstoneLayer.NONE;int decorationRoof=dripstoneDefinition==0?Integer.MIN_VALUE:drainage(random).sample(x,z).height()-48;
+        var decoration=blockbranch.cubic.DripstoneLayer.NONE;int decorationRoof=dripstoneDefinition()==0?Integer.MIN_VALUE:drainage(random).sample(x,z).height()-48;
         for(int y=top-1;y>=min;y--){if(y<=decorationRoof&&!decoration.enabled())decoration=dripstoneLayer(x>>4,z>>4,random,null);if(type.isOpaque().test(decoration.state(x,y,z,surfaceState(x,y,z,random))))return y+1;}
         return bounds.getMinY();
     }
@@ -1379,7 +1489,7 @@ public final class RealisticGenerator extends ChunkGenerator {
         int height = sample.height();
         var trees=canopy(x,z,random);
         var ice=floatingIce(x,z,random);
-        int lid=continentalIceDefinition>0&&drainage(random).permanentFreshwaterLid(x,z)?sample.waterLevel()-1:Integer.MIN_VALUE;
+        int lid=continentalIceDefinition()>0&&drainage(random).permanentFreshwaterLid(x,z)?sample.waterLevel()-1:Integer.MIN_VALUE;
         int overlay=Math.max(Math.max(trees.topY(x,z),ice.top(x,z)),lid);
         if(overlay!=Integer.MIN_VALUE && max>height) {
             if(sample.waterLevel()>height){int fluidTop=Math.min(max,sample.waterLevel()-1);if(fluidTop>=min&&fluidTop>overlay&&type.isOpaque().test(Blocks.WATER.defaultBlockState()))return fluidTop+1;}
@@ -1390,11 +1500,26 @@ public final class RealisticGenerator extends ChunkGenerator {
             }
             max=Math.min(max,height);
         }
-        if(coldRocklandSurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),screeDepth(x,z,random),0,0,0,0,0,0,0,0,0,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
-        if(warmXericSurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,0,warmXericCover(x,z,random),type.isOpaque(),max);return top>min?top:bounds.getMinY();}
-        if(coolDesertSurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,0,coolDesertCover(x,z,random),type.isOpaque(),max);return top>min?top:bounds.getMinY();}
-        if(summerDrySurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,summerDryCover(x,z,random),0,0,0,0,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
-        if(dryForestSurface(x,z,random)){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,dryForestCover(x,z,random),0,0,0,0,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
+        if(coldRocklandSurface(x,z,random)){
+            int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),screeDepth(x,z,random),0,0,0,0,0,0,0,0,0,0,type.isOpaque(),max);
+            return top>min?top:bounds.getMinY();
+        }
+        if(warmXericSurface(x,z,random)){
+            int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,0,warmXericCover(x,z,random),type.isOpaque(),max);
+            return top>min?top:bounds.getMinY();
+        }
+        if(coolDesertSurface(x,z,random)){
+            int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,0,coolDesertCover(x,z,random),type.isOpaque(),max);
+            return top>min?top:bounds.getMinY();
+        }
+        if(summerDrySurface(x,z,random)){
+            int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,summerDryCover(x,z,random),0,0,0,0,0,type.isOpaque(),max);
+            return top>min?top:bounds.getMinY();
+        }
+        if(dryForestSurface(x,z,random)){
+            int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,dryForestCover(x,z,random),0,0,0,0,0,type.isOpaque(),max);
+            return top>min?top:bounds.getMinY();
+        }
         int coldUpland=coldUplandCover(x,z,random);
         if(coldUpland>0){int top=blockbranch.cubic.TerrainProfile.top(TerrainShape.FLOOR,TerrainShape.CEILING,height,sample.waterLevel(),0,0,0,0,0,0,0,0,0,coldUpland,0,type.isOpaque(),max);return top>min?top:bounds.getMinY();}
         int badlands=badlandsCover(x,z,random);
@@ -1414,8 +1539,9 @@ public final class RealisticGenerator extends ChunkGenerator {
         int reedbed=reedbedCover(x,z,random);
         int riverMargin=riverMarginCover(x,z,random);
         int sandyShore=sandyShoreCover(x,z,random);
-        int meadow=meadowCover(x,z,random),woodland=woodlandCover(x,z,random),steppe=steppeCover(x,z,random),boreal=borealCover(x,z,random),warm=warmCover(x,z,random),coldSteppe=coldSteppeCover(x,z,random),desert=desertCover(x,z,random);var trees=canopy(x,z,random);
-        if(continentalIceDefinition>0&&drainage(random).continentalIceThickness(x,z)>0)scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=desert=0;
+        int meadow=meadowCover(x,z,random),woodland=woodlandCover(x,z,random),steppe=steppeCover(x,z,random),boreal=borealCover(x,z,random),warm=warmCover(x,z,random),coldSteppe=coldSteppeCover(x,z,random),desert=desertCover(x,z,random);
+        var trees=canopy(x,z,random);
+        if(continentalIceDefinition()>0&&drainage(random).continentalIceThickness(x,z)>0)scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=desert=0;
         int badlands=badlandsCover(x,z,random);
         if(badlands>0){scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=0;desert=badlands;}
         int coldUpland=coldUplandCover(x,z,random);
@@ -1425,21 +1551,21 @@ public final class RealisticGenerator extends ChunkGenerator {
         if(coolDesertSurface(x,z,random)){desert=coolDesertCover(x,z,random);scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=0;}
         if(summerDrySurface(x,z,random)){woodland=summerDryCover(x,z,random);scree=reedbed=riverMargin=sandyShore=meadow=steppe=boreal=warm=coldSteppe=desert=0;}
         if(dryForestSurface(x,z,random)){woodland=dryForestCover(x,z,random);scree=reedbed=riverMargin=sandyShore=meadow=steppe=boreal=warm=coldSteppe=desert=0;}
-        if(continentalIceDefinition>0&&drainage(random).continentalIceThickness(x,z)>0)scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=desert=0;
+        if(continentalIceDefinition()>0&&drainage(random).continentalIceThickness(x,z)>0)scree=reedbed=riverMargin=sandyShore=meadow=woodland=steppe=boreal=warm=coldSteppe=desert=0;
         int rockHeight=height-drainage(random).continentalIceThickness(x,z);
         var floating=floatingIce(x,z,random);var entrance=approach(x,z,random);
-        int region=oreDefinition==0?0:oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(x>>2,0,z>>2));
-        var ores=oreDefinition==0?OreLayer.NONE:new OreLayer(random.seed(),x>>4,z>>4,oreDefinition,(region&1)!=0?65535:0,(region&2)!=0?65535:0);
+        int region=oreDefinition()==0?0:oreRegion(((ScreeBiomeSource)biomeSource).surfaceResolver().getNoiseBiome(x>>2,0,z>>2));
+        var ores=oreDefinition()==0?OreLayer.NONE:new OreLayer(random.seed(),x>>4,z>>4,oreDefinition(),(region&1)!=0?65535:0,(region&2)!=0?65535:0);
         for(int i=0;i<states.length;i++) {
             var tree=floating.state(x,min+i,z);if(tree==null)tree=trees.state(x,min+i,z);
             states[i]=tree!=null ? tree : material(min+i,height,sample.waterLevel(),scree,reedbed,riverMargin,sandyShore,meadow,woodland,steppe,boreal,warm,coldSteppe,desert);
             var solidIce=landIceBlock(x,min+i,z,random);if(solidIce!=null){states[i]=solidIce;continue;}
             if(entrance.clears(x,min+i,z,rockHeight)&&blockbranch.cubic.UndergroundLayer.approachMaterial(states[i]))states[i]=Blocks.AIR.defaultBlockState();
             if((states[i].is(Blocks.STONE)||states[i].is(Blocks.DEEPSLATE))&&cave(x,min+i,z,rockHeight,random))states[i]=Blocks.AIR.defaultBlockState();
-            states[i]=ores.state(x,min+i,z,rockHeight,states[i],undergroundEnabled);
+            states[i]=ores.state(x,min+i,z,rockHeight,states[i],undergroundEnabled());
         }
-        if(dripstoneDefinition>0)dripstoneLayer(x>>4,z>>4,random,null).applyColumn(x,z,min,states);
-        if(litCaveGrowthDefinition>0)litCaveLayer(x>>4,z>>4,random,null).applyColumn(x,z,min,states);
+        if(dripstoneDefinition()>0)dripstoneLayer(x>>4,z>>4,random,null).applyColumn(x,z,min,states);
+        if(litCaveGrowthDefinition()>0)litCaveLayer(x>>4,z>>4,random,null).applyColumn(x,z,min,states);
         return new NoiseColumn(min, states);
     }
 
@@ -1447,7 +1573,30 @@ public final class RealisticGenerator extends ChunkGenerator {
         var sample = drainage(random).sample(pos.getX(), pos.getZ());
         lines.add("Realistic terrain: surface=" + sample.height() + " water=" + (sample.waterLevel() == DrainageNetwork.DRY ? "dry" : sample.waterLevel())
             + " outlet=" + (sample.closed() ? "inland lake" : "ocean") + " basin=" + sample.basin());
-        lines.add("Habitat: " + (montaneForestSurface(pos.getX(),pos.getZ(),random) ? "seasonally cold montane needleleaf forest" : seasonalForestDefinition>0&&dryForestSurface(pos.getX(),pos.getZ(),random) ? "seasonal broadleaf forest" : warmXericSurface(pos.getX(),pos.getZ(),random) ? "warm xeric subshrubland" : InlandLakeReedbed.contains(pos.getX(),pos.getZ(),(x,z)->InlandLakeReedbed.site(drainage(random),x,z)) ? "inland lake reedbed" : AlpineScree.contains(pos.getX(), pos.getZ(), drainage(random)::sample) ? "alpine scree slope" : GravelRiverMargin.contains(pos.getX(),pos.getZ(),(x,z)->GravelRiverMargin.site(drainage(random),x,z)) ? "gravel-bed river margin" : LowGradientSandyShore.contains(pos.getX(),pos.getZ(),(x,z)->LowGradientSandyShore.site(drainage(random),x,z)) ? "low-gradient sandy shore" : Swamp.contains(random.seed(),pos.getX(),pos.getZ(),drainage(random),terrain(random).climate()) ? "Swamp" : BirchForest.contains(random.seed(),pos.getX(),pos.getZ(),drainage(random),terrain(random).climate()) ? "Birch Forest" : Forest.contains(random.seed(),pos.getX(),pos.getZ(),drainage(random),terrain(random).climate()) ? "Forest" : OakBirchWoodland.contains(random.seed(),pos.getX(),pos.getZ(),drainage(random),terrain(random).climate()) ? "dappled oak-birch woodland" : meadowCover(pos.getX(),pos.getZ(),random)>0 ? "rolling lowland forb-grass meadow" : steppeCover(pos.getX(),pos.getZ(),random)>0 ? "dry continental scrub-steppe" : borealCover(pos.getX(),pos.getZ(),random)>0 ? "boreal spruce-birch woodland" : warmCover(pos.getX(),pos.getZ(),random)>0 ? "warm subhumid oak-pine woodland" : coldSteppeCover(pos.getX(),pos.getZ(),random)>0 ? "cold continental fescue steppe" : desertCover(pos.getX(),pos.getZ(),random)>=8 ? "Desert" : desertCover(pos.getX(),pos.getZ(),random)>0 ? "continental gravel desert" : "unassigned")
+        lines.add("Habitat: " + habitat(pos.getX(), pos.getZ(), random)
             + " debris=" + screeDepth(pos.getX(), pos.getZ(), random) + "m");
+    }
+
+    /** Debug-screen habitat label: the first owning surface model at this column. */
+    private String habitat(int x, int z, RandomState random) {
+        if (montaneForestSurface(x,z,random)) return "seasonally cold montane needleleaf forest";
+        if (seasonalForestDefinition()>0&&dryForestSurface(x,z,random)) return "seasonal broadleaf forest";
+        if (warmXericSurface(x,z,random)) return "warm xeric subshrubland";
+        if (InlandLakeReedbed.contains(x,z,(px,pz)->InlandLakeReedbed.site(drainage(random),px,pz))) return "inland lake reedbed";
+        if (AlpineScree.contains(x, z, drainage(random)::sample)) return "alpine scree slope";
+        if (GravelRiverMargin.contains(x,z,(px,pz)->GravelRiverMargin.site(drainage(random),px,pz))) return "gravel-bed river margin";
+        if (LowGradientSandyShore.contains(x,z,(px,pz)->LowGradientSandyShore.site(drainage(random),px,pz))) return "low-gradient sandy shore";
+        if (Swamp.contains(random.seed(),x,z,drainage(random),terrain(random).climate())) return "Swamp";
+        if (BirchForest.contains(random.seed(),x,z,drainage(random),terrain(random).climate())) return "Birch Forest";
+        if (Forest.contains(random.seed(),x,z,drainage(random),terrain(random).climate())) return "Forest";
+        if (OakBirchWoodland.contains(random.seed(),x,z,drainage(random),terrain(random).climate())) return "dappled oak-birch woodland";
+        if (meadowCover(x,z,random)>0) return "rolling lowland forb-grass meadow";
+        if (steppeCover(x,z,random)>0) return "dry continental scrub-steppe";
+        if (borealCover(x,z,random)>0) return "boreal spruce-birch woodland";
+        if (warmCover(x,z,random)>0) return "warm subhumid oak-pine woodland";
+        if (coldSteppeCover(x,z,random)>0) return "cold continental fescue steppe";
+        if (desertCover(x,z,random)>=8) return "Desert";
+        if (desertCover(x,z,random)>0) return "continental gravel desert";
+        return "unassigned";
     }
 }

@@ -276,7 +276,7 @@ public final class MetallurgySmoke {
             var chunk=level.getChunk(origin.x()+dx,origin.z()+dz);var base=((SparseColumn)chunk).blockbranch$terrain().base();
             require(base.ores().definition()==generator.oreDefinition(),"actual FULL chunk carries its saved generator ore definition");
             var snapshot=TerrainProfile.decode(base.encode(level.palettedContainerFactory()),level.palettedContainerFactory());
-            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=TinVeins.MIN_DEPTH;depth<=TinVeins.MAX_DEPTH;depth++){
+            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=SectionVeins.minDepth(SectionVeins.TIN);depth<=SectionVeins.maxDepth(SectionVeins.TIN);depth++){
                 int y=base.groundHeight(x,z)-depth;var pos=new BlockPos(chunk.getPos().getMinBlockX()+x,y,chunk.getPos().getMinBlockZ()+z);var state=base.state(x,y,z);
                 if(!state.is(MetallurgyContent.TIN_ORE)&&!state.is(MetallurgyContent.DEEPSLATE_TIN_ORE))continue;
                 require(level.getBlockState(pos)==state&&snapshot.state(x,y,z)==state,"actual native vein agrees with saved procedural profile");

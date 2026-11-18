@@ -19,7 +19,7 @@ public final class WarmXericCheck {
         }
         require(WarmXericSchema.schema(267,1)==268&&WarmXericSchema.baseSchema(268,1)==267,"Complete saved wrapper");
         require(!WarmXericSchema.matches(268,0)&&!WarmXericSchema.matches(269,1)&&!WarmXericSchema.matches(268,2),"Malformed/future definitions reject");
-        var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true,true,true,true,true,true);
+        var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));
         var c=new ClimateField(424242,true);
         require(WarmXericShrubland.eligible(432000,-784000,d,c),"Existing warm dry steppe witness supported");
         require(!WarmXericShrubland.eligible(400000,-944000,d,c),"Marine outlet cannot become shrubland");

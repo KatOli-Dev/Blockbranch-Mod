@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 
 import blockbranch.Blockbranch;
 import java.util.function.Function;
@@ -34,7 +35,6 @@ public final class PreciousContent {
         var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,factory.apply(BlockBehaviour.Properties.ofFullCopy(base).setId(ResourceKey.create(Registries.BLOCK,id))));
         Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;
     }
-    private static Item item(String name){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id))));}
     public static void initialize(){
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(SILVER_ORE);out.accept(DEEPSLATE_SILVER_ORE);out.accept(PLATINUM_ORE);out.accept(DEEPSLATE_PLATINUM_ORE);});
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.BUILDING_BLOCKS).register(out->{out.accept(PLATINUM_BLOCK);out.accept(PLATINUM_SLAB);out.accept(PLATINUM_STAIRS);out.accept(SILVER_BLOCK);out.accept(SILVER_SLAB);out.accept(SILVER_STAIRS);});

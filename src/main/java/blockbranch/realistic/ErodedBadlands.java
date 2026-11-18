@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 
 /** Static differential weathering approximation on pre-existing bare sedimentary outcrops.
  * No time integration, overhangs, drainage rerouting or simulated rock mechanics. */
@@ -9,18 +8,18 @@ final class ErodedBadlands {
     private final long seed;
     private final DrainageNetwork reference;
     private final ClimateField climate;
-    private final LinkedHashMap<Long,Double> support=new LinkedHashMap<>(512,.75f,true);
+    private final ExactMemo<Long,Double> support=new ExactMemo<>(512,4096);
     ErodedBadlands(long seed,DrainageNetwork reference){this.seed=seed;this.reference=reference;climate=new ClimateField(seed);}
     private double corner(int gx,int gz){
-        long key=(gx&0xffffffffL)|((long)gz<<32);
-        synchronized(support){var old=support.get(key);if(old!=null)return old;}
+        long key=ExactMemo.key(gx,gz);
+        var old=support.find(key);if(old!=null)return old;
         int x=gx*64,z=gz*64;double value=1;
         // Erode only buffered BARE interiors. Existing soil-bearing woodland,
         // completed dry habitats and reserved water/banks cannot select a patch.
         for(int dz=-1;dz<=1&&value>0;dz++)for(int dx=-1;dx<=1;dx++){
             if(Badlands.surfaceKind(seed,x+dx*64,z+dz*64,reference,climate)!=Badlands.BARE){value=0;break;}
         }
-        synchronized(support){support.put(key,value);if(support.size()>4096)support.remove(support.keySet().iterator().next());}return value;
+        return support.store(key,value);
     }
     double envelope(int x,int z){
         var old=reference.sample(x,z);

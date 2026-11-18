@@ -33,7 +33,7 @@ public final class SummerDryCheck {
         }
         for(double invalid:new double[]{-1,Double.NaN,Double.POSITIVE_INFINITY})expect(()->SummerDryClimate.monthly(invalid,.08));
         expect(()->SummerDryClimate.monthly(900,0));expect(()->SummerDryClimate.summarize(new double[11],temperature,2));
-        var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true,true,true,true,true);var c=new ClimateField(424242);
+        var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true));var c=new ClimateField(424242);
         for(int[] p:new int[][]{{1904000,-752000},{272000,-720000},{144000,-688000}}){
             require(SummerDryWoodland.eligible(424242,p[0],p[1],d,c),"Actual first coastal candidate retained");
             require(SummerDryClimate.potential(p[0],p[1],d,c).equals(SummerDryClimate.potential(p[0],p[1],d,c)),"Deterministic static signal");

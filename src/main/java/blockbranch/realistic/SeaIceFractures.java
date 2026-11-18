@@ -11,8 +11,8 @@ final class SeaIceFractures {
             double t=Math.clamp(((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz),0,1);
             return Math.hypot(x-ax-t*dx,z-az-t*dz)-(aw+t*(bw-aw));}
     }
-    private static final LinkedHashMap<Key,List<Segment>> BUNDLES=new LinkedHashMap<>(128,.75f,true);
-    private static final LinkedHashMap<Key,List<Segment>> CACHE=new LinkedHashMap<>(128,.75f,true);
+    private static final ExactMemo<Key,List<Segment>> BUNDLES=new ExactMemo<>(128,512);
+    private static final ExactMemo<Key,List<Segment>> CACHE=new ExactMemo<>(128,LIMIT);
     static boolean ice(long seed,int x,int z,double concentration){
         if(concentration<=0)return false;
         return clearance(seed,x,z,false)>640*Math.pow(1-concentration,3);
@@ -30,14 +30,13 @@ final class SeaIceFractures {
         return best;
     }
     private static List<Segment> bundle(long seed,int gx,int gz){
-        var key=new Key(seed,gx,gz);synchronized(BUNDLES){var found=BUNDLES.get(key);if(found!=null)return found;}
+        var key=new Key(seed,gx,gz);var found=BUNDLES.find(key);if(found!=null)return found;
         var all=new ArrayList<Segment>();for(int dz=-RADIUS;dz<=RADIUS;dz++)for(int dx=-RADIUS;dx<=RADIUS;dx++)all.addAll(cell(seed,gx+dx,gz+dz));var result=List.copyOf(all);
-        synchronized(BUNDLES){BUNDLES.put(key,result);if(BUNDLES.size()>512)BUNDLES.remove(BUNDLES.keySet().iterator().next());}return result;
+        return BUNDLES.store(key,result);
     }
     private static List<Segment> cell(long seed,int gx,int gz){
-        var key=new Key(seed,gx,gz);synchronized(CACHE){var found=CACHE.get(key);if(found!=null)return found;}
-        var result=generate(seed,gx,gz);
-        synchronized(CACHE){CACHE.put(key,result);if(CACHE.size()>LIMIT)CACHE.remove(CACHE.keySet().iterator().next());}return result;
+        var key=new Key(seed,gx,gz);var found=CACHE.find(key);if(found!=null)return found;
+        return CACHE.store(key,generate(seed,gx,gz));
     }
     static List<Segment> generate(long seed,int gx,int gz){
         long h=OakBirchWoodland.mix(seed^gx*0x9E3779B97F4A7C15L^gz*0xC2B2AE3D27D4EB4FL);

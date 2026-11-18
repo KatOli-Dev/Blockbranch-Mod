@@ -11,7 +11,7 @@ public final class AlluvialDesignSurvey {
         var input=JsonParser.parseString(Files.readString(Path.of(args[0]))).getAsJsonObject();var reports=new ArrayList<Object>();
         for(var seedRow:input.getAsJsonArray("seeds")){
             var row=seedRow.getAsJsonObject();long seed=row.get("seed").getAsLong();
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true,true);var c=new ClimateField(seed,true);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true).withAlluvial(true));var c=new ClimateField(seed,true);
             int samples=0,changed=0,core=0,maxCut=0,referenceMismatch=0,climateMismatch=0;long totalCut=0;int[] stages=new int[4];var witnesses=new ArrayList<Object>();
             for(var value:row.getAsJsonArray("sections")){
                 var section=value.getAsJsonObject();var center=section.getAsJsonArray("center");int cx=center.get(0).getAsInt(),cz=center.get(1).getAsInt();

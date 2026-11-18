@@ -10,7 +10,7 @@ public final class AbyssalTraceCheck {
         require(!AbyssalTraces.eligible(4000,.081,5,true,true)&&!AbyssalTraces.eligible(4000,0,5,false,true)&&!AbyssalTraces.eligible(4000,0,5,true,false),"Slope, ownership and support independently matter");
         require(AbyssalTraces.eligible(3000,.08,5,true,true)&&AbyssalTraces.eligible(6000,0,6,true,true),"Inclusive chosen depth/slope bounds");
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var c=new ClimateField(seed);var arrays=new LinkedHashMap<Long,int[]>();int total=0;var forms=new HashSet<Integer>();
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);var arrays=new LinkedHashMap<Long,int[]>();int total=0;var forms=new HashSet<Integer>();
             // These fixed positive windows are the first three fine-bed/slope
             // witnesses in the pre-existing 32 km grid, not depth-only cells.
             int[][] centers=seed==424242?new int[][]{{-1744000,-1904000},{-528000,-1904000},{304000,-1904000}}:

@@ -5,7 +5,7 @@ public final class CoolDesertSiteSurvey {
     public static void main(String[] args) {
         System.out.println("seed,x,z,height,temperature,moisture,slope,reserved,supported,inland");
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){
                 var s=d.sample(x,z);var q=c.sample(x,z,d::sample);
                 if(s.waterLevel()!=DrainageNetwork.DRY||q.meanTemperatureC()<-6||q.meanTemperatureC()>=5||q.moisture()>=.12)continue;

@@ -20,7 +20,7 @@ public final class ContinentalIceCheck {
                 require(LandIceField.climateStrength(z,mean,.1)==0,"Cold arid rock remains a counterexample");
             }
         }
-        var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true,true,true,true,true,true);var c=new ClimateField(424242,true);
+        var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));var c=new ClimateField(424242,true);
         for(int[] p:new int[][]{{-1552000,-1904000},{-1456000,-1904000}}){
             require(d.continentalIceThickness(p[0],p[1])>64,"Nonvacuous lowland/upland body exceeds legacy cap limit");
             require(d.sample(p[0],p[1]).height()-d.iceReference().sample(p[0],p[1]).height()==d.continentalIceThickness(p[0],p[1]),"Physical body and original rock bed agree");

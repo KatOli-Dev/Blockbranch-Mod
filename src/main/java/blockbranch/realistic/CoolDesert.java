@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 import java.util.function.BiPredicate;
 
 /** A cool continental stony-desert structural analog, not a quantified aridity
@@ -68,18 +67,7 @@ public final class CoolDesert {
     /** Final-fallback quart ownership is intersected with physical support.
      * Immutable seed fields and bounded caches survive concurrent column reads. */
     static BiPredicate<Integer,Integer> domain(DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart){
-        return selectedDomain(selectedQuart,(x,z)->eligible(x,z,d,c));
-    }
-    static BiPredicate<Integer,Integer> selectedDomain(BiPredicate<Integer,Integer> selectedQuart,BiPredicate<Integer,Integer> physical){
-        var blocks=new LinkedHashMap<Long,Boolean>(256,.75f,true);var quarts=new LinkedHashMap<Long,Boolean>(256,.75f,true);
-        return (x,z)->{
-            long key=(x&0xffffffffL)|((long)z<<32);synchronized(blocks){var v=blocks.get(key);if(v!=null)return v;}
-            int qx=x>>2,qz=z>>2;long qkey=(qx&0xffffffffL)|((long)qz<<32);Boolean selected;
-            synchronized(quarts){selected=quarts.get(qkey);}
-            if(selected==null){selected=selectedQuart.test(qx,qz);synchronized(quarts){quarts.put(qkey,selected);if(quarts.size()>2048)quarts.remove(quarts.keySet().iterator().next());}}
-            boolean value=selected&&physical.test(x,z);
-            synchronized(blocks){blocks.put(key,value);if(blocks.size()>8192)blocks.remove(blocks.keySet().iterator().next());}return value;
-        };
+        return SelectedDomain.of(selectedQuart,(x,z)->eligible(x,z,d,c));
     }
     /** Existing desert roles 1..7, including <1 m live shrubs and short grasses.
      * Fine-soil pockets retain vegetation; exposed gravel/pavement remains bare.
