@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 import java.util.function.BiFunction;
 
 /** Static, continuous vegetation-site proxies: regional moisture, local hollows, exposure and canopy shelter. */
@@ -13,7 +12,7 @@ public final class GroundEcology {
     public static final class Field {
         private final BiFunction<Integer,Integer,DrainageNetwork.Sample> terrain;
         private final ClimateField climate;
-        private final LinkedHashMap<Long,Site> samples=new LinkedHashMap<>(512,.75f,true);
+        private final ExactMemo<Long,Site> samples=new ExactMemo<>(512,512);
         public Field(BiFunction<Integer,Integer,DrainageNetwork.Sample> terrain,ClimateField climate){this.terrain=terrain;this.climate=climate;}
         public Site sample(int x,int z){
             int gx=Math.floorDiv(x,32),gz=Math.floorDiv(z,32);double tx=Math.floorMod(x,32)/32.0,tz=Math.floorMod(z,32)/32.0;
@@ -21,7 +20,7 @@ public final class GroundEcology {
             return new Site(blend(a.wetness(),b.wetness(),c.wetness(),d.wetness(),tx,tz),blend(a.retention(),b.retention(),c.retention(),d.retention(),tx,tz),blend(a.exposure(),b.exposure(),c.exposure(),d.exposure(),tx,tz),blend(a.dx(),b.dx(),c.dx(),d.dx(),tx,tz),blend(a.dz(),b.dz(),c.dz(),d.dz(),tx,tz),false);
         }
         private Site corner(int gx,int gz){
-            long key=(gx&0xffffffffL)|((long)gz<<32);synchronized(samples){var found=samples.get(key);if(found!=null)return found;}
+            long key=ExactMemo.key(gx,gz);var found=samples.find(key);if(found!=null)return found;
             int x=gx*32,z=gz*32,h=terrain.apply(x,z).height();var west=terrain.apply(x-16,z);var east=terrain.apply(x+16,z);var north=terrain.apply(x,z-16);var south=terrain.apply(x,z+16);
             double dx=(east.height()-west.height())/32.0,dz=(south.height()-north.height())/32.0;
             double hollow=((west.height()+east.height()+north.height()+south.height())/4.0-h)/4;
@@ -31,9 +30,9 @@ public final class GroundEcology {
             double sun=slope==0?0:Math.max(0,Math.signum(z)*dz/slope)*Math.min(1,slope/.35)*Math.tanh(Math.abs(z)/400000.0);
             double exposure=Math.clamp(sun+Math.max(0,-retention)*.4,0,1);
             var site=new Site(Math.clamp(climate.sample(x,z,terrain).moisture()+.10*retention-.06*exposure,0,1),retention,exposure,dx,dz,false);
-            synchronized(samples){samples.put(key,site);if(samples.size()>512)samples.remove(samples.keySet().iterator().next());}return site;
+            return samples.store(key,site);
         }
-        public int cachedSamples(){synchronized(samples){return samples.size();}}
+        public int cachedSamples(){return samples.size();}
     }
     /** Elliptical colonies have fully jittered centres and soft overlapping edges, rather than filled grid tiles. */
     static Colony colony(long seed,long salt,int x,int z,int scale,double minRadius,double maxRadius,Site site){

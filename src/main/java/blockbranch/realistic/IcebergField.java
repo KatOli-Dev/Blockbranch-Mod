@@ -9,7 +9,7 @@ public final class IcebergField {
     private final long seed;private final DrainageNetwork drainage;private final ClimateField climate;
     private record Site(int x,int z,long priority){}
     public record Berg(int x,int z,IcebergShape shape){}
-    private final LinkedHashMap<Long,Optional<Berg>> cache=new LinkedHashMap<>(128,.75f,true);
+    private final ExactMemo<Long,Optional<Berg>> cache=new ExactMemo<>(128,128);
     public IcebergField(long seed,DrainageNetwork d,ClimateField c){this.seed=seed;drainage=d;climate=c;}
     public static boolean habitat(long seed,int x,int z,DrainageNetwork d,ClimateField c){
         if(SurfacePatches.sample(seed^0x4943454245524750L,x,z,16000)<.58)return false;
@@ -17,7 +17,7 @@ public final class IcebergField {
     }
     private Site site(int gx,int gz){long h=OakBirchWoodland.mix(seed^0x4943454245524753L^gx*0x165667B19E3779F9L^gz*0xD1B54A32D192ED03L);return new Site(gx*CELL+48+(int)(224*unit(h)),gz*CELL+48+(int)(224*unit(OakBirchWoodland.mix(h))),h);}
     private Berg berg(int gx,int gz){
-        long key=(gx&0xffffffffL)|((long)gz<<32);synchronized(cache){var old=cache.get(key);if(old!=null)return old.orElse(null);}
+        long key=ExactMemo.key(gx,gz);var old=cache.find(key);if(old!=null)return old.orElse(null);
         var p=site(gx,gz);boolean valid=habitat(seed,p.x,p.z,drainage,climate);
         // Matérn-style priority rejection, independent of habitat and request order.
         // Accepted bounding discs do not overlap, so merging cannot invent solid ice.
@@ -31,15 +31,15 @@ public final class IcebergField {
             var s=drainage.sample(p.x+dx,p.z+dz);
             if(!habitat(seed,p.x+dx,p.z+dz,drainage,climate)||s.height()>=64+bottom-8){valid=false;break check;}
         }if(valid)value=new Berg(p.x,p.z,shape);}
-        synchronized(cache){cache.put(key,Optional.ofNullable(value));if(cache.size()>128)cache.remove(cache.keySet().iterator().next());}return value;
+        return cache.store(key,Optional.ofNullable(value)).orElse(null);
     }
     public Berg near(int x,int z){int gx=Math.floorDiv(x,CELL),gz=Math.floorDiv(z,CELL);
         for(int dz=-1;dz<=1;dz++)for(int dx=-1;dx<=1;dx++){var b=berg(gx+dx,gz+dz);if(b!=null&&b.shape.bottom(x-b.x,z-b.z)!=Integer.MIN_VALUE)return b;}return null;
     }
-    private final LinkedHashMap<Long,FloatingIceLayer> columns=new LinkedHashMap<>(128,.75f,true);
+    private final ExactMemo<Long,FloatingIceLayer> columns=new ExactMemo<>(128,128);
     public FloatingIceLayer column(int cx,int cz){
-        long key=(cx&0xffffffffL)|((long)cz<<32);synchronized(columns){var old=columns.get(key);if(old!=null)return old;}
-        var layer=createColumn(cx,cz);synchronized(columns){columns.put(key,layer);if(columns.size()>128)columns.remove(columns.keySet().iterator().next());}return layer;
+        long key=ExactMemo.key(cx,cz);var old=columns.find(key);if(old!=null)return old;
+        return columns.store(key,createColumn(cx,cz));
     }
     private FloatingIceLayer createColumn(int cx,int cz){
         int[] spans=new int[256];

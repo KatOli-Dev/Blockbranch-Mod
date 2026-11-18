@@ -1,0 +1,96 @@
+package blockbranch.realistic;
+
+import java.util.function.Predicate;
+
+/**
+ * Frozen pre-table generator validation, saved-schema fold and vegetation flags, transcribed mechanically
+ * from {@code RealisticGenerator} at base commit 1070bd3 (schema 279): the codec validator with
+ * {@code DataResult.error(..)} reduced to its message and palette holder lookups reduced to a predicate.
+ * {@link GeneratorSchemaParityCheck} compares {@link GeneratorSchema} against it. Never edit this copy;
+ * gates newer than schema 279 are outside its domain and stay 0 when compared.
+ */
+final class LegacyGeneratorValidation {
+    static final int MOSS_SAVE_VERSION=83,FORMATION_SAVE_VERSION=84,CAVE_BIOME_SAVE_VERSION=85,STRUCTURE_SAVE_VERSION=86,CALIBRATED_STRUCTURE_SAVE_VERSION=87,ATLAS_STRUCTURE_SAVE_VERSION=88;
+    int biomeTransitionDefinition,redwoodForestDefinition,surfaceOwnershipDefinition,dryForestDefinition,coolDesertDefinition,abyssalTraceDefinition,deepBasinReliefDefinition,landIceDefinition,summerDryDefinition,continentalIceDefinition,leafLitterDefinition,warmXericDefinition,seasonalForestDefinition,alluvialDefinition,montaneForestDefinition,borealSlopeDefinition,mangroveRootsDefinition,broadleafCrownDefinition,seasonalCrownDefinition,birchCrownDefinition,pineCrownDefinition,coastalOakCrownDefinition,humidCrownDefinition,mansionReplacementDefinition,sanctuaryReplacementDefinition,gravelReliefDefinition,borealCrownDefinition,discoveryDefinition,mansionWingDefinition,pyramidGalleryDefinition,overworldDefinition,nativeOrdinary,nativeHutIgloo,structureDefinition,oreDefinition,dripstoneDefinition,litCaveGrowthDefinition,caveBiomeDefinition,inputSchema;
+    boolean icebergsEnabled,sandyCoastsEnabled,undergroundEnabled,approachesEnabled,entryRoutesEnabled;
+    int shipwreckValue,waygateValue,wetlandHutValue,snowShelterValue,warmRuinValue,coldRuinValue,deepColdRuinValue,deepWarmRuinValue,reimaginedValue;
+    int shipwreckDefinition(){return shipwreckValue;}
+    int waygateDefinition(){return waygateValue;}
+    int wetlandHutDefinition(){return wetlandHutValue;}
+    int snowShelterDefinition(){return snowShelterValue;}
+    int warmRuinDefinition(){return warmRuinValue;}
+    int coldRuinDefinition(){return coldRuinValue;}
+    int deepColdRuinDefinition(){return deepColdRuinValue;}
+    int deepWarmRuinDefinition(){return deepWarmRuinValue;}
+    int reimaginedDefinition(){return reimaginedValue;}
+    int nativeHutIglooDefinition(){return nativeHutIgloo;}
+    int nativeOrdinaryDefinition(){return nativeOrdinary;}
+    int humidCrownBaseSchema(){return HumidCrownSchema.baseSchema(inputSchema,humidCrownDefinition);}
+    int coastalOakCrownBaseSchema(){return CoastalOakCrownSchema.baseSchema(humidCrownBaseSchema(),coastalOakCrownDefinition);}
+    int pineCrownBaseSchema(){return PineCrownSchema.baseSchema(coastalOakCrownBaseSchema(),pineCrownDefinition);}
+    int birchCrownBaseSchema(){return BirchCrownSchema.baseSchema(pineCrownBaseSchema(),birchCrownDefinition);}
+    int seasonalCrownBaseSchema(){return SeasonalCrownSchema.baseSchema(birchCrownBaseSchema(),seasonalCrownDefinition);}
+    int broadleafBaseSchema(){return BroadleafCrownSchema.baseSchema(seasonalCrownBaseSchema(),broadleafCrownDefinition);}
+    int mangroveRootsBaseSchema(){return MangroveRootsSchema.baseSchema(broadleafBaseSchema(),mangroveRootsDefinition);}
+    int borealSlopeBaseSchema(){return BorealSlopeSchema.baseSchema(mangroveRootsBaseSchema(),borealSlopeDefinition);}
+    int montaneBaseSchema(){return MontaneForestSchema.baseSchema(borealSlopeBaseSchema(),montaneForestDefinition);}
+    int alluvialBaseSchema(){return AlluvialSchema.baseSchema(montaneBaseSchema(),alluvialDefinition);}
+    int seasonalBaseSchema(){return SeasonalForestSchema.baseSchema(alluvialBaseSchema(),seasonalForestDefinition);}
+
+    /** The frozen validator; null when the combination is accepted. */
+    String validate(Predicate<String> holder){
+        return !HumidCrownSchema.matches(inputSchema,humidCrownDefinition)?("Humid crown schema/definition mismatch"):
+            !CoastalOakCrownSchema.matches(humidCrownBaseSchema(),coastalOakCrownDefinition)?("Coastal oak crown schema/definition mismatch"):
+            coastalOakCrownDefinition>0&&summerDryDefinition==0?("Coastal oak crowns require summer-dry woodland"):
+            !PineCrownSchema.matches(coastalOakCrownBaseSchema(),pineCrownDefinition)?("Pine crown schema/definition mismatch"):
+            !BirchCrownSchema.matches(pineCrownBaseSchema(),birchCrownDefinition)?("Birch crown schema/definition mismatch"):
+            !SeasonalCrownSchema.matches(birchCrownBaseSchema(),seasonalCrownDefinition)?("Seasonal crown schema/definition mismatch"):
+            !BroadleafCrownSchema.matches(seasonalCrownBaseSchema(),broadleafCrownDefinition)?("Broadleaf crown schema/definition mismatch"):
+            !MangroveRootsSchema.matches(broadleafBaseSchema(),mangroveRootsDefinition)?("Mangrove roots schema/definition mismatch"):
+            !BorealSlopeSchema.matches(mangroveRootsBaseSchema(),borealSlopeDefinition)?("Boreal slope schema/definition mismatch"):
+            !MontaneForestSchema.matches(borealSlopeBaseSchema(),montaneForestDefinition)?("Montane forest schema/definition mismatch"):
+            montaneForestDefinition>0&&!holder.test(MontaneForest.KEY)?("Montane forest requires holder"):
+            !AlluvialSchema.matches(montaneBaseSchema(),alluvialDefinition)?("Alluvial schema/definition mismatch"):
+            !SeasonalForestSchema.matches(alluvialBaseSchema(),seasonalForestDefinition)?("Seasonal forest schema/definition mismatch"):
+            !WarmXericSchema.matches(seasonalBaseSchema(),warmXericDefinition)?("Warm xeric schema/definition mismatch"):
+            warmXericDefinition>0&&!holder.test(WarmXericShrubland.KEY)?("Warm xeric shrubs require holder"):
+            !FoundationSchema.matches(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition)?("Continental ice / leaf-litter schema/definition mismatch"):
+            continentalIceDefinition>0&&!holder.test(ContinentalIceField.KEY)?("Continental ice requires biome holder"):
+            !SummerDrySchema.matches(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition)?("Summer-dry schema/definition mismatch"):
+            summerDryDefinition>0&&!holder.test(SummerDryWoodland.KEY)?("Summer-dry woodland requires biome holder"):
+            !LandIceSchema.matches(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition)?("Land ice schema/definition mismatch"):
+            landIceDefinition>0&&!holder.test(LandIceField.KEY)?("Land ice requires biome holder"):
+            !DeepBasinSchema.matches(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition)?("Deep basin relief schema/definition mismatch"):
+            !AbyssalTraceSchema.matches(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition)?("Abyssal trace schema/definition mismatch"):
+            !CoolDesertSchema.matches(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition)?("Cool desert schema/definition mismatch"):
+            coolDesertDefinition>0&&!holder.test(CoolDesert.KEY)?("Cool desert requires biome holder"):
+            !DryForestSchema.matches(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition)?("Dry forest schema/definition mismatch"):
+            dryForestDefinition>0&&!holder.test(DryForest.KEY)?("Dry forest requires biome holder"):
+            !SurfaceOwnershipSchema.matches(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition)?("Surface ownership schema/definition mismatch"):
+            surfaceOwnershipDefinition>0&&!holder.test(ColdRockland.KEY)?("Surface ownership requires cold rockland holder"):
+            !RedwoodForestSchema.matches(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition)?("Redwood forest schema/definition mismatch"):
+            redwoodForestDefinition>0&&!holder.test(RedwoodForest.KEY)?("Redwood forests require their biome holder"):
+            !BiomeTransitionSchema.matches(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition),biomeTransitionDefinition)?("Biome transition schema/definition mismatch"):
+            !MansionReplacementSchema.matches(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition),biomeTransitionDefinition),mansionReplacementDefinition)?("Mansion replacement schema/definition mismatch"):
+            !SanctuaryReplacementSchema.matches(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition),biomeTransitionDefinition),mansionReplacementDefinition),sanctuaryReplacementDefinition)?("Sanctuary replacement schema/definition mismatch"):
+            !GravelReliefSchema.matches(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition),biomeTransitionDefinition),mansionReplacementDefinition),sanctuaryReplacementDefinition),gravelReliefDefinition)?("Gravel relief schema/definition mismatch"):
+            pyramidGalleryDefinition>0&&reimaginedDefinition()==0?("Pyramid galleries require reimagined layouts"):
+            overworldDefinition>0&&!holder.test("deep_dark")?("Overworld coverage requires deep_dark holder"):
+            !StructureGenerationSchema.matches(PyramidGallerySchema.baseSchema(BorealCrownSchema.baseSchema(GravelReliefSchema.baseSchema(SanctuaryReplacementSchema.baseSchema(MansionReplacementSchema.baseSchema(BiomeTransitionSchema.baseSchema(RedwoodForestSchema.baseSchema(SurfaceOwnershipSchema.baseSchema(DryForestSchema.baseSchema(CoolDesertSchema.baseSchema(AbyssalTraceSchema.baseSchema(DeepBasinSchema.baseSchema(LandIceSchema.baseSchema(SummerDrySchema.baseSchema(FoundationSchema.baseSchema(WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition),continentalIceDefinition,leafLitterDefinition),summerDryDefinition),landIceDefinition),deepBasinReliefDefinition),abyssalTraceDefinition),coolDesertDefinition),dryForestDefinition),surfaceOwnershipDefinition),redwoodForestDefinition),biomeTransitionDefinition),mansionReplacementDefinition),sanctuaryReplacementDefinition),gravelReliefDefinition),borealCrownDefinition),pyramidGalleryDefinition),discoveryDefinition,shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),nativeHutIglooDefinition(),nativeOrdinaryDefinition(),reimaginedDefinition(),overworldDefinition,mansionWingDefinition)?("Structure feature schema mismatch"):
+            (WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition)>=ATLAS_STRUCTURE_SAVE_VERSION)!=(structureDefinition==3)?("Structure atlas schema/definition mismatch"):
+            (WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition)==CALIBRATED_STRUCTURE_SAVE_VERSION)!=(structureDefinition==2)?("Calibrated structure schema/definition mismatch"):
+            (WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition)==STRUCTURE_SAVE_VERSION)!=(structureDefinition==1)?("Structure schema/definition mismatch"):
+            (WarmXericSchema.baseSchema(seasonalBaseSchema(),warmXericDefinition)>=CAVE_BIOME_SAVE_VERSION)!=(caveBiomeDefinition==1)?("Cave biome schema/definition mismatch"):
+            caveBiomeDefinition>0&&(dripstoneDefinition!=2||litCaveGrowthDefinition!=2||!holder.test("lush_caves")||!holder.test("sulfur_caves"))?("Cave biomes require formation/moss definitions and both holders"):
+            litCaveGrowthDefinition>0&&(!undergroundEnabled||!approachesEnabled)?("Lit cave growth requires existing cave approaches"):
+            dripstoneDefinition>0&&(!undergroundEnabled||!holder.test("dripstone_caves"))?("Dripstone requires caves and its biome holder"):
+            entryRoutesEnabled&&!approachesEnabled?("Entry routes require approaches"):
+            approachesEnabled&&!undergroundEnabled?("Approaches require caves"):
+            icebergsEnabled&&!holder.test("ice_spikes")?("Iceberg habitat requires ice_spikes holder"):
+            null;
+    }
+
+    int saveSchema(){return HumidCrownSchema.schema(CoastalOakCrownSchema.schema(PineCrownSchema.schema(BirchCrownSchema.schema(SeasonalCrownSchema.schema(BroadleafCrownSchema.schema(MangroveRootsSchema.schema(BorealSlopeSchema.schema(MontaneForestSchema.schema(AlluvialSchema.schema(SeasonalForestSchema.schema(WarmXericSchema.schema(FoundationSchema.schema(SummerDrySchema.schema(LandIceSchema.schema(DeepBasinSchema.schema(AbyssalTraceSchema.schema(CoolDesertSchema.schema(DryForestSchema.schema(SurfaceOwnershipSchema.schema(RedwoodForestSchema.schema(BiomeTransitionSchema.schema(MansionReplacementSchema.schema(SanctuaryReplacementSchema.schema(GravelReliefSchema.schema(BorealCrownSchema.schema(PyramidGallerySchema.schema(StructureGenerationSchema.versionFor(structureDefinition==3?ATLAS_STRUCTURE_SAVE_VERSION:structureDefinition==2?CALIBRATED_STRUCTURE_SAVE_VERSION:structureDefinition>0?STRUCTURE_SAVE_VERSION:caveBiomeDefinition>0?CAVE_BIOME_SAVE_VERSION:dripstoneDefinition==2?FORMATION_SAVE_VERSION:litCaveGrowthDefinition>0?MOSS_SAVE_VERSION:TerrainShape.SHAPE_VERSION,discoveryDefinition,shipwreckDefinition(),waygateDefinition(),wetlandHutDefinition(),snowShelterDefinition(),warmRuinDefinition(),coldRuinDefinition(),deepColdRuinDefinition(),deepWarmRuinDefinition(),nativeHutIglooDefinition(),nativeOrdinaryDefinition(),reimaginedDefinition(),overworldDefinition,mansionWingDefinition),pyramidGalleryDefinition),borealCrownDefinition),gravelReliefDefinition),sanctuaryReplacementDefinition),mansionReplacementDefinition),biomeTransitionDefinition),redwoodForestDefinition),surfaceOwnershipDefinition),dryForestDefinition),coolDesertDefinition),abyssalTraceDefinition),deepBasinReliefDefinition),landIceDefinition),summerDryDefinition),continentalIceDefinition,leafLitterDefinition),warmXericDefinition),seasonalForestDefinition),alluvialDefinition),montaneForestDefinition),borealSlopeDefinition),mangroveRootsDefinition),broadleafCrownDefinition),seasonalCrownDefinition),birchCrownDefinition),pineCrownDefinition),coastalOakCrownDefinition),humidCrownDefinition);}
+
+    int vegetationFlags(){return biomeTransitionDefinition|(redwoodForestDefinition>0?RedwoodForest.FLAG:0)|(dryForestDefinition>0?DryForest.FLAG:0)|(summerDryDefinition>0?SummerDryWoodland.FLAG:0)|(continentalIceDefinition>0?16:0)|(seasonalForestDefinition>0?SeasonalForestExpansion.FLAG:0)|(montaneForestDefinition>0?MontaneForest.FLAG:0)|(borealSlopeDefinition>0?BorealSlope.FLAG:0)|(broadleafCrownDefinition>0?BroadleafCrowns.FLAG:0)|(seasonalCrownDefinition>0?SeasonalCrowns.FLAG:0)|(birchCrownDefinition>0?BirchCrowns.FLAG:0)|(pineCrownDefinition>0?PineCrowns.FLAG:0)|(coastalOakCrownDefinition>0?CoastalOakCrowns.FLAG:0)|(humidCrownDefinition>0?HumidCrowns.FLAG:0);}
+}

@@ -12,7 +12,7 @@ final class ShipwreckRegionalQualification {
   long thread=Thread.currentThread().threadId();var reports=new ArrayList<Object>();
   for(long seed:new long[]{424242,1,-17}){
    long before=System.nanoTime(),allocated=bean.getThreadAllocatedBytes(thread);
-   var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true);var climate=new ClimateField(seed);
+   var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var climate=new ClimateField(seed);
    long terrainNanos=System.nanoTime()-before,terrainBytes=bean.getThreadAllocatedBytes(thread)-allocated;
    before=System.nanoTime();allocated=bean.getThreadAllocatedBytes(thread);
    var source=BuriedTreasureDiscovery.build(seed,true,d,climate);source.bind(d,climate);

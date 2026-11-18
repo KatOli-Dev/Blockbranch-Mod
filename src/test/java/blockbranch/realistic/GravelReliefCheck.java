@@ -25,8 +25,8 @@ public final class GravelReliefCheck {
     }
     private static void verify(Site site)throws Exception {
         long started=System.nanoTime();
-        var legacy=new DrainageNetwork(new TerrainShape(site.seed),site.seed,true,true);
-        var fresh=new DrainageNetwork(new TerrainShape(site.seed),site.seed,true,true,true);
+        var legacy=new DrainageNetwork(new TerrainShape(site.seed),site.seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));
+        var fresh=new DrainageNetwork(new TerrainShape(site.seed),site.seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));
         var climate=new ClimateField(site.seed);
         var before=new DrainageNetwork.Sample[SIDE*SIDE];var after=new DrainageNetwork.Sample[before.length];
         int changed=0,minimum=0,maximum=0;
@@ -78,7 +78,7 @@ public final class GravelReliefCheck {
         Collections.sort(runs);return runs.get((runs.size()-1)*9/10);
     }
     private static void concurrentCold(Site site,DrainageNetwork.Sample[] expected)throws Exception {
-        var cold=new DrainageNetwork(new TerrainShape(site.seed),site.seed,true,true,true);
+        var cold=new DrainageNetwork(new TerrainShape(site.seed),site.seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));
         var indices=new ArrayList<Integer>();for(int z=0;z<SIDE;z+=8)for(int x=0;x<SIDE;x+=8)indices.add(z*SIDE+x);
         Collections.reverse(indices);
         try(var pool=Executors.newFixedThreadPool(3)) {

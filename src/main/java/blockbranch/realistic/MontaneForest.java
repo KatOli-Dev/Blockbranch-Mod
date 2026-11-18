@@ -43,7 +43,7 @@ public final class MontaneForest {
             &&DarkCherryWoodland.surfaceKind(seed,x,z,d,c)==0;
     }
     static BiPredicate<Integer,Integer> domain(long seed,DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart){
-        return CoolDesert.selectedDomain(selectedQuart,(x,z)->eligible(seed,x,z,d,c));
+        return SelectedDomain.of(selectedQuart,(x,z)->eligible(seed,x,z,d,c));
     }
     private MontaneForest(){}
 }

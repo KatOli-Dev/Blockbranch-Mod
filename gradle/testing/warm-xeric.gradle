@@ -34,11 +34,7 @@ tasks.register('verifyWarmXericReader'){
 }
 tasks.named('checkHistoricalReaderFixtures'){dependsOn 'verifyWarmXericReader'}
 
-tasks.register('checkWarmXeric',JavaExec){
- dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.WarmXericCheck';maxHeapSize='2G'
-}
-tasks.named('check'){dependsOn 'checkWarmXeric'}
+analyticCheck('checkWarmXeric','blockbranch.realistic.WarmXericCheck','2G')
 
 def nativeDir=layout.projectDirectory.dir(providers.gradleProperty('warmXericDirectory').getOrElse('build/xeric-evidence/native'))
 def nativeReopen=providers.gradleProperty('warmXericReopen').isPresent()

@@ -4,6 +4,7 @@ import blockbranch.wildlife.*;
 import blockbranch.realistic.*;
 public final class BlockbranchTestMod implements ModInitializer {
     @Override public void onInitialize() {
+        if(Boolean.getBoolean("blockbranch.generatorCodecWitness"))blockbranch.realistic.GeneratorCodecWitness.register();
         if(Boolean.getBoolean("blockbranch.metallurgyView"))blockbranch.metallurgy.MetallurgyViewScene.register();
         if(Boolean.getBoolean("blockbranch.metallurgySmoke"))blockbranch.metallurgy.MetallurgySmoke.register();
         if(Boolean.getBoolean("blockbranch.daylightSync"))blockbranch.time.DaylightSyncSmoke.register();

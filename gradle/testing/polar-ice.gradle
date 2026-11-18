@@ -36,11 +36,11 @@ tasks.register('preparePolarVisual'){doLast{
 }}
 tasks.named('runPolarVisual'){dependsOn 'preparePolarVisual';doLast{assert visual.file(providers.gradleProperty('polarVisualReopen').isPresent()?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkContinentalIce',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceCheck';maxHeapSize='2G'}
-tasks.register('checkFoundationSchema',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.FoundationSchemaCheck'}
+analyticCheck('checkContinentalIce','blockbranch.realistic.ContinentalIceCheck','2G')
+analyticCheck('checkFoundationSchema','blockbranch.realistic.FoundationSchemaCheck')
 tasks.register('checkPolarUnderground',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.PolarUndergroundCheck';maxHeapSize='2G';args(providers.gradleProperty('polarUndergroundReport').isPresent() ? ['report'] : [])}
 tasks.register('checkOreRebind',JavaExec){dependsOn 'integrationTestClasses';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.OreRebindCheck';maxHeapSize='1G';workingDir=layout.buildDirectory.dir('polar-underground-evidence/ore-bootstrap').get().asFile;doFirst{workingDir.mkdirs()}}
-tasks.named('check'){dependsOn 'checkContinentalIce','checkFoundationSchema','checkPolarUnderground','checkOreRebind'}
+tasks.named('check'){dependsOn 'checkPolarUnderground','checkOreRebind'}
 tasks.register('assessContinentalIce',JavaExec){dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.ContinentalIceAssessment';maxHeapSize='2G'}
 
 // The original source is useful for codec/surface comparisons, but shares
@@ -105,5 +105,4 @@ tasks.register('prepareContinentalIceQualification'){doLast{
  dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25623\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
 }}
 tasks.named('runContinentalIceQualification'){dependsOn 'prepareContinentalIceQualification','relocatePolarIceReader';doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}}
-
 

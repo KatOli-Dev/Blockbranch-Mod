@@ -1,0 +1,63 @@
+// JUnit entry point for the canonical analytic checks: the single-action JavaExec tasks on the analytic
+// classpath that `check` or `test` depends on, read after every script is applied (a name-prefix match would
+// adopt stale historical baselines). CheckSuiteTest runs each one's main in its own JVM with that task's JVM
+// arguments and working directory. While `test` is scheduled those tasks only run their prerequisites, so
+// nothing runs twice; invoked by name, a check* task still runs directly.
+// JUnit stays test-scope: its own configuration, never on main/client classpaths or in an archive.
+configurations.create('checkSuiteJUnit') { canBeConsumed = false }
+dependencies {
+    checkSuiteJUnit platform('org.junit:junit-bom:5.11.4')
+    checkSuiteJUnit 'org.junit.jupiter:junit-jupiter'
+    checkSuiteJUnit 'org.junit.platform:junit-platform-launcher'
+    checkSuiteJUnit 'org.apiguardian:apiguardian-api:1.1.2' // annotations JUnit compiles against
+}
+def analyticClasspath = sourceSets.test.runtimeClasspath
+sourceSets.test.compileClasspath += configurations.checkSuiteJUnit
+
+// Declared dependencies only: resolving a task's full dependencies would resolve its classpath configurations
+// before Loom finishes configuring them.
+def declared
+declared = { Object d ->
+    if (d instanceof Task) return [d]
+    if (d instanceof TaskProvider || d instanceof Provider) return declared(d.get())
+    if (d instanceof CharSequence) return [tasks.getByName(d.toString())]
+    if (d instanceof Iterable) return d.collectMany { declared(it) }
+    return []
+}
+def checkTask = tasks.named('check').get()
+def canonical = (checkTask.taskDependencies.getDependencies(checkTask) + declared(tasks.named('test').get().dependsOn)).findAll {
+    it instanceof JavaExec && it.actions.size() == 1 && it.classpath.from.contains(analyticClasspath)
+} as Set
+// Stable order: by name, each check after any canonical check it declares a dependency on.
+def ordered = []
+def visit
+visit = { t -> if (t in ordered) return; declared(t.dependsOn).findAll { it in canonical }.sort { it.name }.each { visit(it) }; ordered << t }
+canonical.sort { it.name }.each { visit(it) }
+
+def sep = '\u001f' as String
+def manifestLines = ordered.collect { t ->
+    [t.name, t.mainClass.get(), t.allJvmArgs.join(sep), t.args.join(sep), t.workingDir.absolutePath].join('\t')
+}
+def manifest = layout.buildDirectory.file('check-suite/manifest.tsv')
+tasks.register('writeCheckSuiteManifest') {
+    inputs.property('checks', manifestLines)
+    outputs.file(manifest)
+    doLast { manifest.get().asFile.text = manifestLines.join('\n') + '\n' }
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    classpath = analyticClasspath + configurations.checkSuiteJUnit + sourceSets.test.output
+    dependsOn tasks.named('writeCheckSuiteManifest'), ordered
+    inputs.files(analyticClasspath).withPropertyName('analyticClasspath').withNormalizer(ClasspathNormalizer)
+    inputs.file(manifest).withPropertyName('checkSuiteManifest')
+    systemProperty 'blockbranch.checkSuite.manifest', manifest.get().asFile.absolutePath
+    systemProperty 'blockbranch.checkSuite.logs', layout.buildDirectory.dir('check-suite/logs').get().asFile.absolutePath
+    jvmArgumentProviders.add({ ['-Dblockbranch.checkSuite.classpath=' + analyticClasspath.asPath] } as CommandLineArgumentProvider)
+    maxHeapSize = '256m'
+    maxParallelForks = 1
+    // Analytic checks are deterministic, but always re-run: their oracles read inputs Gradle cannot see.
+    outputs.upToDateWhen { false }
+}
+def testTask = tasks.named('test').get()
+gradle.taskGraph.whenReady { graph -> if (graph.hasTask(testTask)) ordered.each { it.enabled = false } }

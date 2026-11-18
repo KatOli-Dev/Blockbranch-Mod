@@ -11,7 +11,7 @@ public final class SummerDryAssessment {
     }
     public static void main(String[] args){
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true));var c=new ClimateField(seed);
             int dry=0,parent=0,nominalCount=0,marineFetchCount=0;int[] changed=new int[8],horizonChanged=new int[4];var first=new ArrayList<Object>();
             for(int z=-1904000;z<1920000;z+=32000)for(int x=-1904000;x<1920000;x+=32000){
                 var s=d.sample(x,z);if(s.waterLevel()!=DrainageNetwork.DRY)continue;dry++;

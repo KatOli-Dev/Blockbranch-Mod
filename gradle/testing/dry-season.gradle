@@ -61,11 +61,7 @@ tasks.register('relocateDrySeasonReader') {
 }
 sourceSets.integrationTest.output.dir([builtBy:'relocateDrySeasonReader'],runtimeReader)
 
-tasks.register('checkDrySeasonPolicy',JavaExec) {
-    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.DrySeasonPolicyCheck';maxHeapSize='2G'
-}
-tasks.named('check'){dependsOn 'checkDrySeasonPolicy'}
+analyticCheck('checkDrySeasonPolicy','blockbranch.realistic.DrySeasonPolicyCheck','2G')
 
 def dir=layout.projectDirectory.dir(providers.gradleProperty('dryForestDirectory').getOrElse('build/dry-forest-native'))
 def reopen=providers.gradleProperty('dryForestReopen').isPresent(),legacy=providers.gradleProperty('dryForestLegacy').isPresent()

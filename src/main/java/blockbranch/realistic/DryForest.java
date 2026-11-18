@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 import java.util.function.BiPredicate;
 
 /** Regional seasonally dry broadleaf forest analog. The regional definition
@@ -20,18 +19,7 @@ public final class DryForest {
         return domain(seed,d,c,selectedQuart,false);
     }
     static BiPredicate<Integer,Integer> domain(long seed,DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart,boolean seasonal){
-        var blocks=new LinkedHashMap<Long,Boolean>(256,.75f,true);
-        var quarts=new LinkedHashMap<Long,Boolean>(256,.75f,true);
-        return (x,z)->{
-            long key=(x&0xffffffffL)|((long)z<<32);
-            synchronized(blocks){var value=blocks.get(key);if(value!=null)return value;}
-            int qx=x>>2,qz=z>>2;long qkey=(qx&0xffffffffL)|((long)qz<<32);Boolean selected;
-            synchronized(quarts){selected=quarts.get(qkey);}
-            if(selected==null){selected=selectedQuart.test(qx,qz);synchronized(quarts){quarts.put(qkey,selected);if(quarts.size()>2048)quarts.remove(quarts.keySet().iterator().next());}}
-            boolean value=selected&&(eligible(seed,x,z,d,c)||seasonal&&SeasonalForestExpansion.eligible(seed,x,z,d,c));
-            synchronized(blocks){blocks.put(key,value);if(blocks.size()>8192)blocks.remove(blocks.keySet().iterator().next());}
-            return value;
-        };
+        return SelectedDomain.of(selectedQuart,(x,z)->eligible(seed,x,z,d,c)||seasonal&&SeasonalForestExpansion.eligible(seed,x,z,d,c));
     }
     static boolean eligible(long seed,int x,int z,DrainageNetwork d,ClimateField c){
         var climate=c.sample(x,z,d::sample);

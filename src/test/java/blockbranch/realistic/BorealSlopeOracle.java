@@ -15,7 +15,7 @@ public final class BorealSlopeOracle {
     static final int HALF=64;
 
     /** The bundled published-270 preset: every definition on, polar climate and sheet. */
-    static DrainageNetwork terrain(long seed){return new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true,true);}
+    static DrainageNetwork terrain(long seed){return new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true).withAlluvial(true));}
 
     static String describe(long seed,int x,int z)throws Exception{
         var d=terrain(seed);var c=new ClimateField(seed,true);

@@ -77,9 +77,7 @@ tasks.named('runPublished260Snapshot'){
     doLast{assert original.file('result.txt').asFile.text.startsWith('PASS')}
 }
 
-
-tasks.register('checkAbyssalTraces',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AbyssalTraceCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn 'checkAbyssalTraces'}
+analyticCheck('checkAbyssalTraces','blockbranch.realistic.AbyssalTraceCheck','2G')
 tasks.register('surveyAbyssalTraceSites',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AbyssalTraceSiteSurvey';maxHeapSize='2G'}
 def dir=layout.projectDirectory.dir(providers.gradleProperty('abyssalTraceDirectory').getOrElse('build/abyssal-trace-native'))
 def reopen=providers.gradleProperty('abyssalTraceReopen').isPresent(),legacy=providers.gradleProperty('abyssalTraceLegacy').isPresent()
@@ -102,7 +100,6 @@ tasks.named('runAbyssalTraceQualification'){
     dependsOn 'prepareAbyssalTraceQualification','relocateAbyssalReader'
     doLast{assert dir.file(resultName).asFile.text.startsWith('PASS')}
 }
-
 
 def visualDir=layout.projectDirectory.dir(providers.gradleProperty('abyssalTraceVisualDirectory').getOrElse('build/abyssal-trace-visual'))
 loom.runs.register('abyssalTraceVisual'){

@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 import java.util.function.BiPredicate;
 
 /** Coastal winter-rain evergreen oak-woodland structural analog. Only an
@@ -20,16 +19,7 @@ public final class SummerDryWoodland {
     /** Independently bounded physical/quart caches preserve exact ground
      * clipping without repeating the monthly calculation in vertical reads. */
     static BiPredicate<Integer,Integer> domain(long seed,DrainageNetwork d,ClimateField c,BiPredicate<Integer,Integer> selectedQuart){
-        var blocks=new LinkedHashMap<Long,Boolean>(256,.75f,true);var quarts=new LinkedHashMap<Long,Boolean>(256,.75f,true);
-        return (x,z)->{
-            long key=(x&0xffffffffL)|((long)z<<32);synchronized(blocks){var value=blocks.get(key);if(value!=null)return value;}
-            int qx=x>>2,qz=z>>2;long qkey=(qx&0xffffffffL)|((long)qz<<32);Boolean selected;
-            synchronized(quarts){selected=quarts.get(qkey);}
-            if(selected==null){selected=selectedQuart.test(qx,qz);synchronized(quarts){quarts.put(qkey,selected);if(quarts.size()>2048)quarts.remove(quarts.keySet().iterator().next());}}
-            boolean value=selected&&eligible(seed,x,z,d,c);
-            synchronized(blocks){blocks.put(key,value);if(blocks.size()>8192)blocks.remove(blocks.keySet().iterator().next());}
-            return value;
-        };
+        return SelectedDomain.of(selectedQuart,(x,z)->eligible(seed,x,z,d,c));
     }
     /** Existing rooted/litter/short-grass roles; a woody understory rather than
      * a fern carpet. The static green canopy does not implement leaf phenology. */

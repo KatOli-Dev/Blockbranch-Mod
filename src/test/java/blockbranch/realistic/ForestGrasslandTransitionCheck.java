@@ -9,7 +9,7 @@ public final class ForestGrasslandTransitionCheck {
         double prev=0;for(int i=0;i<=100;i++){double weight=ForestGrasslandTransition.forestWeight(.49+.0012*i);require(weight>=prev&&weight>=0&&weight<=1,"Monotone bounded taper");prev=weight;}
         int changed=0,added=0,removed=0,active=0,legacyRoots=0,infill=0;
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));var c=new ClimateField(seed);
             var p=OakBirchWoodlandFixtures.fixture(d,seed);
             for(int dz=-320;dz<=320;dz+=64)for(int dx=-320;dx<=320;dx+=64){
                 int x=p.x()+dx,z=p.z()+dz;

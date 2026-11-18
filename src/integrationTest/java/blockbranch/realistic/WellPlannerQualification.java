@@ -8,7 +8,7 @@ public final class WellPlannerQualification {
   outer:for(int z=-1900000;z<=1900000;z+=16000)for(int x=-1900000;x<=1900000;x+=16000){
    if(!SandyDesert.contains(seed,x,z,d,c))continue;
    var cell=new BiomeRegionPlacement.Cell(Math.floorDiv(x,2048),Math.floorDiv(z,2048));var warm=new DesertWell(seed,d,c);var region=warm.region(cell);if(region.owner()==null||!owners.add(region.owner()))continue;
-   var owner=region.owner();long terrainStart=System.nanoTime();var coldTerrain=new DrainageNetwork(new TerrainShape(seed),seed,true,true);long terrainConstructionNanos=System.nanoTime()-terrainStart;long bytes=bean.getThreadAllocatedBytes(thread),start=System.nanoTime();var cold=new DesertWell(seed,coldTerrain,new ClimateField(seed),2);var a=cold.plan(owner);long nanos=System.nanoTime()-start;bytes=bean.getThreadAllocatedBytes(thread)-bytes;
+   var owner=region.owner();long terrainStart=System.nanoTime();var coldTerrain=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));long terrainConstructionNanos=System.nanoTime()-terrainStart;long bytes=bean.getThreadAllocatedBytes(thread),start=System.nanoTime();var cold=new DesertWell(seed,coldTerrain,new ClimateField(seed),2);var a=cold.plan(owner);long nanos=System.nanoTime()-start;bytes=bean.getThreadAllocatedBytes(thread)-bytes;
    start=System.nanoTime();var b=cold.plan(owner);long warmNanos=System.nanoTime()-start;WellInteraction.require(a.equals(b),"Warm cache same plan");
    // Evict all 64 plan entries with realistic neighboring cells, then query again.
    for(int i=0;i<70;i++)cold.plan(new BiomeRegionPlacement.Cell(owner.x()+i+10,owner.z()+10));

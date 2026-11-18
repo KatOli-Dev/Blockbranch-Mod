@@ -15,7 +15,7 @@ public final class LandIceCheck {
         for(int n=1;n<=LandIceField.MAX_DEPTH;n++)require(LandIceField.depth(LandIceField.code(n))==n,"Append-only thickness roles");
         int seedIndex=0,total=0;
         for(long seed:new long[]{424242,1,-17}){
-            var old=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true);var now=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true);var c=new ClimateField(seed);var field=new LandIceField(seed,old);
+            var old=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true));var now=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true));var c=new ClimateField(seed);var field=new LandIceField(seed,old);
             if(seed==424242){
                 int[][] negatives={{-1904000,-1904000},{-1040000,-1904000},{-1008000,-1680000},{1904000,-1552000},{-1328000,-1904000},{-1360000,-1808000}};
                 for(var p:negatives){require(field.thickness(p[0],p[1])==0&&old.sample(p[0],p[1]).equals(now.sample(p[0],p[1])),"Fixed ocean/coast/river/lake/seasonal/steep-cold negative control");}

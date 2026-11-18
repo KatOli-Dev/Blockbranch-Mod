@@ -8,105 +8,22 @@ sourceSets.test {
     // TerrainRelief uses the Minecraft-provided primitive-map library in analytic checks.
     runtimeClasspath = output + compileClasspath + sourceSets.main.compileClasspath.filter { it.name.startsWith("fastutil-") }
 }
-tasks.register('checkRealisticShape', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.TerrainShapeCheck'
-}
-tasks.register('checkRealisticDrainage', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.DrainageCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkRealisticShape'), tasks.named('checkRealisticDrainage') }
+analyticCheck('checkRealisticShape','blockbranch.realistic.TerrainShapeCheck')
+analyticCheck('checkRealisticDrainage','blockbranch.realistic.DrainageCheck','512m')
 // Whole-section ore vein and cave lattice fast paths, block for block against the per-block rules.
-tasks.register('checkSectionGeneration', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.metallurgy.SectionGenerationCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkSectionGeneration') }
-tasks.register('checkAlpineScree', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.AlpineScreeCheck'
-}
-tasks.register('checkReedbed', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.ReedbedCheck'
-    maxHeapSize = '512m'
-}
-tasks.register('checkRiverMargin', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.RiverMarginCheck'
-    maxHeapSize = '512m'
-}
-tasks.register('checkSandyShore', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.SandyShoreCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkAlpineScree'), tasks.named('checkReedbed'), tasks.named('checkRiverMargin'), tasks.named('checkSandyShore') }
-tasks.register('checkLowlandMeadow', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.LowlandMeadowCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkLowlandMeadow') }
-tasks.register('checkClimateField', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.ClimateFieldCheck'
-}
-tasks.named('check') { dependsOn tasks.named('checkClimateField') }
-tasks.register('checkWoodland', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.WoodlandCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkWoodland') }
-tasks.register('checkDrySteppe', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.DrySteppeCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkDrySteppe') }
-tasks.register('checkBorealWoodland', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.BorealWoodlandCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkBorealWoodland') }
-tasks.register('checkWarmWoodland', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.WarmWoodlandCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkWarmWoodland') }
-tasks.register('checkColdSteppe', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.ColdSteppeCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkColdSteppe')}
-tasks.register('checkGravelDesert', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.GravelDesertCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkGravelDesert')}
+analyticCheck('checkSectionGeneration','blockbranch.metallurgy.SectionGenerationCheck','512m')
+analyticCheck('checkAlpineScree','blockbranch.realistic.AlpineScreeCheck')
+analyticCheck('checkReedbed','blockbranch.realistic.ReedbedCheck','512m')
+analyticCheck('checkRiverMargin','blockbranch.realistic.RiverMarginCheck','512m')
+analyticCheck('checkSandyShore','blockbranch.realistic.SandyShoreCheck','512m')
+analyticCheck('checkLowlandMeadow','blockbranch.realistic.LowlandMeadowCheck','512m')
+analyticCheck('checkClimateField','blockbranch.realistic.ClimateFieldCheck')
+analyticCheck('checkWoodland','blockbranch.realistic.WoodlandCheck','512m')
+analyticCheck('checkDrySteppe','blockbranch.realistic.DrySteppeCheck','512m')
+analyticCheck('checkBorealWoodland','blockbranch.realistic.BorealWoodlandCheck','512m')
+analyticCheck('checkWarmWoodland','blockbranch.realistic.WarmWoodlandCheck','512m')
+analyticCheck('checkColdSteppe','blockbranch.realistic.ColdSteppeCheck','512m')
+analyticCheck('checkGravelDesert','blockbranch.realistic.GravelDesertCheck','512m')
 tasks.register('checkGravelRelief',JavaExec){
     dependsOn tasks.named('testClasses')
     classpath=sourceSets.test.runtimeClasspath
@@ -115,76 +32,17 @@ tasks.register('checkGravelRelief',JavaExec){
     if(providers.gradleProperty('gravelReliefPriorReader').isPresent())systemProperty('blockbranch.gravelReliefPriorReader',layout.projectDirectory.file(providers.gradleProperty('gravelReliefPriorReader').get()).asFile.absolutePath)
 }
 tasks.named('check'){dependsOn tasks.named('checkGravelRelief')}
-tasks.register('checkSlopeCorrection', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SlopeCorrectionCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSlopeCorrection')}
-tasks.register('checkGroundFoliage', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.GroundFoliageCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkGroundFoliage')}
-tasks.register('checkWoodlandFoliage', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.WoodlandFoliageCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkWoodlandFoliage')}
-tasks.register('checkHumidWoodland', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.HumidWoodlandCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkHumidWoodland')}
-tasks.register('checkHumidCoverage', JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.HumidCoverageCheck'
-    maxHeapSize='512m'
-}
-tasks.register('checkColdTundra',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.ColdTundraCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkColdTundra')}
-tasks.register('checkTundraCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.TundraCoverageCheck'
-    maxHeapSize='512m'
-}
-tasks.register('checkLakeSediment',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.LakeSedimentCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkLakeSediment')}
-tasks.register('checkLakeCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.LakeCoverageCheck'
-    maxHeapSize='512m'
-}
-tasks.register('checkBiomeCoverage', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.BiomeCoverageCheck'
-    maxHeapSize = '512m'
-}
+analyticCheck('checkSlopeCorrection','blockbranch.realistic.SlopeCorrectionCheck','512m')
+analyticCheck('checkGroundFoliage','blockbranch.realistic.GroundFoliageCheck','512m')
+analyticCheck('checkWoodlandFoliage','blockbranch.realistic.WoodlandFoliageCheck','512m')
+analyticCheck('checkHumidWoodland','blockbranch.realistic.HumidWoodlandCheck','512m')
+analyticTask('checkHumidCoverage','blockbranch.realistic.HumidCoverageCheck','512m')
+analyticCheck('checkColdTundra','blockbranch.realistic.ColdTundraCheck','512m')
+analyticTask('checkTundraCoverage','blockbranch.realistic.TundraCoverageCheck','512m')
+analyticCheck('checkLakeSediment','blockbranch.realistic.LakeSedimentCheck','512m')
+analyticTask('checkLakeCoverage','blockbranch.realistic.LakeCoverageCheck','512m')
+analyticTask('checkBiomeCoverage','blockbranch.realistic.BiomeCoverageCheck','512m')
 tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkHumidCoverage'),tasks.named('checkTundraCoverage'),tasks.named('checkLakeCoverage')}
-
-
-
 
 def smokeSeed=providers.gradleProperty('realisticSmokeSeed').getOrElse('424242')
 def smokeDirectory = layout.projectDirectory.dir(providers.gradleProperty('realisticSmokeDirectory').getOrElse('build/deep-ocean-terrain-smoke'))
@@ -615,12 +473,7 @@ tasks.named('runScreeSmoke') {
     }
 }
 
-tasks.register('checkBoundaryAudit', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.BoundaryAuditCheck'
-    maxHeapSize = '512m'
-}
+analyticTask('checkBoundaryAudit','blockbranch.realistic.BoundaryAuditCheck','512m')
 
 // Short registry-backed serialization compatibility check, separate from exhaustive terrain fixtures.
 def codecDirectory=layout.projectDirectory.dir(providers.gradleProperty('realisticCodecDirectory').getOrElse('build/deep-ocean-v23-codec'))
@@ -645,105 +498,25 @@ tasks.named('runHabitatCodec') {
     doLast {def result=codecDirectory.file('result.txt').asFile;if(!result.exists()||result.text.trim()!='PASS')throw new GradleException('Habitat codec compatibility check failed')}
 }
 
-tasks.register('checkRiverChannel',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.RiverChannelCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkRiverChannel')}
-
-tasks.register('checkRiverChannelCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.RiverChannelCoverageCheck'
-    maxHeapSize='512m'
-}
+analyticCheck('checkRiverChannel','blockbranch.realistic.RiverChannelCheck','512m')
+analyticTask('checkRiverChannelCoverage','blockbranch.realistic.RiverChannelCoverageCheck','512m')
 tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkRiverChannelCoverage')}
 
-tasks.register('checkMarineShelf',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.MarineShelfCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkMarineShelf')}
-
-tasks.register('checkMarineShelfCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.MarineShelfCoverageCheck'
-    maxHeapSize='512m'
-}
+analyticCheck('checkMarineShelf','blockbranch.realistic.MarineShelfCheck','512m')
+analyticTask('checkMarineShelfCoverage','blockbranch.realistic.MarineShelfCoverageCheck','512m')
 tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkMarineShelfCoverage')}
 
-tasks.register('checkDeepOcean',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.DeepOceanCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkDeepOcean')}
-tasks.register('checkDeepOceanCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.DeepOceanCoverageCheck'
-    maxHeapSize='512m'
-}
+analyticCheck('checkDeepOcean','blockbranch.realistic.DeepOceanCheck','512m')
+analyticTask('checkDeepOceanCoverage','blockbranch.realistic.DeepOceanCoverageCheck','512m')
 tasks.named('checkBiomeCoverage'){dependsOn tasks.named('checkDeepOceanCoverage')}
 
-tasks.register('checkSavanna',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SavannaCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSavanna')}
-
-tasks.register('checkSavannaCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SavannaCoverageCheck'
-    maxHeapSize='512m'
-}
-
-tasks.register('checkJungle',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.JungleCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkJungle')}
-tasks.register('checkJungleCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.JungleCoverageCheck'
-    maxHeapSize='512m'
-}
-
-tasks.register('checkJungleArchitecture',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.JungleArchitectureCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkJungleArchitecture')}
-
-tasks.register('checkSandyDesert',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SandyDesertCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSandyDesert')}
-
-tasks.register('checkSandyDesertCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SandyDesertCoverageCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSandyDesertCoverage')}
+analyticCheck('checkSavanna','blockbranch.realistic.SavannaCheck','512m')
+analyticTask('checkSavannaCoverage','blockbranch.realistic.SavannaCoverageCheck','512m')
+analyticCheck('checkJungle','blockbranch.realistic.JungleCheck','512m')
+analyticTask('checkJungleCoverage','blockbranch.realistic.JungleCoverageCheck','512m')
+analyticCheck('checkJungleArchitecture','blockbranch.realistic.JungleArchitectureCheck','512m')
+analyticCheck('checkSandyDesert','blockbranch.realistic.SandyDesertCheck','512m')
+analyticCheck('checkSandyDesertCoverage','blockbranch.realistic.SandyDesertCoverageCheck','512m')
 
 // Broad temperate grassland partition and paired-plant regressions.
 ['Plains','PlainsCoverage'].each { checkName ->
@@ -786,507 +559,95 @@ tasks.named('check') { dependsOn tasks.named('checkForest') }
 }
 tasks.named('check') { dependsOn tasks.named('checkBirchForest') }
 
-tasks.register('checkSwamp',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SwampCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSwamp')}
-tasks.register('checkSwampCoverage',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SwampCoverageCheck'
-    maxHeapSize='512m'
-}
-tasks.register('checkSwampSurface',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SwampSurfaceCheck'
-    maxHeapSize='512m'
-}
+analyticCheck('checkSwamp','blockbranch.realistic.SwampCheck','512m')
+analyticTask('checkSwampCoverage','blockbranch.realistic.SwampCoverageCheck','512m')
+analyticTask('checkSwampSurface','blockbranch.realistic.SwampSurfaceCheck','512m')
 tasks.named('checkSwamp'){dependsOn tasks.named('checkSwampSurface')}
-tasks.register('checkReedPattern',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.ReedPatternCheck'
- maxHeapSize='512m'
-}
+analyticTask('checkReedPattern','blockbranch.realistic.ReedPatternCheck','512m')
 tasks.named('checkReedbed'){dependsOn tasks.named('checkReedPattern')}
-tasks.register('checkWoodlandDetails',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.WoodlandDetailsCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkWoodlandDetails')}
-
-tasks.register('checkMangrove',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MangroveCheck'
- maxHeapSize='512m'
-}
-tasks.register('checkMangroveRoots',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MangroveRootsCheck'
- maxHeapSize='512m'
-}
-tasks.register('checkBroadleafCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.BroadleafCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.register('checkSeasonalCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SeasonalCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.register('checkBirchCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.BirchCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.register('checkPineCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.PineCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.register('checkHumidCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.HumidCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.register('checkCoastalOakCrowns',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.CoastalOakCrownsCheck'
- maxHeapSize='1G'
-}
-tasks.named('check'){dependsOn tasks.named('checkMangrove'),tasks.named('checkMangroveRoots'),tasks.named('checkBroadleafCrowns'),tasks.named('checkSeasonalCrowns'),tasks.named('checkBirchCrowns'),tasks.named('checkPineCrowns'),tasks.named('checkCoastalOakCrowns'),tasks.named('checkHumidCrowns')}
-
-tasks.register('checkTaiga',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.TaigaCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkTaiga')}
-
-tasks.register('checkTaigaGround',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.TaigaGroundCheck'
- maxHeapSize='512m'
-}
+analyticCheck('checkWoodlandDetails','blockbranch.realistic.WoodlandDetailsCheck','512m')
+analyticCheck('checkMangrove','blockbranch.realistic.MangroveCheck','512m')
+analyticCheck('checkMangroveRoots','blockbranch.realistic.MangroveRootsCheck','512m')
+analyticCheck('checkBroadleafCrowns','blockbranch.realistic.BroadleafCrownsCheck','1G')
+analyticCheck('checkSeasonalCrowns','blockbranch.realistic.SeasonalCrownsCheck','1G')
+analyticCheck('checkBirchCrowns','blockbranch.realistic.BirchCrownsCheck','1G')
+analyticCheck('checkPineCrowns','blockbranch.realistic.PineCrownsCheck','1G')
+analyticCheck('checkHumidCrowns','blockbranch.realistic.HumidCrownsCheck','1G')
+analyticCheck('checkCoastalOakCrowns','blockbranch.realistic.CoastalOakCrownsCheck','1G')
+analyticCheck('checkTaiga','blockbranch.realistic.TaigaCheck','512m')
+analyticTask('checkTaigaGround','blockbranch.realistic.TaigaGroundCheck','512m')
 tasks.named('checkTaiga'){dependsOn tasks.named('checkTaigaGround')}
 
-tasks.register('checkSnowyTaiga',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SnowyTaigaCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSnowyTaiga')}
-
-tasks.register('checkConiferBranch',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.ConiferBranchCheck'
- maxHeapSize='512m'
-}
+analyticCheck('checkSnowyTaiga','blockbranch.realistic.SnowyTaigaCheck','512m')
+analyticTask('checkConiferBranch','blockbranch.realistic.ConiferBranchCheck','512m')
 tasks.named('checkTaiga'){dependsOn tasks.named('checkConiferBranch')}
 
-tasks.register('checkTemperateOcean',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.TemperateOceanCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkTemperateOcean')}
+analyticCheck('checkTemperateOcean','blockbranch.realistic.TemperateOceanCheck','512m')
+analyticCheck('checkTemperateDeepOcean','blockbranch.realistic.TemperateDeepOceanCheck','512m')
+analyticCheck('checkSnowyPlains','blockbranch.realistic.SnowyPlainsCheck','512m')
+analyticCheck('checkSnowySlopes','blockbranch.realistic.SnowySlopesCheck','512m')
+analyticCheck('checkMontaneMeadow','blockbranch.realistic.MontaneMeadowCheck','512m')
+analyticCheck('checkMeadowFlowerSpacing','blockbranch.realistic.MeadowFlowerSpacingCheck','512m')
+analyticCheck('checkGrove','blockbranch.realistic.GroveCheck','512m')
+analyticCheck('checkRoutedRiver','blockbranch.realistic.RoutedRiverCheck','512m')
+analyticCheck('checkRiverBanks','blockbranch.realistic.RiverBankCheck','512m')
+analyticCheck('checkFrozenRiver','blockbranch.realistic.FrozenRiverCheck','512m')
+analyticCheck('checkTerrainContours','blockbranch.realistic.TerrainContoursCheck','1g')
+analyticCheck('checkSurfacePatches','blockbranch.realistic.SurfacePatchesCheck')
+analyticCheck('checkColdSurface','blockbranch.realistic.ColdSurfaceCheck','512m')
+analyticCheck('checkDrainageCache','blockbranch.realistic.DrainageCacheCheck','512m')
 
-tasks.register('checkTemperateDeepOcean',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.TemperateDeepOceanCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkTemperateDeepOcean')}
+analyticCheck('checkRiverBankRelief','blockbranch.realistic.RiverBankReliefCheck','512m')
+analyticCheck('checkSurfaceMaterialFields','blockbranch.realistic.SurfaceMaterialFieldsCheck')
+analyticCheck('checkSurfaceDomains','blockbranch.realistic.SurfaceDomainsCheck','512m')
+analyticCheck('checkSurfaceRouting','blockbranch.realistic.SurfaceRoutingCheck','512m')
+analyticCheck('checkCoastalBeach','blockbranch.realistic.CoastalBeachCheck','512m')
+analyticCheck('checkLukewarmOcean','blockbranch.realistic.LukewarmOceanCheck','512m')
+analyticCheck('checkOldGrowthTaiga','blockbranch.realistic.OldGrowthTaigaCheck','512m')
+analyticCheck('checkOldGrowthFloor','blockbranch.realistic.OldGrowthFloorCheck','512m')
+analyticCheck('checkTemperateForestVariants','blockbranch.realistic.TemperateForestVariantsCheck','1G')
+analyticCheck('checkFlowerForestPalette','blockbranch.realistic.FlowerForestPaletteCheck')
+analyticCheck('checkDarkCherryWoodland','blockbranch.realistic.DarkCherryWoodlandCheck','768m')
+analyticCheck('checkRedwoodForest','blockbranch.realistic.RedwoodForestCheck','768m')
+analyticCheck('checkMossHabitat','blockbranch.realistic.MossHabitatCheck','512m')
+analyticCheck('checkDarkOakBranch','blockbranch.realistic.DarkOakBranchCheck','512m')
+analyticCheck('checkTropicalForestVariants','blockbranch.realistic.TropicalForestVariantsCheck','768m')
+analyticCheck('checkJungleLargeFern','blockbranch.realistic.JungleLargeFernCheck','512m')
+analyticCheck('checkWindsweptUplands','blockbranch.realistic.WindsweptUplandsCheck','512m')
+analyticCheck('checkWindsweptQuality','blockbranch.realistic.WindsweptQualityCheck','512m')
 
-tasks.register('checkSnowyPlains',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SnowyPlainsCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSnowyPlains')}
+analyticCheck('checkSavannaUplands','blockbranch.realistic.SavannaUplandsCheck','512m')
 
- tasks.register('checkSnowySlopes',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SnowySlopesCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSnowySlopes')}
+analyticCheck('checkMountainPeaks','blockbranch.realistic.MountainPeaksCheck','512m')
 
- tasks.register('checkMontaneMeadow',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MontaneMeadowCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkMontaneMeadow')}
- tasks.register('checkMeadowFlowerSpacing',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MeadowFlowerSpacingCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkMeadowFlowerSpacing')}
- tasks.register('checkGrove',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.GroveCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkGrove')}
+analyticCheck('checkBadlands','blockbranch.realistic.BadlandsCheck','512m')
+analyticCheck('checkSpawnRegions','blockbranch.realistic.SpawnRegionsCheck','512m')
 
-tasks.register('checkRoutedRiver',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.RoutedRiverCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkRoutedRiver')}
-tasks.register('checkRiverBanks',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.RiverBankCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkRiverBanks')}
-tasks.register('checkFrozenRiver',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.FrozenRiverCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkFrozenRiver')}
-
-tasks.register('checkTerrainContours', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.TerrainContoursCheck'
-    maxHeapSize = '1g'
-}
-tasks.named('check') { dependsOn tasks.named('checkTerrainContours') }
-
-tasks.register('checkSurfacePatches', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.SurfacePatchesCheck'
-}
-tasks.named('check') { dependsOn tasks.named('checkSurfacePatches') }
-
-tasks.register('checkColdSurface', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.ColdSurfaceCheck'
-    maxHeapSize = '512m'
-}
-tasks.named('check') { dependsOn tasks.named('checkColdSurface') }
-
-tasks.register('checkDrainageCache',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.DrainageCacheCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkDrainageCache')}
-
-
-tasks.register('checkRiverBankRelief',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.RiverBankReliefCheck'
- maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkRiverBankRelief')}
-
-tasks.register('checkSurfaceMaterialFields',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SurfaceMaterialFieldsCheck'
-}
-tasks.register('checkSurfaceDomains',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SurfaceDomainsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSurfaceMaterialFields'),tasks.named('checkSurfaceDomains')}
-tasks.register('checkSurfaceRouting',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SurfaceRoutingCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSurfaceRouting')}
-
-tasks.register('checkCoastalBeach',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.CoastalBeachCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkCoastalBeach')}
-
-tasks.register('checkLukewarmOcean',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.LukewarmOceanCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkLukewarmOcean')}
-
-tasks.register('checkOldGrowthTaiga',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.OldGrowthTaigaCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkOldGrowthTaiga')}
-
-tasks.register('checkOldGrowthFloor',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.OldGrowthFloorCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkOldGrowthFloor')}
-
-tasks.register('checkTemperateForestVariants',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.TemperateForestVariantsCheck'
-    maxHeapSize='1G'
-}
-tasks.register('checkFlowerForestPalette',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.FlowerForestPaletteCheck'
-}
-tasks.named('check'){dependsOn tasks.named('checkFlowerForestPalette')}
-tasks.named('check'){dependsOn tasks.named('checkTemperateForestVariants')}
-
-tasks.register('checkDarkCherryWoodland',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.DarkCherryWoodlandCheck'
-    maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkDarkCherryWoodland')}
-tasks.register('checkRedwoodForest',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.RedwoodForestCheck'
-    maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkRedwoodForest')}
-tasks.register('checkMossHabitat',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.MossHabitatCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkMossHabitat')}
-tasks.register('checkDarkOakBranch',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.DarkOakBranchCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkDarkOakBranch')}
-tasks.register('checkTropicalForestVariants',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.TropicalForestVariantsCheck'
-    maxHeapSize='768m'
-}
-tasks.register('checkJungleLargeFern',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.JungleLargeFernCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkTropicalForestVariants'),tasks.named('checkJungleLargeFern')}
-
-tasks.register('checkWindsweptUplands',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.WindsweptUplandsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkWindsweptUplands')}
-
-tasks.register('checkWindsweptQuality',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.WindsweptQualityCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkWindsweptQuality')}
-
-
-tasks.register('checkSavannaUplands',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SavannaUplandsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSavannaUplands')}
-
-
-tasks.register('checkMountainPeaks',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.MountainPeaksCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkMountainPeaks')}
-
-
-tasks.register('checkBadlands',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.BadlandsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkBadlands')}
-
-tasks.register('checkSpawnRegions',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SpawnRegionsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSpawnRegions')}
-
-
-tasks.register('checkColdUplands',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.ColdUplandsCheck'
-    maxHeapSize='512m'
-}
-tasks.named('check'){dependsOn tasks.named('checkColdUplands')}
-
-tasks.register('checkWarmDappled',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.WarmDappledCheck'
-    maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkWarmDappled')}
-
-tasks.register('checkCoastalLandforms',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.CoastalLandformsCheck'
-    maxHeapSize='1g'
-}
-tasks.named('check'){dependsOn tasks.named('checkCoastalLandforms')}
-
-tasks.register('checkSeaIcePolicy',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SeaIcePolicyCheck'
- maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSeaIcePolicy')}
-
-tasks.register('checkFrozenOcean',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.FrozenOceanCheck'
- maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkFrozenOcean')}
-
-tasks.register('checkSeaIceFractures',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.SeaIceFractureCheck'
- maxHeapSize='768m'
-}
-tasks.named('check'){dependsOn tasks.named('checkSeaIceFractures')}
+analyticCheck('checkColdUplands','blockbranch.realistic.ColdUplandsCheck','512m')
+analyticCheck('checkWarmDappled','blockbranch.realistic.WarmDappledCheck','768m')
+analyticCheck('checkCoastalLandforms','blockbranch.realistic.CoastalLandformsCheck','1g')
+analyticCheck('checkSeaIcePolicy','blockbranch.realistic.SeaIcePolicyCheck','768m')
+analyticCheck('checkFrozenOcean','blockbranch.realistic.FrozenOceanCheck','768m')
+analyticCheck('checkSeaIceFractures','blockbranch.realistic.SeaIceFractureCheck','768m')
 
 // Preformation-backed landform diagnostic.
-tasks.register('checkErodedBadlands',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.ErodedBadlandsCheck'
-    maxHeapSize='512m'
-}
+analyticCheck('checkErodedBadlands','blockbranch.realistic.ErodedBadlandsCheck','512m')
+analyticCheck('checkIcebergShapes','blockbranch.realistic.IcebergShapeCheck','512m')
+analyticCheck('checkIcebergField','blockbranch.realistic.IcebergFieldCheck','512m')
 
-tasks.named('check'){dependsOn tasks.named('checkErodedBadlands')}
-
-tasks.register('checkIcebergShapes',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.IcebergShapeCheck'
-    maxHeapSize='512m'
-}
-
-tasks.register('checkIcebergField',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.IcebergFieldCheck'
-    maxHeapSize='512m'
-}
-
-tasks.named('check'){dependsOn tasks.named('checkIcebergShapes'),tasks.named('checkIcebergField')}
-
-tasks.register('checkColdOceans',JavaExec){
- dependsOn tasks.named('testClasses')
- classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.ColdOceanCheck'
- maxHeapSize='2G'
-}
-tasks.named('check'){dependsOn tasks.named('checkColdOceans')}
+analyticCheck('checkColdOceans','blockbranch.realistic.ColdOceanCheck','2G')
 
 tasks.register('diagnoseSandyCoast',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SandyCoastDiagnostic';maxHeapSize='2G'}
 
 tasks.register('surveyIcebergDensity',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.IcebergDensitySurvey';maxHeapSize='2G'}
 
-tasks.register('checkSandyCoast',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.SandyCoastCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn tasks.named('checkSandyCoast')}
-tasks.register('checkFrozenSeabed',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.FrozenSeabedCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn tasks.named('checkFrozenSeabed')}
-tasks.register('checkBambooSoil',JavaExec){dependsOn tasks.named('testClasses');classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.BambooSoilCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn tasks.named('checkBambooSoil')}
+analyticCheck('checkSandyCoast','blockbranch.realistic.SandyCoastCheck','2G')
+analyticCheck('checkFrozenSeabed','blockbranch.realistic.FrozenSeabedCheck','2G')
+analyticCheck('checkBambooSoil','blockbranch.realistic.BambooSoilCheck','2G')
 
 // Geometry-only underground foundation; native profile integration is a later slice.
-tasks.register('checkUndergroundStructure', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.UndergroundStructureCheck'
-    maxHeapSize = '256m'
-}
-tasks.named('check') { dependsOn tasks.named('checkUndergroundStructure') }
-tasks.register('checkCaveApproach', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.realistic.CaveApproachCheck'
-    maxHeapSize = '768m'
-}
-tasks.named('check') { dependsOn tasks.named('checkCaveApproach') }
+analyticCheck('checkUndergroundStructure','blockbranch.realistic.UndergroundStructureCheck','256m')
+analyticCheck('checkCaveApproach','blockbranch.realistic.CaveApproachCheck','768m')
 
 // Opens an isolated copy of a tested cave world for actual native image review.
 def undergroundClientDirectory=layout.projectDirectory.dir(providers.gradleProperty('undergroundClientDirectory').getOrElse('build/underground-client-review'))
@@ -1387,12 +748,6 @@ tasks.named('runCaveApproachClient') {
     doLast {assert caveApproachClientDirectory.file('result.txt').asFile.text.startsWith('PASS')}
 }
 
-// This project uses assertion-bearing JavaExec programs, not framework-discovered test classes.
-// `test` remains a standard entry point for the canonical analytic build checks.
-tasks.named('test') {
-    failOnNoDiscoveredTests = false
-}
-
 // Historical staged habitat baselines evaluated over current terrain. These do
 // not execute the complete current selector and cannot measure current coverage.
 // Preserve their frozen selectors/assertions; current inventory uses runCurrentBiomeSurvey.
@@ -1422,28 +777,17 @@ tasks.named('runCurrentBiomeSurvey') {
     doLast { assert biomeSurveyDir.file('result.txt').asFile.text.startsWith('PASS') }
 }
 
-tasks.register('checkSurfaceOwnership',JavaExec) {
-    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.SurfaceOwnershipCheck';maxHeapSize='2G'
-}
-tasks.named('check'){dependsOn 'checkSurfaceOwnership'}
+analyticCheck('checkSurfaceOwnership','blockbranch.realistic.SurfaceOwnershipCheck','2G')
 
 // Exact original-noise oracle; no timing assertion or native fixture dependency.
-tasks.register('checkTerrainPhases',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.TerrainPhaseCheck'}
-tasks.named('check'){dependsOn 'checkTerrainPhases'}
+analyticCheck('checkTerrainPhases','blockbranch.realistic.TerrainPhaseCheck')
 
 // Optional bounded topology witness; never an elapsed-time build gate.
 def startupSeeds=providers.gradleProperty('drainageStartupSeeds').getOrElse('424242,1,-17').split(',') as List
 tasks.register('measureDrainageStartup',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.DrainageStartupWitness';minHeapSize='512m';maxHeapSize='3G';args startupSeeds}
 
 // Definition-1 temperate edge predicates and frozen historical root reader.
-tasks.register('checkForestGrasslandTransition',JavaExec){
-    dependsOn tasks.named('testClasses')
-    classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.ForestGrasslandTransitionCheck'
-    maxHeapSize='1g'
-}
-tasks.named('check'){dependsOn tasks.named('checkForestGrasslandTransition')}
+analyticCheck('checkForestGrasslandTransition','blockbranch.realistic.ForestGrasslandTransitionCheck','1g')
 
 def transitionVisualDir=layout.projectDirectory.dir(providers.gradleProperty('forestGrasslandVisualDirectory').getOrElse('build/transition-evidence/visual'))
 loom.runs.register('forestGrasslandVisual'){
@@ -1476,19 +820,8 @@ tasks.register('prepareRedwoodForestVisual'){doLast{
 }}
 tasks.named('runRedwoodForestVisual'){dependsOn 'prepareRedwoodForestVisual';doLast{assert redwoodVisualDir.file('result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkHardwareTier', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.performance.HardwareTierCheck'
-}
-tasks.named('check') { dependsOn tasks.named('checkHardwareTier') }
-
-tasks.register('checkHorizonSelection', JavaExec) {
-    dependsOn tasks.named('testClasses')
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'blockbranch.horizon.HorizonSelectionCheck'
-}
-tasks.named('check') { dependsOn tasks.named('checkHorizonSelection') }
+analyticCheck('checkHardwareTier','blockbranch.performance.HardwareTierCheck')
+analyticCheck('checkHorizonSelection','blockbranch.horizon.HorizonSelectionCheck')
 tasks.register('checkHorizonProtocol', JavaExec) {
     dependsOn 'compileIntegrationTestJava'
     classpath = sourceSets.integrationTest.runtimeClasspath

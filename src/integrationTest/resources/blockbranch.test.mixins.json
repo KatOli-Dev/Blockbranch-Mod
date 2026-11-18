@@ -21,6 +21,7 @@
     "wildlife.ProceduralSpawnSampleAuditMixin",
     "qa.SectionGenerationWorkMixin",
     "qa.StructureLoadAuditMixin",
+    "qa.StructuralComparisonMixin",
     "qa.TreasurePreviewTimingMixin",
     "qa.TreasureMapUseTraceMixin",
     "qa.TreasureConnectedMapMixin",

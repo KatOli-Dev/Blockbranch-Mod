@@ -74,7 +74,7 @@ public final class WarmXericQualification {
     private static Object selectors(HabitatPalette oldPalette,HabitatPalette palette){
         var rows=new ArrayList<Object>();
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true);var c=new ClimateField(seed,true);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));var c=new ClimateField(seed,true);
             var before=source(oldPalette,seed,d,c,false);var after=source(palette,seed,d,c,true);int count=0;
             int[] sensitivity=new int[5],changedAdmission=new int[5];
             int marineBoundComparisons=0;

@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 
 import blockbranch.Blockbranch;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
@@ -26,7 +27,6 @@ public final class TitaniumContent {
     public static final ArmorMaterial ARMOR=new ArmorMaterial(20,java.util.Map.of(ArmorType.BOOTS,2),12,net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON,0,0,REPAIR,EQUIPMENT);
     public static final Item BOOTS=item("titanium_alloy_boots",new Item.Properties().humanoidArmor(ARMOR,ArmorType.BOOTS).attributes(ARMOR.createAttributes(ArmorType.BOOTS).withModifierAdded(Attributes.MOVEMENT_SPEED,new AttributeModifier(Blockbranch.id("titanium_alloy_boots_speed"),.05,AttributeModifier.Operation.ADD_MULTIPLIED_BASE),EquipmentSlotGroup.FEET)));
     private static Block block(String name,Block base,float hardness){var id=Blockbranch.id(name);var b=Registry.register(BuiltInRegistries.BLOCK,id,new Block(BlockBehaviour.Properties.ofFullCopy(base).strength(hardness,6).setId(ResourceKey.create(Registries.BLOCK,id))));Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(b,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return b;}
-    private static Item item(String name,Item.Properties properties){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(properties.setId(ResourceKey.create(Registries.ITEM,id))));}
     public static void initialize(){
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(ORE);out.accept(DEEPSLATE_ORE);});
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(out->{out.accept(RAW);out.accept(INGOT);out.accept(ALLOY_INGOT);});

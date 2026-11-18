@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 
 import blockbranch.Blockbranch;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
@@ -19,7 +20,6 @@ public final class BismuthContent {
     public static final Item RAW=item("raw_bismuth"),INGOT=item("bismuth_ingot");
     public static final Item PICKAXE=Registry.register(BuiltInRegistries.ITEM,Blockbranch.id("bismuth_steel_pickaxe"),new BismuthPickaxe(new Item.Properties().pickaxe(SteelContent.STEEL,1,-2.8F).component(DataComponents.LORE,new ItemLore(java.util.List.of(Component.translatable("item.blockbranch.bismuth_steel_pickaxe.effect")))).setId(ResourceKey.create(Registries.ITEM,Blockbranch.id("bismuth_steel_pickaxe")))));
     private static Block ore(String name,Block base){var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,new Block(BlockBehaviour.Properties.ofFullCopy(base).setId(ResourceKey.create(Registries.BLOCK,id))));Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;}
-    private static Item item(String name){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id))));}
     public static void initialize(){
         PayloadTypeRegistry.clientboundPlay().register(OrePulsePacket.TYPE,OrePulsePacket.CODEC);
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(ORE);out.accept(DEEPSLATE_ORE);});

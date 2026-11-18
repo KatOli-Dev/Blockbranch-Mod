@@ -1,6 +1,5 @@
 package blockbranch.realistic;
 
-import java.util.LinkedHashMap;
 
 /** Shallow, static undulations on buffered gravel-desert interiors. No drainage simulation. */
 final class GravelDesertRelief {
@@ -8,15 +7,15 @@ final class GravelDesertRelief {
     private final long seed;
     private final DrainageNetwork reference;
     private final ClimateField climate;
-    private final LinkedHashMap<Long,Double> interiors=new LinkedHashMap<>(512,.75f,true);
+    private final ExactMemo<Long,Double> interiors=new ExactMemo<>(512,4096);
     private record Tile(float[] clearance,int[] waterLevels) {}
-    private final LinkedHashMap<Long,Tile> tiles=new LinkedHashMap<>(256,.75f,true);
+    private final ExactMemo<Long,Tile> tiles=new ExactMemo<>(256,256);
     private final long[] eligibilityKeys=new long[1<<17];
     private final byte[] eligibilityFlags=new byte[eligibilityKeys.length];
     GravelDesertRelief(long seed,DrainageNetwork reference){this.seed=seed;this.reference=reference;climate=new ClimateField(seed);}
     private double interior(int gx,int gz){
-        long key=(gx&0xffffffffL)|((long)gz<<32);
-        synchronized(interiors){var found=interiors.get(key);if(found!=null)return found;}
+        long key=ExactMemo.key(gx,gz);
+        var found=interiors.find(key);if(found!=null)return found;
         double value=1;
         for(int dz=-1;dz<=1&&value>0;dz++)for(int dx=-1;dx<=1;dx++){
             int x=(gx+dx)*64,z=(gz+dz)*64;var old=reference.sample(x,z);
@@ -25,7 +24,7 @@ final class GravelDesertRelief {
             if(old.waterLevel()!=DrainageNetwork.DRY||old.bedrockCoast()||old.height()<TerrainShape.SEA_LEVEL+32||Math.hypot(sx,sz)>.14
                 ||reference.channelAt(x,z).edge()>=0||!GravelDesert.surfaceContains(x,z,reference,climate)){value=0;break;}
         }
-        synchronized(interiors){interiors.put(key,value);if(interiors.size()>4096)interiors.remove(interiors.keySet().iterator().next());}return value;
+        return interiors.store(key,value);
     }
     double envelope(int x,int z){
         var old=reference.sample(x,z);
@@ -40,8 +39,8 @@ final class GravelDesertRelief {
         return support*tile.clearance[(z&15)*16+(x&15)]*(1-fade(Math.clamp((slope-.08)/.06,0,1)));
     }
     private Tile tile(int tx,int tz){
-        long key=(tx&0xffffffffL)|((long)tz<<32);
-        synchronized(tiles){var found=tiles.get(key);if(found!=null)return found;}
+        long key=ExactMemo.key(tx,tz);
+        var found=tiles.find(key);if(found!=null)return found;
         // Read every reference column, including an eight-block halo. Tiny wet or
         // specialist pockets must taper relief even when the broad grid misses them.
         byte[] distance=new byte[32*32];int[] water=new int[32*32];boolean hasWater=false;
@@ -57,7 +56,7 @@ final class GravelDesertRelief {
             weights[z*16+x]=(float)fade(distance[(z+8)*32+x+8]/8.);
         }
         var built=new Tile(weights,nearbyWater);
-        synchronized(tiles){tiles.put(key,built);if(tiles.size()>256)tiles.remove(tiles.keySet().iterator().next());}return built;
+        return tiles.store(key,built);
     }
     private boolean eligible(int x,int z,DrainageNetwork.Sample old){
         long key=(x&0xffffffffL)|((long)z<<32);int slot=(int)OakBirchWoodland.mix(key)&(eligibilityFlags.length-1);

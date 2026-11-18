@@ -20,8 +20,8 @@ public final class PolarUndergroundCheck {
     static final int RADIUS=12;
 
     public static void main(String[] args){
-        var polar=new DrainageNetwork(new TerrainShape(SEED),SEED,true,true,true,true,true,true,true);
-        var published=new DrainageNetwork(new TerrainShape(SEED),SEED,true,true,true,true,true,true,false);
+        var polar=new DrainageNetwork(new TerrainShape(SEED),SEED,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));
+        var published=new DrainageNetwork(new TerrainShape(SEED),SEED,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true));
         var bed=polar.iceReference();
         boolean report=args.length>0&&args[0].equals("report");
         int columnsUnderSheet=0,maskChunksDiffer=0,maskColumnsAlt=0,maskColumnsBed=0,cityGateAlt=0,cityGateBed=0,cityGateDiffer=0,sheetChunks=0;

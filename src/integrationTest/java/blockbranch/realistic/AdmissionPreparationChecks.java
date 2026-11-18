@@ -95,7 +95,7 @@ public final class AdmissionPreparationChecks {
         var weak=new ArrayList<java.lang.ref.WeakReference<ProtoChunk>>();for(var c:held)weak.add(new java.lang.ref.WeakReference<>(c));held=null;
         for(int i=0;i<6&&weak.stream().anyMatch(w->w.get()!=null);i++){System.gc();Thread.sleep(20);}
         require(weak.stream().allMatch(w->w.get()==null),"Abandoned profile owners collectible");
-        var paletteField=RealisticGenerator.class.getDeclaredField("palette");paletteField.setAccessible(true);var legacy=new RealisticGenerator((HabitatPalette)paletteField.get(g),true,true,true,true,true,2,1,0);
+        var legacy=new RealisticGenerator(g.palette(),GenerationSettings.NONE.with(GenerationGate.ICEBERGS,true).with(GenerationGate.SANDY_COASTS,true).with(GenerationGate.UNDERGROUND,true).with(GenerationGate.CAVE_APPROACHES,true).with(GenerationGate.CAVE_ENTRY_ROUTES,true).with(GenerationGate.ORE,2).with(GenerationGate.DRIPSTONE,1));
         var old=proto(l,p);legacy.prepareCaveProfile(old,r);require(pending(legacy).isEmpty(),"Legacy cave-biome opt-out unchanged");
         require(legacy.profileForBuild(old,r).encode(factory).equals(legacy.profile(old,r).encode(factory)),"Legacy profile unchanged");
         DiagnosticCurrentSave.verify(l);

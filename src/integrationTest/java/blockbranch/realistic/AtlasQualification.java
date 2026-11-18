@@ -50,7 +50,7 @@ public final class AtlasQualification {
   var chosen=List.copyOf(selected);var parallelPlans=java.util.stream.IntStream.range(0,4096).parallel().mapToObj(i->{var p=chosen.get(i%chosen.size());return wells.forChunk(new net.minecraft.world.level.ChunkPos(p.x()>>4,p.z()>>4)).orElseThrow();}).toList();
   for(int i=0;i<parallelPlans.size();i++)WellInteraction.require(parallelPlans.get(i).equals(chosen.get(i%chosen.size())),"Concurrent occupied chunks produce identical plans");
   var otherSeeds=new ArrayList<Object>();for(long seed:new long[]{1,-17}){
-   var nd=new DrainageNetwork(new TerrainShape(seed),seed,true,true);var nc=new ClimateField(seed);long t=System.nanoTime(),ab=bean.getThreadAllocatedBytes(thread);
+   var nd=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var nc=new ClimateField(seed);long t=System.nanoTime(),ab=bean.getThreadAllocatedBytes(thread);
    var nw=new DesertWell(seed,nd,nc,3);long ns=System.nanoTime()-t;ab=bean.getThreadAllocatedBytes(thread)-ab;int[] count={0};nw.atlas().forEachSubstantialOwner(owner->{if(nw.plan(owner).isPresent())count[0]++;});
    WellInteraction.require(digest(nw).equals(seed==1?"9922591c1ea2663b99ad5c161f025d833b6eff4c1cf02c280a421b6ce37be21a":"71b4e1da5599309cc02051a4a315c9077a97c14878fd28e19d445c0522a79a6a"),"Every alternate-seed placement matches original dense definition 3");
    otherSeeds.add(Map.of("placementDigest",digest(nw),"seed",seed,"statistics",nw.atlas().statistics(),"initializationNanos",ns,"allocatedBytes",ab,"accepted",count[0],"retainedBytes",nw.retainedPlanBytes()+nw.atlas().retainedArrayBytes()));

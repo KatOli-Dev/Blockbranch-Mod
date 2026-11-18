@@ -34,5 +34,4 @@ tasks.register('prepareLeafLitterVisual'){doLast{
 }}
 tasks.named('runLeafLitterVisual'){dependsOn 'prepareLeafLitterVisual';doLast{assert visual.file(providers.gradleProperty('leafLitterVisualReopen').isPresent()?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkLeafLitter',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.LeafLitterCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn 'checkLeafLitter'}
+analyticCheck('checkLeafLitter','blockbranch.realistic.LeafLitterCheck','2G')

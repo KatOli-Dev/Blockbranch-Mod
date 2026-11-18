@@ -9,7 +9,7 @@ public final class DeepBasinAssessment {
             (shape.continuousHeight(x,z+128)-shape.continuousHeight(x,z-128))/256);
     }
     public static void main(String[] args){
-        long seed=424242;var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,true,true,true,true);
+        long seed=424242;var shape=new TerrainShape(seed);var d=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));
         var sites=new LinkedHashMap<String,int[]>();
         sites.put("previousFineBed",new int[]{-1744000,-1904000});
         sites.put("previousDepthOnly",new int[]{-1904000,-1904000});

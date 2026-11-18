@@ -21,9 +21,7 @@ tasks.register('preparePublished269Snapshot'){doLast{
 }}
 tasks.named('runPublished269Snapshot'){dependsOn 'preparePublished269Snapshot';doLast{assert original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
 
-
-tasks.register('checkAlluvial',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialCheck';maxHeapSize='1G'}
-tasks.named('check'){dependsOn 'checkAlluvial'}
+analyticCheck('checkAlluvial','blockbranch.realistic.AlluvialCheck','1G')
 tasks.register('surveyAlluvialDesign',JavaExec){
  dependsOn 'compileIntegrationTestJava';classpath=sourceSets.integrationTest.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialDesignSurvey';maxHeapSize='3G'
  args(providers.gradleProperty('alluvialSectionInput').getOrElse('build/floodplain-evidence/assessment269-sections.json'),providers.gradleProperty('alluvialDesignReport').getOrElse('build/floodplain-evidence/design270.json'))
@@ -99,5 +97,4 @@ tasks.register('prepareAlluvialVisual'){doLast{
 }}
 tasks.named('runAlluvialVisual'){dependsOn 'prepareAlluvialVisual';doLast{assert visual.file('result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkAlluvialSpawn',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.AlluvialSpawnCheck';maxHeapSize='3G'}
-tasks.named('check'){dependsOn 'checkAlluvialSpawn'}
+analyticCheck('checkAlluvialSpawn','blockbranch.realistic.AlluvialSpawnCheck','3G')

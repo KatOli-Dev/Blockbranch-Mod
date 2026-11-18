@@ -90,7 +90,7 @@ public final class CoastalBeachCheck {
     private static void pioneerPair(long[]rate,int[]eligible,int[]retained,int a,int b){if(eligible[a]==2&&eligible[b]==2&&retained[a]==2){rate[1]++;if(retained[b]==2)rate[0]++;}}
 
     private static void verifyReducedPioneers(long seed) {
-        var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true);var c=new ClimateField(seed);
+        var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var c=new ClimateField(seed);
         var scene=CoastalBeachScenes.forWorld(seed,false,d,c);int before=0,after=0,low=0,eligible=0;
         for(int z=scene.z()-64;z<=scene.z()+64;z++)for(int x=scene.x()-64;x<=scene.x()+64;x++){
             var site=LowGradientSandyShore.site(d,x,z);

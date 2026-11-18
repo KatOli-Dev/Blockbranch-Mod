@@ -84,7 +84,7 @@ public final class SurfaceBoundaryQualification {
     private record Patch(int cx,int cz,int roots,int nonanchorRoots,int quartDifference) {}
     private static Map<String,Object> kelp(ServerLevel level,RealisticGenerator g,RandomState random) {
         var c=new ClimateField(SEED);var fresh=g.drainage(random);
-        var old=new DrainageNetwork(new TerrainShape(SEED),SEED,true,true,true);
+        var old=new DrainageNetwork(new TerrainShape(SEED),SEED,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true));
         var gates=new ArrayList<Object>();var nativePatches=new LinkedHashMap<Long,Patch>();
         for(var d:List.of(old,fresh)) {
             int chunks=0,skipped=0,roots=0,nonanchor=0,different=0,entries=0,emptyPhysicalPatches=0;

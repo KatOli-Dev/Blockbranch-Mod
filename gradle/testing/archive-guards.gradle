@@ -99,8 +99,4 @@ tasks.register('checkDevelopmentClasspaths') {
 }
 tasks.named('check') {dependsOn tasks.named('checkProductionArchives'),tasks.named('checkDevelopmentClasspaths')}
 
-// Preserve the existing build's analytic scope. Historical/manual coverage diagnostics
-// stay explicitly callable; a name-prefix match would incorrectly adopt stale baselines.
-def checkTask = tasks.named('check').get()
-def canonicalAnalyticChecks = checkTask.taskDependencies.getDependencies(checkTask).findAll { it instanceof JavaExec }
-tasks.named('test') { dependsOn canonicalAnalyticChecks }
+// The canonical analytic set that `test` runs is derived in check-suite.gradle, after every script.

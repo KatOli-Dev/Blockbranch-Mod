@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 
 import blockbranch.Blockbranch;
 import java.util.Map;
@@ -35,7 +36,6 @@ public final class SteelContent {
     public static final Item STEEL_LEGGINGS=item("steel_leggings",new Item.Properties().humanoidArmor(STEEL_ARMOR,ArmorType.LEGGINGS));
     public static final Item STEEL_BOOTS=item("steel_boots",new Item.Properties().humanoidArmor(STEEL_ARMOR,ArmorType.BOOTS));
     private static Block block(String name,Block base){var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,new Block(BlockBehaviour.Properties.ofFullCopy(base).setId(ResourceKey.create(Registries.BLOCK,id))));Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;}
-    private static Item item(String name,Item.Properties p){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(p.setId(ResourceKey.create(Registries.ITEM,id))));}
     public static void initialize(){
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(MANGANESE_ORE);out.accept(DEEPSLATE_MANGANESE_ORE);});
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.BUILDING_BLOCKS).register(out->out.accept(STEEL_BLOCK));

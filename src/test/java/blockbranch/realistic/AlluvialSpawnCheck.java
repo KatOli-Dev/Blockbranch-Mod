@@ -8,7 +8,7 @@ public final class AlluvialSpawnCheck {
     public static void main(String[] args){
         int limit=ColumnLimits.BORDER_LIMIT;var border=new SpawnRegions.Bounds(-limit,-limit,limit,limit);var reserved=border.reserve(10);var bins=new HashSet<Integer>();boolean north=false,south=false;
         for(long seed:new long[]{424242,1,-17,0,42,987654321,Long.MIN_VALUE,Long.MAX_VALUE}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true,true,true,true,true);var c=new ClimateField(seed,true);var p=SpawnRegions.select(seed,reserved,d,c);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true).withAlluvial(true));var c=new ClimateField(seed,true);var p=SpawnRegions.select(seed,reserved,d,c);
             require(reserved.allows(p.x(),p.z())&&border.clearance(p.x(),p.z())>=128010,"128km clearance plus native player radius");
             require(p.probes()<=SpawnRegions.MAX_PROBES&&SpawnRegions.eligible(p.x(),p.z(),d,c)&&SpawnRegions.mild(c.sample(p.x(),p.z(),d::sample)),"Bounded dry gentle non-extreme final-terrain start");
             d.sample(-p.x(),-p.z());require(p.equals(SpawnRegions.select(seed,reserved,d,c)),"Stable across terrain request order");

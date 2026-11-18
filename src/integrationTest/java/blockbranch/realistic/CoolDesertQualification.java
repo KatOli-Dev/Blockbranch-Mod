@@ -93,7 +93,7 @@ public final class CoolDesertQualification {
         int changed=0;var seeds=new ArrayList<Object>();var type=Class.forName("blockbranch.realistic.Published259ScreeBiomeSource");
         var bind=type.getDeclaredMethod("bind",long.class,DrainageNetwork.class,ClimateField.class);bind.setAccessible(true);
         for(long seed:new long[]{424242,1,-17}){
-            var d=new DrainageNetwork(new TerrainShape(seed),seed,true,true,true,true);var c=new ClimateField(seed);
+            var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true));var c=new ClimateField(seed);
             var m=oldPalette.margins();var sentinel=Holder.direct(m.fallback().value());
             var tagged=new HabitatPalette(new HabitatPalette.Margins(sentinel,m.scree(),m.reedbed(),m.riverMargin(),m.sandyShore(),m.lake(),m.riverChannel(),m.shelf(),m.deepOcean()),oldPalette.land(),oldPalette.additional());
             var original=type.getConstructor(HabitatPalette.class,boolean.class,boolean.class).newInstance(tagged,true,true);

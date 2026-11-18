@@ -15,8 +15,7 @@ tasks.named('runPublished262Snapshot'){
     dependsOn 'preparePublished262Snapshot'
     doLast{assert original.file('result.txt').asFile.text.startsWith('PASS')}
 }
-tasks.register('checkLandIce',JavaExec){dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath;mainClass='blockbranch.realistic.LandIceCheck';maxHeapSize='2G'}
-tasks.named('check'){dependsOn 'checkLandIce'}
+analyticCheck('checkLandIce','blockbranch.realistic.LandIceCheck','2G')
 
 // The original source is useful for codec/surface comparisons, but shares
 // candidate helpers. Whole-original output hashes are the independent oracle.
@@ -80,7 +79,6 @@ tasks.register('prepareLandIceQualification'){doLast{
     dir.file('server.properties').asFile.text='online-mode=false\nserver-ip=127.0.0.1\nserver-port=25621\nview-distance=2\nsimulation-distance=2\nlevel-name=survey\nlevel-type=blockbranch:realistic\nlevel-seed=424242\nmax-tick-time=0\n'
 }}
 tasks.named('runLandIceQualification'){dependsOn 'prepareLandIceQualification','relocateLandIceReader';doLast{assert dir.file(result).asFile.text.startsWith('PASS')}}
-
 
 def visual=layout.projectDirectory.dir(providers.gradleProperty('landIceVisualDirectory').getOrElse('build/land-ice-visual'))
 def visualLegacy=providers.gradleProperty('landIceVisualLegacy').isPresent()

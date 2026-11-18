@@ -20,11 +20,7 @@ tasks.register('preparePublished270Snapshot'){doLast{
 }}
 tasks.named('runPublished270Snapshot'){dependsOn 'preparePublished270Snapshot';doLast{assert original.file(originalReopen?'reopen-result.txt':'result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkMontaneForest',JavaExec){
- dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MontaneForestCheck';maxHeapSize='1G'
-}
-tasks.named('check'){dependsOn 'checkMontaneForest'}
+analyticCheck('checkMontaneForest','blockbranch.realistic.MontaneForestCheck','1G')
 def fixture=layout.projectDirectory.dir('src/integrationTest/resources/blockbranch-fixtures/montane-forest-reader-270')
 def collector=layout.projectDirectory.file('src/integrationTest/java/blockbranch/realistic/Published270Snapshot.java')
 def baselinePreset=layout.projectDirectory.file('src/integrationTest/resources/data/blockbranch/worldgen/world_preset/montane_forest_baseline.json')
@@ -112,10 +108,4 @@ tasks.register('prepareExistingBiomeComparison'){doLast{
 }}
 tasks.named('runExistingBiomeComparison'){dependsOn 'prepareExistingBiomeComparison';doLast{assert comparison.file('result.txt').asFile.text.startsWith('PASS')}}
 
-tasks.register('checkMontaneDeadwood',JavaExec){
- dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
- mainClass='blockbranch.realistic.MontaneDeadwoodCheck';maxHeapSize='1G'
-}
-tasks.named('check'){dependsOn 'checkMontaneDeadwood'}
-// These new analytic checks also belong to the standard test entry point.
-tasks.named('test'){dependsOn 'checkMontaneForest','checkMontaneDeadwood'}
+analyticCheck('checkMontaneDeadwood','blockbranch.realistic.MontaneDeadwoodCheck','1G')

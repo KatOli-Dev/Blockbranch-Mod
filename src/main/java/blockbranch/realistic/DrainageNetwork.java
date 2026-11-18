@@ -32,8 +32,9 @@ public final class DrainageNetwork {
     private volatile DrainageNetwork unrelieved;
     private volatile GravelDesertRelief gravelRelief;
     private final CoastalHeadlands headlands;
-    // Disposable client comparison only; never enabled by normal generation.
-    private final boolean structuralComparison=Boolean.getBoolean("blockbranch.terrainStructuralComparison")&&Boolean.getBoolean("blockbranch.realisticClientFixture");
+    // Disposable client comparison only (raw channels, no later relief); never enabled by normal
+    // generation. Fixed per network family: views inherit it from their owner.
+    private final boolean structuralComparison;
     private final TerrainRelief surfaceRelief=new TerrainRelief(this::structuralSample);
     // Exact block samples are immutable. A bounded direct-mapped cache avoids
     // recalculating shared climate/slope probes without spatial approximation.
@@ -64,28 +65,56 @@ public final class DrainageNetwork {
         public Sample(int height,int waterLevel,int basin,boolean closed){this(height,waterLevel,basin,closed,false,height,waterLevel);}
     }
 
-    public DrainageNetwork(TerrainShape shape,long seed){this(shape,seed,true);}
-    /** Read-only negative control for coastal regression; ordinary worlds always enable the foundation. */
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms) {this(shape,seed,coastalLandforms,false);}
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts) {
-        this(shape,seed,coastalLandforms,sandyCoasts,false);
+    /**
+     * Generation inputs of one network. Each flag mirrors a saved generator gate except
+     * {@code coastalLandforms} (off only as a read-only coastal negative control) and
+     * {@code structuralComparison} (disposable QA terrain comparison). Immutable.
+     */
+    public record Options(boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership,
+                          boolean deepBasinRelief,boolean landIce,boolean continentalIce,boolean alluvial,boolean structuralComparison) {
+        /** The definition-82 foundation: coastal landforms only. */
+        public static final Options DEFAULT=new Options(true,false,false,false,false,false,false,false,false);
+        public Options withCoastalLandforms(boolean v){return new Options(v,sandyCoasts,gravelRelief,surfaceOwnership,deepBasinRelief,landIce,continentalIce,alluvial,structuralComparison);}
+        public Options withSandyCoasts(boolean v){return new Options(coastalLandforms,v,gravelRelief,surfaceOwnership,deepBasinRelief,landIce,continentalIce,alluvial,structuralComparison);}
+        public Options withGravelRelief(boolean v){return new Options(coastalLandforms,sandyCoasts,v,surfaceOwnership,deepBasinRelief,landIce,continentalIce,alluvial,structuralComparison);}
+        public Options withSurfaceOwnership(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,v,deepBasinRelief,landIce,continentalIce,alluvial,structuralComparison);}
+        public Options withDeepBasinRelief(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,surfaceOwnership,v,landIce,continentalIce,alluvial,structuralComparison);}
+        public Options withLandIce(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,surfaceOwnership,deepBasinRelief,v,continentalIce,alluvial,structuralComparison);}
+        public Options withContinentalIce(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,surfaceOwnership,deepBasinRelief,landIce,v,alluvial,structuralComparison);}
+        public Options withAlluvial(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,surfaceOwnership,deepBasinRelief,landIce,continentalIce,v,structuralComparison);}
+        public Options withStructuralComparison(boolean v){return new Options(coastalLandforms,sandyCoasts,gravelRelief,surfaceOwnership,deepBasinRelief,landIce,continentalIce,alluvial,v);}
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled) {
-        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,false);
+
+    public DrainageNetwork(TerrainShape shape,long seed){this(shape,seed,Options.DEFAULT);}
+    // Positional forms kept only because hash-frozen code compiles against them: historical reader
+    // fixtures (src/integrationTest/resources/blockbranch-fixtures) and Published*Snapshot collectors.
+    // New code uses Options.
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts));
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership) {
-        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,false);
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief));
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief) {
-        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,false);
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief).withSurfaceOwnership(surfaceOwnership));
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled) {
-        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,landIceEnabled,false);
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership,boolean deepBasinRelief) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief).withSurfaceOwnership(surfaceOwnership).withDeepBasinRelief(deepBasinRelief));
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled,boolean continentalIceEnabled) {
-        this(shape,seed,coastalLandforms,sandyCoasts,gravelReliefEnabled,surfaceOwnership,deepBasinRelief,landIceEnabled,continentalIceEnabled,false);
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIce) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief).withSurfaceOwnership(surfaceOwnership).withDeepBasinRelief(deepBasinRelief).withLandIce(landIce));
     }
-    DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelReliefEnabled,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIceEnabled,boolean continentalIceEnabled,boolean alluvialEnabled) {
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIce,boolean continentalIce) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief).withSurfaceOwnership(surfaceOwnership).withDeepBasinRelief(deepBasinRelief).withLandIce(landIce).withContinentalIce(continentalIce));
+    }
+    @Deprecated DrainageNetwork(TerrainShape shape,long seed,boolean coastalLandforms,boolean sandyCoasts,boolean gravelRelief,boolean surfaceOwnership,boolean deepBasinRelief,boolean landIce,boolean continentalIce,boolean alluvial) {
+        this(shape,seed,Options.DEFAULT.withCoastalLandforms(coastalLandforms).withSandyCoasts(sandyCoasts).withGravelRelief(gravelRelief).withSurfaceOwnership(surfaceOwnership).withDeepBasinRelief(deepBasinRelief).withLandIce(landIce).withContinentalIce(continentalIce).withAlluvial(alluvial));
+    }
+    DrainageNetwork(TerrainShape shape,long seed,Options options) {
+        this.structuralComparison=options.structuralComparison();
+        boolean alluvialEnabled=options.alluvial(),continentalIceEnabled=options.continentalIce(),landIceEnabled=options.landIce();
+        boolean deepBasinRelief=options.deepBasinRelief(),surfaceOwnership=options.surfaceOwnership(),gravelReliefEnabled=options.gravelRelief();
+        boolean sandyCoasts=options.sandyCoasts(),coastalLandforms=options.coastalLandforms();
         this.alluvialEnabled=alluvialEnabled;
         this.continentalIceEnabled=continentalIceEnabled;
         this.landIceEnabled=landIceEnabled;
@@ -234,6 +263,7 @@ public final class DrainageNetwork {
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms) {this(owner,erodedLandforms,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference) {this(owner,erodedLandforms,completeReference,false);}
     private DrainageNetwork(DrainageNetwork owner,boolean erodedLandforms,boolean completeReference,boolean retainIce) {
+        structuralComparison=owner.structuralComparison;
         alluvialEnabled=false;landIceEnabled=retainIce&&owner.landIceEnabled;continentalIceEnabled=retainIce&&owner.continentalIceEnabled;
         // Legacy reference views disable this final physical adjustment; apply once,
         // after the complete original surface, retaining its climate references.
@@ -308,10 +338,8 @@ public final class DrainageNetwork {
         if(gravelReliefEnabled&&!structuralComparison)value=gravelRelief().apply(x,z,gravelReference().sample(x,z));
         else {
             boolean weathered=erodedLandforms&&!structuralComparison;
-            var base=weathered?preformation():this;
-            // QA flags are captured per instance. A fixture may toggle them between
-            // owner/view construction; preserve the old composition in that case.
-            value=weathered&&!base.structuralComparison?base.sample(x,z):sample(x,z,!structuralComparison);
+            // Views inherit structuralComparison, so a weathered owner's preformation is never raw.
+            value=weathered?preformation().sample(x,z):sample(x,z,!structuralComparison);
             if(weathered)value=eroded().apply(x,z,value);
         }
         if(deepBasinRelief!=null&&!structuralComparison)value=deepBasinRelief.apply(this,x,z,value);

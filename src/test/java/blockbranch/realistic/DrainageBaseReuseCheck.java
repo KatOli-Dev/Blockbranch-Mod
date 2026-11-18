@@ -8,7 +8,7 @@ public final class DrainageBaseReuseCheck {
   var raw=DrainageNetwork.class.getDeclaredMethod("sample",int.class,int.class,boolean.class);raw.setAccessible(true);
   int checked=0,weathered=0;
   for(long seed:new long[]{424242,1,-17})for(int mode=0;mode<(seed==424242?3:1);mode++){
-   var d=new DrainageNetwork(new TerrainShape(seed),seed,mode!=2,mode==0);var expected=new LinkedHashMap<Long,DrainageNetwork.Sample>();
+   var d=new DrainageNetwork(new TerrainShape(seed),seed,DrainageNetwork.Options.DEFAULT.withCoastalLandforms(mode!=2).withSandyCoasts(mode==0));var expected=new LinkedHashMap<Long,DrainageNetwork.Sample>();
    var points=new ArrayList<int[]>();
    for(int[]center:new int[][]{{0,0},{228504,-267736},{-1318712,-1697680},{-701960,270984},{387960,-804006},{-2097104,2097103}})
     for(int z=-16;z<=16;z+=8)for(int x=-16;x<=16;x+=8)points.add(new int[]{center[0]+x,center[1]+z});
@@ -33,14 +33,9 @@ public final class DrainageBaseReuseCheck {
     }));check(ready.await(5,TimeUnit.SECONDS),"Cold consumers ready");start.countDown();for(var job:tasks)job.get(30,TimeUnit.SECONDS);
    }finally{jobs.shutdownNow();check(jobs.awaitTermination(5,TimeUnit.SECONDS),"Consumer jobs release");}
   }
-  String priorComparison=System.getProperty("blockbranch.terrainStructuralComparison"),priorFixture=System.getProperty("blockbranch.realisticClientFixture");
-  try{
-   System.setProperty("blockbranch.terrainStructuralComparison","true");System.setProperty("blockbranch.realisticClientFixture","true");
-   var control=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
+  {
+   var control=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withStructuralComparison(true));
    for(int i=-8;i<=8;i++){int x=228504+i*8,z=-267736-i*4;check(control.sample(x,z).equals(raw.invoke(control,x,z,false)),"QA structural comparison remains the raw negative control");checked++;}
-  }finally{
-   if(priorComparison==null)System.clearProperty("blockbranch.terrainStructuralComparison");else System.setProperty("blockbranch.terrainStructuralComparison",priorComparison);
-   if(priorFixture==null)System.clearProperty("blockbranch.realisticClientFixture");else System.setProperty("blockbranch.realisticClientFixture",priorFixture);
   }
   check(weathered>0,"Actual weathered interior, not only unchanged coast");
   System.out.println("PASS exact old drainage composition cases="+checked+" weathered="+weathered+" three seeds, legacy coastal flags, four concurrent consumers");

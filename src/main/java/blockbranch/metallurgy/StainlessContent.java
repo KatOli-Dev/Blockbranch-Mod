@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 
 import blockbranch.Blockbranch;
 import java.util.function.Function;
@@ -28,23 +29,21 @@ public final class StainlessContent {
     // Longer wear life than steel, at iron speed/access/attack strength; diamond remains faster/higher-tier.
     public static final ToolMaterial MATERIAL=new ToolMaterial(net.minecraft.tags.BlockTags.INCORRECT_FOR_IRON_TOOL,960,6,2,12,REPAIR);
     public static final Item STAINLESS_STEEL_PICKAXE=Registry.register(BuiltInRegistries.ITEM,Blockbranch.id("stainless_steel_pickaxe"),new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,Blockbranch.id("stainless_steel_pickaxe"))).pickaxe(MATERIAL,1,-2.8f)));
-    public static final Item STAINLESS_STEEL_SWORD=gear("stainless_steel_sword",new Item.Properties().sword(MATERIAL,3,-2.4f));
-    public static final Item STAINLESS_STEEL_AXE=gear("stainless_steel_axe",new Item.Properties().axe(MATERIAL,6,-3.1f));
-    public static final Item STAINLESS_STEEL_SHOVEL=gear("stainless_steel_shovel",new Item.Properties().shovel(MATERIAL,1.5f,-3));
-    public static final Item STAINLESS_STEEL_HOE=gear("stainless_steel_hoe",new Item.Properties().hoe(MATERIAL,-2,-1));
+    public static final Item STAINLESS_STEEL_SWORD=item("stainless_steel_sword",new Item.Properties().sword(MATERIAL,3,-2.4f));
+    public static final Item STAINLESS_STEEL_AXE=item("stainless_steel_axe",new Item.Properties().axe(MATERIAL,6,-3.1f));
+    public static final Item STAINLESS_STEEL_SHOVEL=item("stainless_steel_shovel",new Item.Properties().shovel(MATERIAL,1.5f,-3));
+    public static final Item STAINLESS_STEEL_HOE=item("stainless_steel_hoe",new Item.Properties().hoe(MATERIAL,-2,-1));
     public static final ResourceKey<net.minecraft.world.item.equipment.EquipmentAsset> EQUIPMENT=ResourceKey.create(net.minecraft.world.item.equipment.EquipmentAssets.ROOT_ID,Blockbranch.id("stainless_steel"));
     // Iron defense, longer wear life and lower enchantability than steel; no toughness or knockback bonus.
     public static final net.minecraft.world.item.equipment.ArmorMaterial ARMOR=new net.minecraft.world.item.equipment.ArmorMaterial(30,java.util.Map.of(net.minecraft.world.item.equipment.ArmorType.HELMET,2,net.minecraft.world.item.equipment.ArmorType.CHESTPLATE,6,net.minecraft.world.item.equipment.ArmorType.LEGGINGS,5,net.minecraft.world.item.equipment.ArmorType.BOOTS,2),8,net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON,0,0,REPAIR,EQUIPMENT);
-    public static final Item STAINLESS_STEEL_HELMET=gear("stainless_steel_helmet",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.HELMET));
-    public static final Item STAINLESS_STEEL_CHESTPLATE=gear("stainless_steel_chestplate",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.CHESTPLATE));
-    public static final Item STAINLESS_STEEL_LEGGINGS=gear("stainless_steel_leggings",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.LEGGINGS));
-    public static final Item STAINLESS_STEEL_BOOTS=gear("stainless_steel_boots",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.BOOTS));
-    private static Item gear(String name,Item.Properties properties){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(properties.setId(ResourceKey.create(Registries.ITEM,id))));}
+    public static final Item STAINLESS_STEEL_HELMET=item("stainless_steel_helmet",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.HELMET));
+    public static final Item STAINLESS_STEEL_CHESTPLATE=item("stainless_steel_chestplate",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.CHESTPLATE));
+    public static final Item STAINLESS_STEEL_LEGGINGS=item("stainless_steel_leggings",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.LEGGINGS));
+    public static final Item STAINLESS_STEEL_BOOTS=item("stainless_steel_boots",new Item.Properties().humanoidArmor(ARMOR,net.minecraft.world.item.equipment.ArmorType.BOOTS));
     private static Block block(String name,Block base,Function<BlockBehaviour.Properties,Block> factory){
         var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,factory.apply(BlockBehaviour.Properties.ofFullCopy(base).setId(ResourceKey.create(Registries.BLOCK,id))));
         Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;
     }
-    private static Item item(String name){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id))));}
     public static void initialize(){
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(NICKEL_ORE);out.accept(DEEPSLATE_NICKEL_ORE);out.accept(CHROMIUM_ORE);out.accept(DEEPSLATE_CHROMIUM_ORE);});
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.BUILDING_BLOCKS).register(out->{out.accept(STAINLESS_STEEL_BLOCK);out.accept(STAINLESS_STEEL_SLAB);out.accept(STAINLESS_STEEL_STAIRS);});

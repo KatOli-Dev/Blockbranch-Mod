@@ -1,4 +1,5 @@
 package blockbranch.metallurgy;
+import static blockbranch.metallurgy.MetalItems.item;
 import blockbranch.Blockbranch;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
@@ -23,7 +24,6 @@ public final class TungstenContent {
  public static final Item TUNGSTEN_STEEL_SHOVEL=item("tungsten_steel_shovel",new Item.Properties().shovel(MATERIAL,1.5f,-3));
  public static final Item TUNGSTEN_STEEL_HOE=item("tungsten_steel_hoe",new Item.Properties().hoe(MATERIAL,-2,-1));
  private static Block ore(String name,Block base,float hardness){var id=Blockbranch.id(name);var block=Registry.register(BuiltInRegistries.BLOCK,id,new Block(BlockBehaviour.Properties.ofFullCopy(base).strength(hardness,6).setId(ResourceKey.create(Registries.BLOCK,id))));Registry.register(BuiltInRegistries.ITEM,id,new BlockItem(block,new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id)).useBlockDescriptionPrefix()));return block;}
- private static Item item(String name,Item.Properties p){var id=Blockbranch.id(name);return Registry.register(BuiltInRegistries.ITEM,id,new Item(p.setId(ResourceKey.create(Registries.ITEM,id))));}
  public static void initialize(){
  CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(out->{out.accept(TUNGSTEN_ORE);out.accept(DEEPSLATE_TUNGSTEN_ORE);});
  CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(out->{out.accept(RAW_TUNGSTEN);out.accept(TUNGSTEN_INGOT);out.accept(TUNGSTEN_STEEL_INGOT);});

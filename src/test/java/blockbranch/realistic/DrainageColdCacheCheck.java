@@ -34,8 +34,8 @@ public final class DrainageColdCacheCheck {
   }finally{start.countDown();jobs.shutdownNow();check(jobs.awaitTermination(5,TimeUnit.SECONDS),"View callers release");}
  }
  public static void main(String[]args)throws Exception{
-  var target=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
-  var oracle=new DrainageNetwork(new TerrainShape(424242),424242,true,true);
+  var target=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));
+  var oracle=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));
   var raw=DrainageNetwork.class.getDeclaredMethod("sample",int.class,int.class,boolean.class);raw.setAccessible(true);
   var memo=(Object[])field("sampleCache").get(target);var entry=Class.forName("blockbranch.realistic.DrainageNetwork$CachedSample");
   var entryKey=entry.getDeclaredMethod("key");var entryValue=entry.getDeclaredMethod("value");entryKey.setAccessible(true);entryValue.setAccessible(true);

@@ -11,7 +11,7 @@ Use Java 25 and the checked-in Gradle wrapper from the repository root. Versions
 ./gradlew tasks --all
 ```
 
-The serial, one-worker `build` form is the laptop-safe default: `gradle.properties` enables parallel execution, and a full aggregate with several workers once exhausted memory and swap on a roughly 15 GiB development machine; the flags change no setting or test coverage, so the same checks run, and plain `./gradlew build` remains valid on a roomy machine. `build` compiles production/development code, runs canonical analytic JavaExec checks through `test`/`check`, and creates binary/source JARs in `build/libs/`. There are no framework-discovered tests; historical/manual diagnostics remain explicitly callable, not adopted by task-name prefix.
+The serial, one-worker `build` form is the laptop-safe default: `gradle.properties` enables parallel execution, and a full aggregate with several workers once exhausted memory and swap on a roughly 15 GiB development machine; the flags change no setting or test coverage, so the same checks run, and plain `./gradlew build` remains valid on a roomy machine. `build` compiles production/development code, runs canonical analytic checks through `test`/`check`, and creates binary/source JARs in `build/libs/`. `gradle/testing/check-suite.gradle` collects the JavaExec checks wired into `check` (never by name prefix) and JUnit's `CheckSuiteTest` runs each `main` in a child JVM with that task's arguments, one dynamic test per check; logs land in `build/check-suite/logs`. Under `test` those tasks are skipped, and `./gradlew checkX` still runs one directly. Register a new check with `analyticCheck(name, main, heap)` from `source-sets.gradle` (`analyticTask` for an unwired diagnostic). Historical/manual diagnostics stay explicitly callable, not adopted.
 
 | Location | Purpose |
 | --- | --- |
@@ -224,7 +224,7 @@ Native artwork is loaded at runtime, not bundled or written back to textures.
 Use `checkStructureSchemas` for feature combinations and `checkSurfaceReservations`
 for bounded exact caches. `checkDrainageBaseReuse`, `checkDrainageColdCache` and
 `checkDrainageFlagTransition` cover exact reuse, concurrent cold reads,
-collision/eviction and flag transitions; they are release gates in `test`/`check`.
+collision/eviction and the fixed per-network QA comparison mode; they are release gates in `test`/`check`.
 Native task/property definitions are in [structures.gradle](../gradle/testing/structures.gradle)
 and [integrated-overworld.gradle](../gradle/testing/integrated-overworld.gradle).
 
@@ -489,7 +489,7 @@ compares completed crypt fixtures; forced admission is not connected-player FPS.
 Record commit, JDK/hardware, seed, distances, commands and fresh/reopen state.
 Cumulative allocation is not peak/live memory; cloud timing is not laptop FPS.
 
-Most Python utilities use the standard library. Ore art authoring needs Python 3 and Pillow (`generate_ore_art.py --out build/ore-art`); bismuth has a JDK-only `java scripts/assets/GenerateBismuth.java`. Audio candidate tools need the selected script's NumPy/SciPy/Matplotlib/FFmpeg prerequisites. Read source first; Gradle never installs or invokes those optional dependencies.
+Most Python utilities use the standard library. Ore art authoring needs Python 3 and Pillow (`generate_ore_art.py --out build/ore-art`); bismuth has a JDK-only `java scripts/assets/GenerateBismuth.java`; metal tool/armor sets come from one table in `java scripts/assets/GenerateEquipmentArt.java --out build/equipment-art [metal ...]`. Audio candidate tools need the selected script's NumPy/SciPy/Matplotlib/FFmpeg prerequisites. Read source first; Gradle never installs or invokes those optional dependencies.
 
 ## Storage limits and historical evidence
 

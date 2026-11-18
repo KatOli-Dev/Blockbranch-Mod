@@ -9,7 +9,7 @@ import java.util.*;
  * Cooling variations here change sheet admission only, not a whole alternate world. */
 public final class ContinentalIceAssessment {
     public static void main(String[] args)throws Exception{
-        var d=new DrainageNetwork(new TerrainShape(424242),424242,true,true,true,true,true,true,true);var bed=d.iceReference();
+        var d=new DrainageNetwork(new TerrainShape(424242),424242,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true).withGravelRelief(true).withSurfaceOwnership(true).withDeepBasinRelief(true).withLandIce(true).withContinentalIce(true));var bed=d.iceReference();
         var nominal=new ContinentalIceField(424242,bed);var points=new ArrayList<int[]>();
         for(int[] center:new int[][]{{-1552000,-1904000},{-1456000,-1904000},{-1615115,-1904000}})
             for(int z=center[1]-128;z<=center[1]+128;z+=8)for(int x=center[0]-128;x<=center[0]+128;x+=8)points.add(new int[]{x,z});

@@ -107,7 +107,7 @@ public final class ZincBrassSmoke {
         var origin=generator.getOrigin(level.getChunkSource().randomState());
         for(int dz=0;dz<2;dz++)for(int dx=0;dx<2;dx++){
             var chunk=level.getChunk(origin.x()+dx,origin.z()+dz);var base=((SparseColumn)chunk).blockbranch$terrain().base();require(base.ores().definition()==generator.oreDefinition(),"actual FULL column carries its saved ore definition");var restored=TerrainProfile.decode(base.encode(level.palettedContainerFactory()),level.palettedContainerFactory());
-            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=ZincVeins.MIN_DEPTH;depth<=ZincVeins.MAX_DEPTH;depth++){
+            for(int z=0;z<16;z++)for(int x=0;x<16;x++)for(int depth=SectionVeins.minDepth(SectionVeins.ZINC);depth<=SectionVeins.maxDepth(SectionVeins.ZINC);depth++){
                 int y=base.groundHeight(x,z)-depth;var pos=new BlockPos(chunk.getPos().getMinBlockX()+x,y,chunk.getPos().getMinBlockZ()+z);var value=base.state(x,y,z);if(!isZinc(value))continue;
                 require(level.getBlockState(pos)==value&&restored.state(x,y,z)==value,"native zinc agrees with snapshot");level.setBlock(pos,Blocks.AIR.defaultBlockState(),2);Files.writeString(marker,pos.getX()+","+pos.getY()+","+pos.getZ());level.getServer().saveEverything(false,true,true);Blockbranch.LOGGER.info("ZINC_BRASS naturally generated zinc witness={}",pos);return;
             }

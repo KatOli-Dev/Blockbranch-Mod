@@ -65,11 +65,7 @@ tasks.register('surveyCoolDesertSites',JavaExec) {
     dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
     mainClass='blockbranch.realistic.CoolDesertSiteSurvey';maxHeapSize='2G'
 }
-tasks.register('checkCoolDesert',JavaExec) {
-    dependsOn 'testClasses';classpath=sourceSets.test.runtimeClasspath
-    mainClass='blockbranch.realistic.CoolDesertCheck';maxHeapSize='2G'
-}
-tasks.named('check'){dependsOn 'checkCoolDesert'}
+analyticCheck('checkCoolDesert','blockbranch.realistic.CoolDesertCheck','2G')
 
 def original=layout.projectDirectory.dir(providers.gradleProperty('published259Directory').getOrElse('build/published259-snapshot'))
 loom.runs.register('published259Snapshot') {

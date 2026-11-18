@@ -4,7 +4,7 @@ package blockbranch.realistic;
 public final class SandyCoastCheck {
  public static void main(String[]args){
   for(long seed:new long[]{424242,1,-17}){
-   var shape=new TerrainShape(seed);var old=new DrainageNetwork(shape,seed);var d=new DrainageNetwork(shape,seed,true,true);var c=new ClimateField(seed);
+   var shape=new TerrainShape(seed);var old=new DrainageNetwork(shape,seed);var d=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));var c=new ClimateField(seed);
    for(boolean snow:new boolean[]{false,true}){
     var scene=CoastalBeachScenes.forWorld(seed,snow,d,c);int changed=0,flat=0,wasFlat=0,maxStep=0;
     for(int z=scene.z()-128;z<=scene.z()+128;z+=4)for(int x=scene.x()-128;x<=scene.x()+128;x+=4){
@@ -29,7 +29,7 @@ public final class SandyCoastCheck {
     }
     for(boolean elevated:new boolean[]{false,true})System.out.println("SANDY_CAMERA "+CoastalBeachScenes.camera(scene,d,c,elevated));
     // Repeat in reverse order in a fresh cache; no chunk or request-order state.
-    var reverse=new DrainageNetwork(shape,seed,true,true);for(int z=scene.z()+32;z>=scene.z()-32;z--)for(int x=scene.x()+32;x>=scene.x()-32;x--)require(d.sample(x,z).equals(reverse.sample(x,z)),"Exact cache/seam/order agreement");
+    var reverse=new DrainageNetwork(shape,seed,DrainageNetwork.Options.DEFAULT.withSandyCoasts(true));for(int z=scene.z()+32;z>=scene.z()-32;z--)for(int x=scene.x()+32;x>=scene.x()-32;x--)require(d.sample(x,z).equals(reverse.sample(x,z)),"Exact cache/seam/order agreement");
    }
    int untouched=0;for(int z=-1900000;z<=1900000;z+=32000)for(int x=-1900000;x<=1900000;x+=32000){var a=old.sample(x,z);var b=d.sample(x,z);if(a.closed()||a.height()<61||a.height()>67||a.bedrockCoast()){require(a.equals(b),"Unrelated inland/deep/wetland/rock exact preservation");untouched++;}}
    var rock=blockbranch.realistic.StonyShoreFixtures.fixture(old,seed);int protectedRock=0;
